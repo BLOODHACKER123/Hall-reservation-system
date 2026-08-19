@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hall Reservation system</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="container">
+      <div id="nav-bar">
+        <a id="logo" href="#">VenueVista</a>
+        <nav id="nav-links">
+          <a>Browse Venues</a>
+          <a>List A Venue</a>
+          <a>Owners Dashboard</a>
+          <a>Admin</a>
+        </nav>
+        <div id="nav-buttons">
+          <button id="list-venue-button">List A Venue</button>
+          <button id="login-button">Login</button>
+        </div>
+      </div>
+    </div>
+
+    <section id="hero-section">
+      <div id="hero-text">
+        <p id="hero-title">DISCOVER EXTRAORDINARY SPACES</p>
+        <h1 id="hero-heading">Every Moment Deserves a Perfect Venue</h1>
+        <p id="hero-description">
+          From intimate gatherings to grand celebrations — find and book the
+          space that tells your story.
+        </p>
+
+        <div id="venue-search">
+          <div id="venue-search-inputs">
+            <div id="location-search">
+              <p>Location</p>
+              <input type="text" placeholder="City or Area" />
+            </div>
+
+            <div id="venue-type-search">
+              <p>Venue Type</p>
+              <select
+                id="venue-type-select"
+                name="venueType"
+                title="Select a venue type"
+                required
+              >
+                <option value="" selected disabled>Select a venue type</option>
+                <option value="Wedding Venue">Wedding Venue</option>
+                <option value="Banquet Hall">Banquet Hall</option>
+                <option value="Hotel">Hotel</option>
+                <option value="Conference Venue">Conference Venue</option>
+                <option value="Garden Venue">Garden Venue</option>
+                <option value="Seminar Hall">Seminar Hall</option>
+                <option value="Auditorium">Auditorium</option>
+                <option value="Rooftop venue">Rooftop venue</option>
+                <option value="Meeting">Meeting</option>
+              </select>
+            </div>
+
+            <div id="date-search">
+              <p>Date</p>
+              <input type="date" name="eventDate" placeholder="Select a date" />
+            </div>
+          </div>
+
+          <div id="search-btn-container">
+            <button id="search-venues-button">Search Venues</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
