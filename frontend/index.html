@@ -4,26 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hall Reservation system</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div id="container">
-      <div id="nav-bar">
-        <a id="logo" href="#">VenueVista</a>
-        <nav id="nav-links">
-          <a>Browse Venues</a>
-          <a>List A Venue</a>
-          <a>Owners Dashboard</a>
-          <a>Admin</a>
-        </nav>
-        <div id="nav-buttons">
-          <button id="list-venue-button">List A Venue</button>
-          <button id="login-button">Login</button>
+    <section id="hero-section">
+      <div id="container">
+        <div id="nav-bar">
+          <a id="logo" href="#">VenueVista</a>
+          <nav id="nav-links">
+            <a>Browse Venues</a>
+            <a>List A Venue</a>
+            <a>Owners Dashboard</a>
+            <a>Admin</a>
+          </nav>
+          <div id="nav-buttons">
+            <button id="list-venue-button">List A Venue</button>
+            <button id="login-button">Login</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <section id="hero-section">
       <div id="hero-text">
         <p id="hero-title">DISCOVER EXTRAORDINARY SPACES</p>
         <h1 id="hero-heading">Every Moment Deserves a Perfect Venue</h1>
@@ -32,15 +39,26 @@
           space that tells your story.
         </p>
 
-        <div id="venue-search">
+        <form id="venue-search">
           <div id="venue-search-inputs">
             <div id="location-search">
-              <p>Location</p>
-              <input type="text" placeholder="City or Area" />
+              <p>
+                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                Location
+              </p>
+              <input
+                id="location-input"
+                type="text"
+                placeholder="City or Area"
+                required
+              />
             </div>
 
             <div id="venue-type-search">
-              <p>Venue Type</p>
+              <p>
+                <i class="fa-solid fa-building" aria-hidden="true"></i> Venue
+                Type
+              </p>
               <select
                 id="venue-type-select"
                 name="venueType"
@@ -61,16 +79,161 @@
             </div>
 
             <div id="date-search">
-              <p>Date</p>
-              <input type="date" name="eventDate" placeholder="Select a date" />
+              <p>
+                <i class="fa-regular fa-calendar" aria-hidden="true"></i> Date
+              </p>
+              <input
+                id="event-date-input"
+                type="date"
+                name="eventDate"
+                placeholder="Select a date"
+                required
+              />
             </div>
           </div>
 
           <div id="search-btn-container">
-            <button id="search-venues-button">Search Venues</button>
+            <button id="search-venues-button" type="submit">
+              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              Search Venues
+            </button>
+          </div>
+          <p id="search-message" role="status" aria-live="polite"></p>
+        </form>
+        <div id="mouse-image">
+          <img src="images/mouse.png" alt="Hero Image" />
+        </div>
+      </div>
+    </section>
+
+    <section id="featured-venue">
+      <div>
+        <p>Handpicked for You</p>
+        <h2>Featured Venues</h2>
+        <a href="#">View All Venues →</a>
+
+        <div id="featured-venue-cards">
+          <div id="venue-card">
+            <div id="venue-card-image">
+              <img
+                src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&auto=format&fit=crop&q=80"
+                alt="Venue 1"
+              />
+              <div id="hall-type-tag">Wedding Venue</div>
+              <div id="featured-tag">Featured</div>
+              <div id="rating-tag">*4.8</div>
+            </div>
+
+            <div id="location-details">
+              <p>The Grand Rosewood Ballroom</p>
+              <p id="cost">$8,500/day</p><br>
+              <p>
+                <i class="fa-solid fa-location-dot" aria-hidden="true"></i> New
+                York, NY
+              </p>
+              
+            </div>
+            <div id="hall-details">
+              <p>
+                <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+                100-600 guest
+              </p>
+              <p>
+                <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
+                reviews
+              </p>
+              <a href="#">view Details → </a>
+            </div>
+          </div>
+
+          <div id="venue-card">
+            <div id="venue-card-image">
+              <img
+                src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80"
+                alt="Venue 1"
+              />
+              <div id="hall-type-tag">Rooftop Venue</div>
+              <div id="featured-tag">Featured</div>
+              <div id="rating-tag">*4.7</div>
+            </div>
+
+            <div id="location-details">
+              <p>Skyline Garden Terrace</p>
+              <p id="cost">$5,500/day</p><br>
+              <p>
+                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                Chicago,IL
+              </p>
+              
+            </div>
+            <div id="hall-details">
+              <p>
+                <i class="fa-solid fa-user-group" aria-hidden="true"></i> 50-250
+                guest
+              </p>
+              <p>
+                <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
+                reviews
+              </p>
+              <a href="#">view Details → </a>
+            </div>
+          </div>
+
+          <div id="venue-card">
+            <div id="venue-card-image">
+              <img
+                src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1200&auto=format&fit=crop&q=80"
+                alt="Venue 1"
+              />
+              <div id="hall-type-tag">Garden Venue</div>
+              <div id="featured-tag">Featured</div>
+              <div id="rating-tag">*4.9</div>
+            </div>
+
+            <div id="location-details">
+              <p>The Verdant Garden Estate</p>
+              <p id="cost">$6,500/day</p><br>
+              <p id>
+                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                NAPA,CA
+              </p>
+              
+            </div>
+            <div id="hall-details">
+              <p>
+                <i class="fa-solid fa-user-group" aria-hidden="true"></i> 30-300
+                guest
+              </p>
+              <p>
+                <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
+                reviews
+              </p>
+              <a href="#">view Details → </a>
+            </div>
           </div>
         </div>
       </div>
     </section>
+
+    <section id="browse-venue-type">
+      <div>
+
+       <p>Every Occasion</p>
+       <h1>Browse by Venue Type</h1>
+
+       <div id="venue-type-cards">
+        <div><img src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&auto=format&fit=crop&q=60" alt="Venue Type 1"></div>
+        <div><img src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=400&auto=format&fit=crop&q=60" alt="Venue Type 1"></div>
+        <div><img src="https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&auto=format&fit=crop&q=60" alt="Venue Type 1"></div>
+        <div><img src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&auto=format&fit=crop&q=60"" alt="Venue Type 1"></div>
+        <div><img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&auto=format&fit=crop&q=60" alt="Venue Type 1"></div>
+        <div><img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&auto=format&fit=crop&q=60" alt="Venue Type 1"></div>
+        <div><img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&auto=format&fit=crop&q=60"" alt="Venue Type 1"></div>
+        <div><img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&auto=format&fit=crop&q=60" alt="Venue Type 1"></div>
+       </div>
+
+      </div>
+    </section>
+    <script src="script.js" defer></script>
   </body>
 </html>
