@@ -3,30 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hall Reservation system</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
+    <title>VenueSpot</title>
+    <link rel="stylesheet" href="common.css" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <section id="hero-section">
       <div id="container">
         <div id="nav-bar">
-          <a id="logo" href="#">VenueVista</a>
+          <a id="logo" href="index.html">VenueVista</a>
           <nav id="nav-links">
-            <a>Browse Venues</a>
-            <a>List A Venue</a>
-            <a>Owners Dashboard</a>
-            <a>Admin</a>
+            <a href="search.html">Browse Venues</a>
+            <a href="list.html">List A Venue</a>
+            <a href="ownerdashboard.html">Owners Dashboard</a>
+            <a href="admin.html">Admin</a>
           </nav>
           <div id="nav-buttons">
-            <button id="list-venue-button">List A Venue</button>
-            <button id="login-button">Login</button>
+            <a id="list-venue-button" href="list.html">List A Venue</a>
+            <a id="login-button" href="loginchoice.html">Login</a>
           </div>
         </div>
       </div>
@@ -110,7 +104,7 @@
       <div>
         <p>Handpicked for You</p>
         <h2>Featured Venues</h2>
-        <a href="#">View All Venues →</a>
+        <a href="search.html">View All Venues →</a>
 
         <div id="featured-venue-cards">
           <div class="venue-card">
@@ -121,7 +115,7 @@
               />
               <div class="hall-type-tag">Wedding Venue</div>
               <div class="featured-tag">Featured</div>
-              <div class="rating-tag">*4.8</div>
+              <div class="rating-tag">★4.8</div>
             </div>
 
             <div class="location-details">
@@ -142,7 +136,7 @@
                 <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
                 reviews
               </p>
-              <a href="#">view Details → </a>
+              <a href="search.html">view Details → </a>
             </div>
           </div>
 
@@ -154,7 +148,7 @@
               />
               <div class="hall-type-tag">Rooftop Venue</div>
               <div class="featured-tag">Featured</div>
-              <div class="rating-tag">*4.7</div>
+              <div class="rating-tag">★4.7</div>
             </div>
 
             <div class="location-details">
@@ -175,7 +169,7 @@
                 <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
                 reviews
               </p>
-              <a href="#">view Details → </a>
+              <a href="search.html">view Details → </a>
             </div>
           </div>
 
@@ -187,7 +181,7 @@
               />
               <div class="hall-type-tag">Garden Venue</div>
               <div class="featured-tag">Featured</div>
-              <div class="rating-tag">*4.9</div>
+              <div class="rating-tag">★4.9</div>
             </div>
 
             <div class="location-details">
@@ -208,9 +202,10 @@
                 <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
                 reviews
               </p>
-              <a href="#">view Details → </a>
+              <a href="search.html">view Details → </a>
             </div>
           </div>
+          
         </div>
       </div>
     </section>
@@ -221,66 +216,68 @@
         <h1>Browse by Venue Type</h1>
 
         <div id="venue-type-cards">
-          <div class="venue-type-card">
+          <a class="venue-type-card" href="search.html">
            
             <img
               src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&auto=format&fit=crop&q=60"
               alt="Banquet hall"/>
              <p>Banquet Hall</p>
-          </div>
-          <div class="venue-type-card">
+          </a>
+          <a class="venue-type-card" href="search.html">
             <img
               src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=400&auto=format&fit=crop&q=60"
               alt="Wedding venue"/>
             <p>Wedding Venue</p>
-          </div>
-          <div class="venue-type-card">
+          </a>
+          <a class="venue-type-card" href="search.html">
             <img
               src="https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&auto=format&fit=crop&q=60"
               alt="Conference venue"/>
             <p>Conference Venue</p>
-          </div>
-          <div class="venue-type-card">
+          </a>
+          <a class="venue-type-card" href="search.html">
             <img
               src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&auto=format&fit=crop&q=60"
               alt="Garden venue"/>
             <p>Garden Venue</p>
-          </div>
-          <div class="venue-type-card">
+          </a>
+          <a class="venue-type-card" href="search.html">
             <img
               src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&auto=format&fit=crop&q=60"
               alt="Rooftop venue" />
             <p>Rooftop Venue</p>
-          </div>
-          <div class="venue-type-card">
+          </a>
+          <a class="venue-type-card" href="search.html">
             <img
               src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&auto=format&fit=crop&q=60"
               alt="Hotel venue"/>
             <p>Hotel Venue</p>
-          </div>
-          <div class="venue-type-card">
+          </a>
+          <a class="venue-type-card" href="search.html">
             <img
               src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&auto=format&fit=crop&q=60"
               alt="Auditorium"/>
             <p>Auditorium</p>
-          </div>
-          <div class="venue-type-card">
+          </a>
+          <a class="venue-type-card" href="search.html">
             <img
               src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&auto=format&fit=crop&q=60"
               alt="Meeting space"/>
             <p>Meeting Space</p>
-          </div>
+          </a>
         </div>
+
       </div>
     </section>
 
     <section id="about-page">
       <div id="about-container">
-        <div>4.9 ★ Average Rating</div>
-        <div></div>
-        <div></div>
         <div id="about-image-container">
           <img src="https://images.unsplash.com/photo-1478146059778-26028b07395a?w=800&auto=format&fit=crop&q=70" alt="about-image">
+          <div class="details-box">4.9 <span>★</span><small>Average Rating</small></div>
+          <div class="details-box">2,000+<small>Events Hosted</small></div>
+          <div class="details-box">1,500+<small>Happy Clients</small></div>
+          <div class="details-box">500+<small>Venues Listed</small></div>
         </div>
 
         <div id="about-details">
@@ -322,6 +319,68 @@
         </div>  
       </div>
     </section>
+
+    <section id="list-venue-section">
+      <div id="list-venue-body">
+
+        <p>OWN A VENUE?</p>
+        <p>List Your Space</p>
+        <h1>Reach Thousands</h1>
+        <p>Join hundreds of venue owners who trust VenueVista to
+            connect them with the right clients.</p>
+        <a href="list.html">Start Listing Today →</a>
+
+      </div>
+    </section>
+
+    <section id="footer-section">
+      <div id="footer-body">
+        <div id="footer-top">
+
+          <div id="footer-details-block">
+            <h1>VenueVista</h1>
+            <p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells 
+              a story.</p>
+
+            <div class="social-links">
+              <a href="">INSTAGRAM</a>
+              <a href="">PINTEREST</a>
+              <a href="">FACEBOOK</a>
+            </div>
+          </div>
+        
+          <div class="footer-nav-links">
+
+            <p>DISCOVER</p>
+            <a href="search.html">Browse Venues</a>
+            <a href="search.html">Wedding Venues</a>
+            <a href="search.html">Banquet Halls</a>
+            <a href="search.html">Conference Halls</a>
+          
+          </div>
+
+          <div class="footer-nav-links">
+            <p>FOR OWNERS</p> 
+            
+                <a href="list.html">List Your Venue</a>
+                <a href="ownerdashboard.html">Owner Dashboard</a>
+                <a href="mybookings.html">My Bookings</a>
+              
+          </div>
+        
+        </div>
+        <div id="footer-bottom">
+            <p>@ 2026 VenueVista. All rights reserved.</p>
+
+            <div class="footer-links">
+            <a href="">Privacy Policy</a>
+            <a href="">Terms of Service</a>
+            <a href="">Contact</a>
+            </div>
+          </div>
+      </div>
+    </section>
+
     <script src="script.js" defer></script>
   </body>
 </html>

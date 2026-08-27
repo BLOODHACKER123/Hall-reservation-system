@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | VenueVista</title>
+  <link rel="stylesheet" href="common.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+  <section id="navigation-section">
+      <div id="container">
+        <div id="nav-bar">
+          <a id="logo" href="index.html">VenueVista</a>
+          <nav id="nav-links">
+            <a href="search.html">Browse Venues</a>
+            <a href="list.html">List A Venue</a>
+            <a href="ownerdashboard.html">Owners Dashboard</a>
+            <a href="admin.html">Admin</a>
+          </nav>
+          <div id="nav-buttons">
+            <a id="list-venue-button" href="list.html">List A Venue</a>
+            <a id="login-button" href="loginchoice.html">Login</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+ 
+  <main class="admin-content" id="overview">
+    <section class="admin-hero">
+      <p class="admin-eyebrow">PLATFORM MANAGEMENT</p>
+      <h1>Admin Dashboard</h1>
+      <div class="admin-stats">
+        <article class="stat-card"><span class="stat-label">▥ &nbsp; TOTAL VENUES</span><strong>6</strong></article>
+        <article class="stat-card"><span class="stat-label">✓ &nbsp; APPROVED</span><strong>6</strong></article>
+        <article class="stat-card"><span class="stat-label">⊙ &nbsp; PENDING REVIEW</span><strong>0</strong></article>
+        <article class="stat-card"><span class="stat-label">□ &nbsp; TOTAL BOOKINGS</span><strong>0</strong></article>
+        <article class="stat-card"><span class="stat-label">↗ &nbsp; PLATFORM REVENUE</span><strong>$0</strong></article>
+      </div>
+    </section>
+
+    <nav class="admin-tabs" aria-label="Admin dashboard sections">
+      <a class="active" href="#overview">Overview</a>
+      <a href="#pending-venues">Pending Venues</a>
+      <a href="#all-venues">All Venues</a>
+      <a href="#all-bookings">All Bookings</a>
+    </nav>
+
+    <section class="admin-panel" id="pending-venues">
+      <h2>Pending Approvals</h2>
+      <div class="empty-state"><span aria-hidden="true">✓</span><p>All caught up!</p></div>
+    </section>
+  </main>
+
+  <section id="footer-section">
+      <div id="footer-body">
+        <div id="footer-top">
+
+          <div id="footer-details-block">
+            <h1>VenueVista</h1>
+            <p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells 
+              a story.</p>
+
+            <div class="social-links">
+              <a href="">INSTAGRAM</a>
+              <a href="">PINTEREST</a>
+              <a href="">FACEBOOK</a>
+            </div>
+          </div>
+        
+          <div class="footer-nav-links">
+
+            <p>DISCOVER</p>
+            <a href="search.html">Browse Venues</a>
+            <a href="search.html">Wedding Venues</a>
+            <a href="search.html">Banquet Halls</a>
+            <a href="search.html">Conference Halls</a>
+          
+          </div>
+
+          <div class="footer-nav-links">
+            <p>FOR OWNERS</p> 
+            
+                <a href="list.html">List Your Venue</a>
+                <a href="ownerdashboard.html">Owner Dashboard</a>
+                <a href="mybookings.html">My Bookings</a>
+              
+          </div>
+        
+        </div>
+        <div id="footer-bottom">
+            <p>@ 2026 VenueVista. All rights reserved.</p>
+
+            <div class="footer-links">
+            <a href="">Privacy Policy</a>
+            <a href="">Terms of Service</a>
+            <a href="">Contact</a>
+            </div>
+          </div>
+      </div>
+    </section>    
+</body>
+</html>

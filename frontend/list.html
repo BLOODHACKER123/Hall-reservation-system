@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>List Your Venue | VenueVista</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="common.css">
+  <link rel="stylesheet" href="list.css">
+  <script src="list.js" defer></script>
+</head>
+<body>
+
+ <section id="navigation-section">
+      <div id="container">
+        <div id="nav-bar">
+          <a id="logo" href="index.html">VenueVista</a>
+          <nav id="nav-links">
+            <a href="search.html">Browse Venues</a>
+            <a href="list.html">List A Venue</a>
+            <a href="ownerdashboard.html">Owners Dashboard</a>
+            <a href="admin.html">Admin</a>
+          </nav>
+          <div id="nav-buttons">
+            <a id="list-venue-button" href="list.html">List A Venue</a>
+            <a id="login-button" href="loginchoice.html">Login</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <main class="page-content">
+    <p class="eyebrow">JOIN VENUEVISTA</p>
+    <h1>List Your Venue</h1>
+    <p class="intro">Reach thousands of customers looking for the perfect<br>space. It's free to list.</p>
+
+    <ol class="steps" aria-label="Listing progress">
+      <li class="current"><span>1</span><strong>Basic Info</strong></li>
+      <li><span>2</span><strong>Capacity &amp; Pricing</strong></li>
+      <li><span>3</span><strong>Photos &amp; Amenities</strong></li>
+      <li><span>4</span><strong>Packages</strong></li>
+      <li><span>5</span><strong>Rules and Submit</strong></li>
+    </ol>
+   
+
+    <form class="listing-form" action="#" method="post" novalidate>
+      <section class="form-step active-step" data-step="0">
+      <h2>Basic Information</h2>
+      <label for="venue-name">Venue Name <em>*</em></label>
+      <input id="venue-name" name="venue-name" type="text" placeholder="The Grand Ballroom" required>
+
+      <label for="owner-email">Owner Email <em>*</em></label>
+      <input id="owner-email" name="owner-email" type="email" placeholder="owner@venue.com" required>
+
+      <fieldset>
+        <legend>Venue Type <em>*</em></legend>
+        <div class="type-options">
+          <label><input type="radio" name="venue-type" value="wedding" required><span>Wedding Venue</span></label>
+          <label><input type="radio" name="venue-type" value="banquet"><span>Banquet Hall</span></label>
+          <label><input type="radio" name="venue-type" value="hotel"><span>Hotel</span></label>
+          <label><input type="radio" name="venue-type" value="conference"><span>Conference Hall</span></label>
+          <label><input type="radio" name="venue-type" value="garden"><span>Garden Venue</span></label>
+          <label><input type="radio" name="venue-type" value="seminar"><span>Seminar Hall</span></label>
+          <label><input type="radio" name="venue-type" value="auditorium"><span>Auditorium</span></label>
+          <label><input type="radio" name="venue-type" value="rooftop"><span>Rooftop Venue</span></label>
+          <label><input type="radio" name="venue-type" value="meeting"><span>Meeting Room</span></label>
+        </div>
+      </fieldset>
+
+      <label for="city">City / Area <em>*</em></label>
+      <input id="city" name="city" type="text" placeholder="New York, NY" required>
+      <label for="address">Full Address</label>
+      <input id="address" name="address" type="text" placeholder="123 Main Street, New York, NY 10001">
+      <label for="description">Description <em>*</em></label>
+      <textarea id="description" name="description" placeholder="Describe your venue — its history, ambiance, unique features..." required></textarea>
+      </section>
+
+      <section class="form-step" data-step="1">
+        <h2>Capacity &amp; Pricing</h2>
+        <div class="two-fields"><div><label for="min-capacity">Min Capacity <em>*</em></label><input id="min-capacity" name="min-capacity" type="number" placeholder="50" required></div><div><label for="max-capacity">Max Capacity <em>*</em></label><input id="max-capacity" name="max-capacity" type="number" placeholder="500" required></div></div>
+        <label for="base-price">Base Price per Day ($) <em>*</em></label><input id="base-price" name="base-price" type="number" placeholder="2500" required>
+        <fieldset><legend>Seating Layouts Available</legend><div class="choice-pills"><label><input type="checkbox" name="seating" value="theatre"><span>Theatre</span></label><label><input type="checkbox" name="seating" value="classroom"><span>Classroom</span></label><label><input type="checkbox" name="seating" value="banquet"><span>Banquet</span></label><label><input type="checkbox" name="seating" value="cocktail"><span>Cocktail</span></label><label><input type="checkbox" name="seating" value="u-shape"><span>U-Shape</span></label><label><input type="checkbox" name="seating" value="boardroom"><span>Boardroom</span></label><label><input type="checkbox" name="seating" value="cabaret"><span>Cabaret</span></label><label><input type="checkbox" name="seating" value="custom"><span>Custom</span></label></div></fieldset>
+        <fieldset><legend>Catering Options</legend><div class="choice-pills"><label><input type="checkbox" name="catering" value="in-house"><span>In-house Catering</span></label><label><input type="checkbox" name="catering" value="external"><span>External Caterers Allowed</span></label><label><input type="checkbox" name="catering" value="self"><span>Self-catering</span></label><label><input type="checkbox" name="catering" value="alcohol"><span>Alcohol Allowed</span></label><label><input type="checkbox" name="catering" value="halal"><span>Halal Options</span></label><label><input type="checkbox" name="catering" value="vegan"><span>Vegan Options</span></label></div></fieldset>
+      </section>
+
+      <section class="form-step" data-step="2">
+        <h2>Photos &amp; Amenities</h2><label for="photo-url">Photo URLs</label><div class="inline-field"><input id="photo-url" type="url" placeholder="https://your-photo-url.com/image.jpg"><button class="add-button" type="button">Add</button></div><fieldset><legend>Amenities Available</legend><div class="choice-pills"><label><input type="checkbox" name="amenities" value="wifi"><span>WiFi</span></label><label><input type="checkbox" name="amenities" value="parking"><span>Parking</span></label><label><input type="checkbox" name="amenities" value="catering"><span>Catering</span></label><label><input type="checkbox" name="amenities" value="av"><span>AV Equipment</span></label><label><input type="checkbox" name="amenities" value="stage"><span>Stage</span></label><label><input type="checkbox" name="amenities" value="dance-floor"><span>Dance Floor</span></label><label><input type="checkbox" name="amenities" value="pool"><span>Pool</span></label><label><input type="checkbox" name="amenities" value="garden"><span>Garden</span></label><label><input type="checkbox" name="amenities" value="valet"><span>Valet</span></label><label><input type="checkbox" name="amenities" value="bridal-suite"><span>Bridal Suite</span></label><label><input type="checkbox" name="amenities" value="green-room"><span>Green Room</span></label><label><input type="checkbox" name="amenities" value="air-conditioning"><span>Air Conditioning</span></label><label><input type="checkbox" name="amenities" value="bar"><span>Bar</span></label><label><input type="checkbox" name="amenities" value="kitchen"><span>Kitchen</span></label><label><input type="checkbox" name="amenities" value="lounge"><span>Lounge</span></label><label><input type="checkbox" name="amenities" value="outdoor"><span>Outdoor Space</span></label></div></fieldset>
+      </section>
+
+      <section class="form-step" data-step="3">
+        <h2>Packages</h2><div class="package-box"><label for="package-name">Add a Package</label><input id="package-name" type="text" placeholder="Package name (e.g. Silver)"><div class="two-fields"><input type="number" placeholder="Price ($)"><input type="text" placeholder="Short description"></div><input type="text" placeholder="Includes (comma-separated)"><button class="add-button" type="button">+ &nbsp; Add Package</button></div>
+      </section>
+
+      <section class="form-step" data-step="4">
+        <h2>Rules &amp; Policies</h2><label for="venue-rules">Venue Rules</label><textarea id="venue-rules" placeholder="e.g. No outside catering, No smoking, Music must end by 11pm..."></textarea><label for="cancellation-policy">Cancellation Policy</label><textarea id="cancellation-policy" placeholder="e.g. Full refund if cancelled 30 days before the event..."></textarea><div class="summary"><strong>Listing Summary</strong><p><span>Name</span><b id="summary-name">—</b></p><p><span>Type</span><b id="summary-type">—</b></p><p><span>Location</span><b id="summary-location">—</b></p><p><span>Capacity</span><b id="summary-capacity">—</b></p><p><span>Price/day</span><b id="summary-price">$—</b></p><p><span>Photos</span><b>0</b></p><p><span>Packages</span><b>0</b></p></div>
+      </section>
+
+      <div class="form-actions">
+        <button class="previous" type="button" disabled>← &nbsp; Previous</button>
+        <button class="next" type="button">Next <span aria-hidden="true">→</span></button>
+      </div>
+    </form>
+  </main>
+
+   <section id="footer-section">
+      <div id="footer-body">
+        <div id="footer-top">
+
+          <div id="footer-details-block">
+            <h1>VenueVista</h1>
+            <p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells 
+              a story.</p>
+
+            <div class="social-links">
+              <a href="">INSTAGRAM</a>
+              <a href="">PINTEREST</a>
+              <a href="">FACEBOOK</a>
+            </div>
+          </div>
+        
+          <div class="footer-nav-links">
+
+            <p>DISCOVER</p>
+            <a href="search.html">Browse Venues</a>
+            <a href="search.html">Wedding Venues</a>
+            <a href="search.html">Banquet Halls</a>
+            <a href="search.html">Conference Halls</a>
+          
+          </div>
+
+          <div class="footer-nav-links">
+            <p>FOR OWNERS</p> 
+            
+                <a href="list.html">List Your Venue</a>
+                <a href="ownerdashboard.html">Owner Dashboard</a>
+                <a href="mybookings.html">My Bookings</a>
+              
+          </div>
+        
+        </div>
+        <div id="footer-bottom">
+            <p>@ 2026 VenueVista. All rights reserved.</p>
+
+            <div class="footer-links">
+            <a href="">Privacy Policy</a>
+            <a href="">Terms of Service</a>
+            <a href="">Contact</a>
+            </div>
+          </div>
+      </div>
+    </section> 
+</body>
+</html>
