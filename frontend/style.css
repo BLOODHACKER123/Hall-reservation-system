@@ -79,8 +79,6 @@ body {
   background-color: transparent;
   font-size: 18px;
   color: #faf7f2;
- 
- 
 }
 
 #nav-links {
@@ -100,6 +98,7 @@ body {
 
 #nav-buttons {
   display: flex;
+  font-family: Arial, Helvetica, sans-serif;
   gap: 10px;
   justify-self: end;
 }
@@ -142,28 +141,29 @@ body {
 }
 
 #hero-title {
-  font-size: 14px;
-  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight:bolder;
+  font-family: Arial, Helvetica, sans-serif;
   letter-spacing: 0.15em;
   font-weight: 100;
 }
 
 #hero-heading {
-  font-family: Cormorant-Garamond,serif;
+  font-family:'Times New Roman', Times, serif;
   font-size: clamp(2.5rem, 5vw, 5.5rem);
   margin: 20px 0;
   line-height: 1.2;
   max-width: 800px;
   align-self: center;
   justify-self: center;
-  font-weight: 100;
+  font-weight:lighter;
 }
 
 #hero-description {
   font-size: 18px;
   margin-bottom: 30px;
   font-family: Inter, sans-serif;
-  color: #faf7f2b3;
+  color: #f0ede9b3;
   font-style: italic;
 }
 
@@ -172,9 +172,10 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: rgba(250, 247, 242, 0.7);
-  width: min(800px, 85vw);
+  background-color: rgba(250, 247, 242, 0.6);
+  width: 900px;
   margin: 0 auto;
+  height: 180px;
   padding: 5px 20px;
   border-radius: 20px;
   box-sizing: border-box;
@@ -188,7 +189,7 @@ body {
   justify-content: center;
   align-items: end;
   width: 100%;
-  padding: 12px;
+  padding: 15px;
 }
 
 #location-search,
@@ -197,12 +198,13 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-width: 180px;
-  color: #2d2926b3;
+  min-width: 200px;
+  color: rgb(71, 70, 70);
   border-right: 1px solid #d4a5a54d;
-  font-family: Inter, sans-serif;
-  font-weight: 700;
-  padding-right: 20px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  padding-right: 30px;
 }
 
 #location-search p,
@@ -217,11 +219,10 @@ body {
 #location-search input,
 #venue-type-select,
 #date-search input {
-  width: 100%;
-  min-width: 180px;
+  width: 200px;
   padding: 0 0;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 18px;
   box-sizing: border-box;
   border: none;
   background-color: transparent;
@@ -242,8 +243,9 @@ body {
   width: 100%;
   max-width: 200px;
   padding: 10px 30px;
-  font-size: 16px;
+  font-size: 19px;
   border-radius: 50px;
+  font-weight: bold;
   background-color: #8c5e58;
   color: #faf7f2;
   border: none;
@@ -283,6 +285,10 @@ body {
   #date-search input {
     width: 100%;
   }
+}
+
+.fa-regular.fa-magnifying-glass{
+  color:#ffffff;
 }
 
 #mouse-image img{
@@ -328,7 +334,7 @@ body {
   color: #8c5e58;
   font-family: Arial, sans-serif;
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
@@ -361,6 +367,7 @@ body {
 .venue-card {
   padding: 5px;
   margin: 20px;
+  width: 350px;
   background-color: #faf7f2;
   border-radius: 30px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
@@ -369,7 +376,7 @@ body {
 }
 
 .venue-card:hover{
-  transform: scale(1.05);
+  transform: scale(1.02);
   box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.16);
   transition: transform 0.4s ease-in, box-shadow 0.4s ease-in;
 }
@@ -387,7 +394,7 @@ body {
   position: relative;
   border-radius: 5px;
   overflow: hidden;
-  height:200px;
+  height:220px;
 }
 
 .venue-card-image::after {
@@ -424,8 +431,7 @@ body {
 }
 
 .location-details p{
-letter-spacing: 0;
-font-family:Inter,sans-serif;
+font-family: 'Times New Roman', Times, serif;
 display: inline-flex;
 align-items: center;
 font-size: 15px;
@@ -433,23 +439,24 @@ gap: 8px;
 }
 
 .cost{
-  font-family:Inter,sans-serif;
-  font-size: 15px;
-  color:#8c5e58;
-  letter-spacing: 0;
+  font-family:'Times New Roman', Times, serif;
+  font-size: 13px;
+  font-weight: bolder;
+  color:#493533;
   float:inline-end;
   
 
 }
 
 .rating-tag{
-  font-family:Inter,sans-serif;
+  font-family:'Times New Roman', Times, serif;
+  font-weight: bolder;
   background-color: #f7f6f6b2;
   border-radius: 10px;
   width: fit-content;
   padding: 2.5px 10px;
   font-size: medium;
-  color:#080807;
+  color:#543c3a;
   position: absolute;
   bottom: 10px;
   right: 10px;
@@ -469,6 +476,7 @@ gap: 8px;
 .hall-details p {
   display: inline-flex;
   align-items: center;
+  font-size: 14px;
   gap: 6px;
 }
 
@@ -476,7 +484,8 @@ gap: 8px;
   text-decoration:none;
   justify-content: space-between;
   align-items: center;
-  font-family: Inter, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
   font-size: 10px;
   color: #8c5e58;
 }
@@ -503,11 +512,11 @@ gap: 8px;
 #browse-venue-type {
   padding: 64px 8vw 80px;
   color: #2d2926;
-  background: #efe5dc;
+  background: #f4f2f0;
 }
 
 #venue-card-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -516,14 +525,14 @@ gap: 8px;
   color: #8c5e58;
   font-family: Arial, sans-serif;
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 
 #venue-card-container > h1 {
   margin: 0 0 28px;
-  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-size: 50px;
   font-family: Georgia, serif;
   font-weight: 400;
 }
@@ -537,7 +546,8 @@ gap: 8px;
 .venue-type-card {
   display: block;
   position: relative;
-  min-width: 0;
+  width: 300px;
+  height: 150px;
   overflow: hidden;
   border-radius: 18px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
@@ -694,12 +704,12 @@ gap: 8px;
 
   #about-image-container img {
     width: 100%;
-    height: 440px;
+    height: 500px;
     margin-left: 0;
   }
 
   .details-box {
-    min-width: 100px;
+    width:auto;
     padding: 12px 14px;
     font-size: 1.1rem;
   }
@@ -710,14 +720,14 @@ gap: 8px;
     color: #8c5e58;
     font-family: Arial, sans-serif;
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 800;
     letter-spacing: 0.15em;
     text-transform: uppercase;
 }
 
 #about-details h1{
   margin: 0 0 28px;
-    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-size: 50px;
     font-family: Georgia, serif;
     font-weight: 400;
 }
@@ -731,11 +741,11 @@ gap: 8px;
   align-items: flex-start;
   gap: 16px;
   font-family:Cormorant-Garamond,serif ;
-  font-size: 14px;
-  color: #2d2926b3;
+  font-size: 16px;
+  color: #6d534f;
   line-height: 1.6;
   text-align: justify;
-  font-weight: 100;
+  font-weight: 120;
 }
 
 .detail-text > div:first-child {
@@ -747,7 +757,7 @@ gap: 8px;
   justify-content: center;
   border-radius: 50%;
   background-color: #aa70673b;
-  color: #8c5e58;
+  color: #6d534f;
   font-size: 1.25rem;
   line-height: 1;
 }
@@ -762,7 +772,7 @@ gap: 8px;
   font-family:Cormorant-Garamond,serif ;
   letter-spacing:0;
   text-transform: none;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .detail-text p{
@@ -791,7 +801,7 @@ gap: 8px;
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: 455px;
+  min-height: 465px;
   display: grid;
   place-items: center;
   color: #faf7f2;
@@ -916,7 +926,7 @@ gap: 8px;
 
 .social-links a{
    text-decoration: none;
-   color: #efe5dc;
+   color: #e6e2df;
    font-size: 12px;
 }
 
@@ -947,12 +957,26 @@ gap: 8px;
   padding-top: 25px;
 }
 
+#logo { 
+  font-size: 24px;
+  font-family: 'Times New Roman', Times, serif;
+  font-weight: lighter;
+}
+
+#venue-search { 
+  font-size: 14px; 
+  color:#2d2926;
+}
+
+#location-search input, #venue-type-select, #date-search input { 
+  font-size: 15px; 
+  color:rgb(53, 52, 52);
+}
+
+
 #nav-bar { font-size: 15px; }
 #nav-links { font-size: 15px; }
-#logo { font-size: 24px; }
 #nav-buttons a, #search-venues-button { font-size: 14px; }
-#venue-search { font-size: 14px; }
-#location-search input, #venue-type-select, #date-search input { font-size: 15px; }
 .location-details p { font-size: 16px; }
 .hall-details, .hall-details a { font-size: 12px; }
 
