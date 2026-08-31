@@ -1,5 +1,7 @@
 body {
   margin: 0;
+  padding: 0;
+  border-top: none;
   font-family: Georgia, serif;
   background-color: #faf7f2;
   background-size: cover;
@@ -29,8 +31,9 @@ body {
 #nav-links {
   font-family: Inter,Arial;
   display: flex;
-  gap: 70px;
-  flex-wrap: wrap;
+  gap: 20px;
+  white-space: nowrap;
+  flex-wrap: nowrap;
   justify-content: center;
   justify-self: center;
 }
@@ -39,12 +42,16 @@ body {
   color: #faf7f2;
   text-decoration: none;
   cursor: pointer;
+  font-weight: 200;
+  
 }
 
 #nav-buttons {
   display: flex;
   gap: 10px;
   justify-self: end;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 #login-button,
@@ -57,6 +64,7 @@ body {
   padding: 10px 18px;
   cursor: pointer;
   font-size: 16px;
+  font-weight: 100;
 }
 
 #login-button,
@@ -254,6 +262,7 @@ body {
   margin: 0 0 38px;
   color: var(--listing-rose);
   font: 500 12px Arial, sans-serif;
+  font-weight:bolder;
   letter-spacing: .14em;
   text-align: center;
 }
@@ -261,13 +270,13 @@ body {
 .page-content > h1 {
   margin: 0;
   color: #152e46;
-  font: 100 35px/1.05 Georgia, serif;
+  font: 100 35px/1.05 ariel;
   text-align: center;
 }
 
 .page-content > .intro {
   margin: 42px auto 70px;
-  color: #92766e;
+  color: #8f7c77;
   font: 100 16px/1.55 Arial, sans-serif;
   text-align: center;
 }
@@ -288,7 +297,7 @@ body {
   gap: 10px;
   max-width: 100%;
   color: #92766e;
-  font: 200 11px Arial, sans-serif;
+  font: 200 11px calibri;
 }
 
 .steps li:not(:last-child)::after {
@@ -312,7 +321,7 @@ body {
 
 .steps li.current {
   color: #172e44;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .steps li.current span {
@@ -325,21 +334,23 @@ body {
   height: 26px;
   margin: 11px 0 60px;
   padding: 6px 24px;
-  background: #f0f1f2;
+  background: #f2eeeb;
+  border-radius: 6px;
 }
 
 .scrollbar-thumb {
   width: 100%;
   height: 100%;
-  background: #898989;
+  background: #986e68;
+  border-radius: 4px;
 }
 
 .scroll-arrow,
 .progress-scrollbar .sr-only {
   position: absolute;
   overflow: hidden;
-  width: 1px;
-  height: 1px;
+  width: 3px;
+  height: 2px;
   padding: 0;
   border: 0;
   clip: rect(0, 0, 0, 0);
@@ -348,7 +359,7 @@ body {
 .listing-form {
   padding: 52px 48px 38px;
   border: 1px solid #eee8e3;
-  border-radius: 28px;
+  border-radius: 30px;
   background: #ffffff;
   box-shadow: 0 15px 38px rgba(45, 41, 38, .06);
 }
@@ -364,7 +375,7 @@ body {
 .form-step h2 {
   margin: 0 0 38px;
   color: #172e44;
-  font: 400 31px/1.1 Georgia, serif;
+  font: 100 31px/1.1 ariel;
 }
 
 .form-step > label,
@@ -372,8 +383,8 @@ body {
 .package-box > label {
   display: block;
   margin: 0 0 11px;
-  color: #856d68;
-  font: 700 14px/1.2 Arial, sans-serif;
+  color: #634d49;
+  font: 500 15px/1.2 Arial, sans-serif;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
@@ -390,7 +401,7 @@ body {
 .package-box input,
 .package-box textarea {
   width: 100%;
-  min-height: 56px;
+  min-height: 45px;
   margin: 0 0 30px;
   padding: 0 22px;
   border: 1px solid transparent;
@@ -402,7 +413,7 @@ body {
 }
 
 .form-step > textarea {
-  min-height: 152px;
+  min-height: 140px;
   padding-top: 18px;
   resize: vertical;
 }
@@ -476,6 +487,10 @@ body {
   color: #b9b4b1;
   font: 600 16px Arial, sans-serif;
   cursor: pointer;
+}
+
+.form-actions button:hover{
+  border: 2px solid #b18c86;
 }
 
 .form-actions .next,
@@ -846,3 +861,4 @@ body {
     font-size: 15px;
   }
 }
+
