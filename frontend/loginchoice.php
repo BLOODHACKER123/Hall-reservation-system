@@ -11,23 +11,22 @@
   <link rel="stylesheet" href="common.css">
   <link rel="stylesheet" href="loginchoice.css">
   
-  
 </head>
 <body>
 
 <section id="navigation-section">
       <div id="container">
         <div id="nav-bar">
-          <a id="logo" href="index.html">VenueVista</a>
+          <a id="logo" href="index.php">VenueVista</a>
           <nav id="nav-links">
-            <a href="search.html">Browse Venues</a>
-            <a href="list.html">List a Venue</a>
-            <a href="ownerdashboard.html">Owners Dashboard</a>
-            <a href="admin.html">Admin</a>
+            <a href="search.php">Browse Venues</a>
+            <a href="list.php">List a Venue</a>
+            <a href="ownerdashboard.php">Owners Dashboard</a>
+            <a href="admin.php">Admin</a>
           </nav>
           <div id="nav-buttons">
-            <a id="list-venue-button" href="list.html">List a Venue</a>
-            <a id="login-button" href="loginchoice.html">Login</a>
+            <a id="list-venue-button" href="list.php">List a Venue</a>
+            <a id="login-button" href="loginchoice.php">Login</a>
           </div>
         </div>
       </div>
@@ -41,10 +40,10 @@
       <div class="choice-card">
         <a class="google-button" href="#"><span class="google-mark" aria-hidden="true"><img src="images/google.png" alt="Google"></span>Continue with Google</a>
         <div class="divider"><span>OR</span></div>
-        <a class="email-button" href="login.html"><span aria-hidden="true">✉</span>Continue with Email</a>
+        <a class="email-button" href="login.php"><span aria-hidden="true">✉</span>Continue with Email</a>
       </div>
-      <p class="signup">Don't have an account? <a href="signup.html">Sign up</a></p>
-      <a class="back-home" href="index.html">← Back to home</a>
+      <p class="signup">Don't have an account? <a href="signup.php">Sign up</a></p>
+      <a class="back-home" href="index.php">← Back to home</a>
     </section>
   </main>
 
@@ -67,19 +66,19 @@
           <div class="footer-nav-links">
 
             <p>DISCOVER</p>
-            <a href="search.html">Browse Venues</a>
-            <a href="search.html">Wedding Venues</a>
-            <a href="search.html">Banquet Halls</a>
-            <a href="search.html">Conference Halls</a>
+            <a href="search.php">Browse Venues</a>
+            <a href="search.php">Wedding Venues</a>
+            <a href="search.php">Banquet Halls</a>
+            <a href="search.php">Conference Halls</a>
           
           </div>
 
           <div class="footer-nav-links">
             <p>FOR OWNERS</p> 
             
-                <a href="list.html">List Your Venue</a>
-                <a href="ownerdashboard.html">Owner Dashboard</a>
-                <a href="mybookings.html">My Bookings</a>
+                <a href="list.php">List Your Venue</a>
+                <a href="ownerdashboard.php">Owner Dashboard</a>
+                <a href="mybookings.php">My Bookings</a>
               
           </div>
         

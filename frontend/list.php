@@ -17,16 +17,16 @@
  <section id="navigation-section">
       <div id="container">
         <div id="nav-bar">
-          <a id="logo" href="index.html">VenueVista</a>
+          <a id="logo" href="index.php">VenueVista</a>
           <nav id="nav-links">
-            <a href="search.html">Browse Venues</a>
-            <a href="list.html">List a Venue</a>
-            <a href="ownerdashboard.html">Owners Dashboard</a>
-            <a href="admin.html">Admin</a>
+            <a href="search.php">Browse Venues</a>
+            <a href="list.php">List a Venue</a>
+            <a href="ownerdashboard.php">Owners Dashboard</a>
+            <a href="admin.php">Admin</a>
           </nav>
           <div id="nav-buttons">
-            <a id="list-venue-button" href="list.html">List a Venue</a>
-            <a id="login-button" href="loginchoice.html">Login</a>
+            <a id="list-venue-button" href="list.php">List a Venue</a>
+            <a id="login-button" href="loginchoice.php">Login</a>
           </div>
         </div>
       </div>
@@ -46,7 +46,7 @@
     </ol>
    
 
-    <form class="listing-form" action="#" method="post" novalidate>
+    <form class="listing-form" action="list.php" method="post" novalidate>
       <section class="form-step active-step" data-step="0">
       <h2>Basic Information</h2>
       <label for="venue-name">Venue Name <em>*</em></label>
@@ -124,19 +124,19 @@
           <div class="footer-nav-links">
 
             <p>DISCOVER</p>
-            <a href="search.html">Browse Venues</a>
-            <a href="search.html">Wedding Venues</a>
-            <a href="search.html">Banquet Halls</a>
-            <a href="search.html">Conference Halls</a>
+            <a href="search.php">Browse Venues</a>
+            <a href="search.php">Wedding Venues</a>
+            <a href="search.php">Banquet Halls</a>
+            <a href="search.php">Conference Halls</a>
           
           </div>
 
           <div class="footer-nav-links">
             <p>FOR OWNERS</p> 
             
-                <a href="list.html">List Your Venue</a>
-                <a href="ownerdashboard.html">Owner Dashboard</a>
-                <a href="mybookings.html">My Bookings</a>
+                <a href="list.php">List Your Venue</a>
+                <a href="ownerdashboard.php">Owner Dashboard</a>
+                <a href="mybookings.php">My Bookings</a>
               
           </div>
         

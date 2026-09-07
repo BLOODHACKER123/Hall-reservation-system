@@ -15,16 +15,16 @@
   <section id="navigation-section">
     <div id="container">
       <div id="nav-bar">
-        <a id="logo" href="index.html">VenueVista</a>
+        <a id="logo" href="index.php">VenueVista</a>
         <nav id="nav-links">
-          <a href="search.html">Browse Venues</a>
-          <a href="list.html">List a Venue</a>
-          <a href="ownerdashboard.html">Owners Dashboard</a>
-          <a href="admin.html">Admin</a>
+          <a href="search.php">Browse Venues</a>
+          <a href="list.php">List a Venue</a>
+          <a href="ownerdashboard.php">Owners Dashboard</a>
+          <a href="admin.php">Admin</a>
         </nav>
         <div id="nav-buttons">
-          <a id="list-venue-button" href="list.html">List a Venue</a>
-          <a id="login-button" href="loginchoice.html">Login</a>
+          <a id="list-venue-button" href="list.php">List a Venue</a>
+          <a id="login-button" href="loginchoice.php">Login</a>
         </div>
       </div>
     </div>
@@ -36,7 +36,7 @@
       <p class="eyebrow">WELCOME BACK</p>
       <h1 id="login-title">Sign in to VenueVista</h1>
       <p class="subtitle">Manage your venues and reservations in one place.</p>
-      <form action="../backend/index.php" method="post">
+      <form action="login.php" method="post">
         <label for="role">Sign in as</label>
         <select id="role" name="role">
           <option value="customer">Customer</option>
@@ -50,7 +50,7 @@
         <label class="remember"><input type="checkbox" name="remember"><span>Remember me</span></label>
         <button type="submit">Sign in <span aria-hidden="true">→</span></button>
       </form>
-      <p class="signup">Don't have an account? <a href="signup.html">Create one</a></p>
+      <p class="signup">Don't have an account? <a href="signup.php">Create one</a></p>
     </section>
   </main>
 </body>

@@ -15,16 +15,16 @@
  <section id="navigation-section">
       <div id="container">
         <div id="nav-bar">
-          <a id="logo" href="index.html">VenueVista</a>
+          <a id="logo" href="index.php">VenueVista</a>
           <nav id="nav-links">
-            <a href="search.html">Browse Venues</a>
-            <a href="list.html">List a Venue</a>
-            <a href="ownerdashboard.html">Owners Dashboard</a>
-            <a href="admin.html">Admin</a>
+            <a href="search.php">Browse Venues</a>
+            <a href="list.php">List a Venue</a>
+            <a href="ownerdashboard.php">Owners Dashboard</a>
+            <a href="admin.php">Admin</a>
           </nav>
           <div id="nav-buttons">
-            <a id="list-venue-button" href="list.html">List a Venue</a>
-            <a id="login-button" href="loginchoice.html">Login</a>
+            <a id="list-venue-button" href="list.php">List a Venue</a>
+            <a id="login-button" href="loginchoice.php">Login</a>
           </div>
         </div>
       </div>
@@ -36,7 +36,7 @@
       <p class="eyebrow">JOIN VENUEVISTA</p>
       <h1 id="login-title">Create your account</h1>
       <p class="subtitle">Manage your venues and reservations in one place.</p>
-      <form action="../backend/index.php" method="post">
+      <form action="signup.php" method="post">
         <label for="role">Account type</label>
         <select id="role" name="role">
           <option value="customer">Customer</option>
@@ -52,7 +52,7 @@
         <input id="confirm-password" name="confirm_password" type="password" autocomplete="new-password" minlength="8" placeholder="Re-enter your password" required>
         <button type="submit">Create account <span aria-hidden="true">→</span></button>
       </form>
-      <p class="signup">Already have an account? <a href="login.html">Sign in</a></p>
+      <p class="signup">Already have an account? <a href="login.php">Sign in</a></p>
     </section>
   </main>
   
@@ -75,19 +75,19 @@
           <div class="footer-nav-links">
 
             <p>DISCOVER</p>
-            <a href="search.html">Browse Venues</a>
-            <a href="search.html">Wedding Venues</a>
-            <a href="search.html">Banquet Halls</a>
-            <a href="search.html">Conference Halls</a>
+            <a href="search.php">Browse Venues</a>
+            <a href="search.php">Wedding Venues</a>
+            <a href="search.php">Banquet Halls</a>
+            <a href="search.php">Conference Halls</a>
           
           </div>
 
           <div class="footer-nav-links">
             <p>FOR OWNERS</p> 
             
-                <a href="list.html">List Your Venue</a>
-                <a href="ownerdashboard.html">Owner Dashboard</a>
-                <a href="mybookings.html">My Bookings</a>
+                <a href="list.php">List Your Venue</a>
+                <a href="ownerdashboard.php">Owner Dashboard</a>
+                <a href="mybookings.php">My Bookings</a>
               
           </div>
         
