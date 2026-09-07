@@ -16,7 +16,6 @@
 }
 
 
-
 .admin-hero {
   padding: 34px clamp(20px, 3.2vw, 52px) 52px;
   color: #ffffff;
@@ -26,13 +25,15 @@
 .admin-eyebrow {
   margin: 0 0 25px;
   color: #d9a09a;
-  font: 700 16px/1 Arial, sans-serif;
+  font-weight: 500;
+  font-size:0.875rem;
+  font-family: Arial, sans-serif;;
   letter-spacing: .12em;
 }
 
 .admin-hero h1 {
   margin: 0 0 52px;
-  font: 400 48px/1 Georgia, serif;
+  font: 100 3rem/1 Cormorant Garamond,serif;
 }
 
 .admin-stats {
@@ -43,31 +44,40 @@
 }
 
 .stat-card {
-  min-height: 123px;
-  padding: 25px 21px 18px;
+  height: 90px;
+  width: 220px;
+  padding-top: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-bottom: 1.25rem;
+  margin: 0.5rem;
   border: 1px solid #4a4541;
-  border-radius: 20px;
+  border-radius: 15px;
   background: #393531;
+}
+
+.stat-card strong{
+ font-family: Cormorant Garamond,serif;
+ display: flex;
+ font-size: 1.875rem;
+ font-weight:lighter;
+ 
 }
 
 .stat-label {
   display: block;
-  margin-bottom: 17px;
+  margin-bottom: 10px;
   color: var(--admin-muted);
-  font: 700 15px/1 Arial, sans-serif;
+  font: 700 0.75rem/1 Inter, sans-serif;
   letter-spacing: .08em;
   white-space: nowrap;
+  
 }
 
 .stat-label:first-letter {
   color: #d9a09a;
 }
 
-.stat-card strong {
-  display: block;
-  color: #ffffff;
-  font: 400 34px/1 Georgia, serif;
-}
 
 .admin-tabs {
   display: flex;
@@ -84,9 +94,10 @@
   align-items: center;
   position: relative;
   color: #856d68;
-  font: 400 17px Arial, sans-serif;
+  font: 400 0.875rem Inter, sans-serif;
   text-decoration: none;
   white-space: nowrap;
+  
 }
 
 .admin-tabs a.active {
@@ -112,7 +123,16 @@
 .admin-panel h2 {
   margin: 0 0 32px;
   color: var(--admin-ink);
-  font: 400 30px/1.1 Georgia, serif;
+  font: normal 1.5rem/1.1 Cormorant Garamond,serif;
+}
+
+.admin-panel h6 {
+  margin: 0 0 32px;
+  color: hsl(20, 10%, 48%);
+  font-family: Inter,sans-serif;
+  line-height: 3rem;
+  font-size: 1rem;
+  font-weight:normal;
 }
 
 .empty-state {
@@ -121,38 +141,22 @@
   place-items: center;
   align-content: center;
   border-radius: 20px;
-  background: #ffffff;
+  background: transparent;
   box-shadow: 0 8px 25px rgba(45, 41, 38, .03);
 }
 
 .empty-state span {
   color: #6d7d70;
-  font: 400 38px/1 Arial, sans-serif;
+  font: 400 32px/1 Cormorant Garamond,serif;
 }
 
 .empty-state p {
   margin: 16px 0 0;
   color: var(--admin-ink);
-  font: 400 24px/1 Georgia, serif;
+  font: 400 1.25rem/1 Georgia, serif;
 }
 
 @media (max-width: 900px) {
-  #navigation-section #nav-bar {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    padding: 18px 0;
-    text-align: center;
-  }
-
-  #navigation-section #logo,
-  #navigation-section #nav-links,
-  #navigation-section #nav-buttons {
-    justify-self: center;
-  }
-
-  #navigation-section #logo {
-    justify-content: center;
-  }
 
   .admin-hero h1 {
     font-size: 40px;
@@ -168,18 +172,6 @@
     padding-block: 28px 34px;
   }
 
-  .admin-eyebrow {
-    font-size: 13px;
-  }
-
-  .admin-hero h1 {
-    margin-bottom: 34px;
-    font-size: 34px;
-  }
-
-  .admin-stats {
-    grid-template-columns: 1fr;
-  }
 
   .admin-tabs {
     gap: 28px;
@@ -190,190 +182,4 @@
   }
 }
 
-/* Login choice screen. */
-:root {
-  --login-ink: #172e44;
-  --login-muted: #92766e;
-  --login-rose: #986e68;
-  --login-bg: #faf8f5;
-  --login-line: #e9e2dc;
-}
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-body {
-  overflow-x: hidden;
-  background: var(--login-bg);
-  color: var(--login-ink);
-}
-
-#navigation-section,
-#footer-section {
-  display: block;
-}
-
-.login-area {
-  display: flex;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 0 20px 70px;
-  background: var(--login-bg);
-}
-
-.login-choice {
-  width: min(100%, 668px);
-  padding-top: 0;
-  text-align: center;
-}
-
-.brand-title {
-  margin: -12px 0 48px;
-  color: var(--login-rose);
-  font: 400 28px/1 Georgia, serif;
-}
-
-#login-title {
-  margin: 0 0 20px;
-  color: #152e46;
-  font: 400 34px/1.1 Georgia, serif;
-}
-
-.subtitle {
-  margin: 0 0 60px;
-  color: var(--login-muted);
-  font: 400 21px/1.35 Arial, sans-serif;
-}
-
-.choice-card {
-  padding: 48px;
-  border: 1px solid #f0eae5;
-  border-radius: 34px;
-  background: #ffffff;
-  box-shadow: 0 14px 36px rgba(45, 41, 38, .08);
-}
-
-.google-button,
-.email-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  width: 100%;
-  height: 80px;
-  border-radius: 25px;
-  font: 600 22px Arial, sans-serif;
-  text-decoration: none;
-  transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
-}
-
-.google-button {
-  border: 1px solid var(--login-line);
-  color: #171513;
-  background: #ffffff;
-}
-
-.email-button {
-  color: #ffffff;
-  background: var(--login-rose);
-}
-
-.google-button:hover,
-.email-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(45, 41, 38, .1);
-}
-
-.google-mark {
-  color: #4285f4;
-  font: 700 30px Arial, sans-serif;
-}
-
-.email-button span {
-  font-size: 29px;
-  line-height: 1;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 26px;
-  margin: 28px 0;
-  color: var(--login-muted);
-  font: 400 18px Arial, sans-serif;
-}
-
-.divider::before,
-.divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--login-line);
-}
-
-.signup {
-  margin: 40px 0 46px;
-  color: var(--login-muted);
-  font: 400 18px Arial, sans-serif;
-}
-
-.signup a {
-  color: var(--login-rose);
-  text-decoration: none;
-}
-
-.signup a:hover,
-.back-home:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-.back-home {
-  color: var(--login-muted);
-  font: 400 18px Arial, sans-serif;
-  text-decoration: none;
-}
-
-@media (max-width: 700px) {
-  .login-area {
-    padding-inline: 14px;
-  }
-
-  .brand-title {
-    margin-bottom: 34px;
-    font-size: 24px;
-  }
-
-  #login-title {
-    font-size: 30px;
-  }
-
-  .subtitle {
-    margin-bottom: 38px;
-    font-size: 17px;
-  }
-
-  .choice-card {
-    padding: 28px 24px;
-    border-radius: 26px;
-  }
-
-  .google-button,
-  .email-button {
-    height: 64px;
-    font-size: 17px;
-  }
-
-  .divider {
-    margin-block: 22px;
-    font-size: 16px;
-  }
-
-  .signup,
-  .back-home {
-    font-size: 16px;
-  }
-}
