@@ -1,42 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VenueVista</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="icon" type="image/x-icon" href="images/venuevista-logo.png" />
+    <title>VenueSpot</title>
     <link rel="stylesheet" href="common.css" />
     <link rel="stylesheet" href="style.css" />
-    <script src="https://kit.fontawesome.com/YOUR_KIT_CODE.js" crossorigin="anonymous"></script>
   </head>
   <body>
-
-    <section id="navigation-section" class="home-navigation">
+    <section id="hero-section">
       <div id="container">
-        <div id="nav-bar" class="site-nav">
-          <a id="logo" href="index.html">VenueVista</a>
+        <div id="nav-bar">
+          <a id="logo" href="index.php">VenueVista</a>
           <nav id="nav-links">
             <a href="search.html">Browse Venues</a>
-            <a href="list.html">List a Venue</a>
+            <a href="list.html">List A Venue</a>
             <a href="ownerdashboard.html">Owners Dashboard</a>
             <a href="admin.html">Admin</a>
           </nav>
           <div id="nav-buttons">
-            <a id="list-venue-button" href="list.html">List a Venue</a>
+            <a id="list-venue-button" href="list.html">List A Venue</a>
             <a id="login-button" href="loginchoice.html">Login</a>
           </div>
         </div>
       </div>
-    </section>
 
-    <section id="hero-section">
       <div id="hero-text">
         <p id="hero-title">DISCOVER EXTRAORDINARY SPACES</p>
         <h1 id="hero-heading">Every Moment Deserves a Perfect Venue</h1>
         <p id="hero-description">
-          From intimate gatherings to grand celebrations, find and book the
+          From intimate gatherings to grand celebrations — find and book the
           space that tells your story.
         </p>
 
@@ -95,7 +88,7 @@
 
           <div id="search-btn-container">
             <button id="search-venues-button" type="submit">
-              <i class="fa-regular fa-magnifying-glass"></i>
+              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
               Search Venues
             </button>
           </div>
@@ -110,12 +103,12 @@
     <section id="featured-venue">
       <div>
         <p>Handpicked for You</p>
-        <h1>Featured Venues</h1>
+        <h2>Featured Venues</h2>
         <a href="search.html">View All Venues →</a>
 
         <div id="featured-venue-cards">
-          <div class="featured-venue-card">
-            <div class="featured-venue-card-image">
+          <div class="venue-card">
+            <div class="venue-card-image">
               <img
                 src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&auto=format&fit=crop&q=80"
                 alt="Venue 1"
@@ -143,12 +136,12 @@
                 <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
                 reviews
               </p>
-              <a href="search.html">View Details → </a>
+              <a href="search.html">view Details → </a>
             </div>
           </div>
 
-          <div class="featured-venue-card">
-            <div class="featured-venue-card-image">
+          <div class="venue-card">
+            <div class="venue-card-image">
               <img
                 src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80"
                 alt="Venue 1"
@@ -176,12 +169,12 @@
                 <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
                 reviews
               </p>
-              <a href="search.html">View Details → </a>
+              <a href="search.html">view Details → </a>
             </div>
           </div>
 
-          <div class="featured-venue-card">
-            <div class="featured-venue-card-image">
+          <div class="venue-card">
+            <div class="venue-card-image">
               <img
                 src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1200&auto=format&fit=crop&q=80"
                 alt="Venue 1"
@@ -209,7 +202,7 @@
                 <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
                 reviews
               </p>
-              <a href="search.html">View Details → </a>
+              <a href="search.html">view Details → </a>
             </div>
           </div>
           
@@ -281,7 +274,7 @@
       <div id="about-container">
         <div id="about-image-container">
           <img src="https://images.unsplash.com/photo-1478146059778-26028b07395a?w=800&auto=format&fit=crop&q=70" alt="about-image">
-          <div class="details-box">4.9★<small>Average Rating</small></div>
+          <div class="details-box">4.9 <span>★</span><small>Average Rating</small></div>
           <div class="details-box">2,000+<small>Events Hosted</small></div>
           <div class="details-box">1,500+<small>Happy Clients</small></div>
           <div class="details-box">500+<small>Venues Listed</small></div>
@@ -298,7 +291,7 @@
               <p>Every venue is personally reviewed and approved by our team to ensure the highest standards.</p>
             </div>
           </div>
-          <br>
+
           <div class="detail-text">
             <div>◎</div>
             <div>
@@ -306,7 +299,7 @@
               <p>Reserve your dream venue in minutes. Real-time availability, no back-and-forth emails.</p>
             </div>
           </div>
-          <br>
+
           <div class="detail-text">
             <div>⬡</div>
             <div>
@@ -314,7 +307,7 @@
               <p>All packages, packages and catering options clearly laid out. No hidden fees, ever.</p>
             </div>
           </div>
-          <br>
+
           <div class="detail-text">
             <div>❖</div>
             <div>
