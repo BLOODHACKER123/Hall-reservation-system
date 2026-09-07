@@ -2,11 +2,10 @@
 
 //db connection
 
-$host = "localhost";
+$host = "127.0.0.1";
 $username = "root";
-$password ="Dimuth";
+$password ="";
 $dbname = "venuevista";
-
 
 try {
     $pdo = new PDO(
@@ -19,5 +18,7 @@ try {
 } catch (PDOException $error) {
     die("Database connection failed: " . $error->getMessage());
 }
+
+echo "Connected";
 
 ?>
