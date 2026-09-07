@@ -72,6 +72,7 @@
 
 #hero-section #nav-buttons {
   display: flex;
+  font-family: Arial, Helvetica, sans-serif;
   gap: 10px;
   justify-self: end;
 }
@@ -175,28 +176,29 @@
 }
 
 #hero-title {
-  font-size: 14px;
-  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight:bolder;
+  font-family: Arial, Helvetica, sans-serif;
   letter-spacing: 0.15em;
   font-weight: 100;
 }
 
 #hero-heading {
-  font-family: Cormorant-Garamond,serif;
+  font-family:'Times New Roman', Times, serif;
   font-size: clamp(2.5rem, 5vw, 5.5rem);
   margin: 20px 0;
   line-height: 1.2;
   max-width: 800px;
   align-self: center;
   justify-self: center;
-  font-weight: 100;
+  font-weight:lighter;
 }
 
 #hero-description {
   font-size: 18px;
   margin-bottom: 30px;
   font-family: Inter, sans-serif;
-  color: #faf7f2b3;
+  color: #f0ede9b3;
   font-style: italic;
 }
 
@@ -205,9 +207,10 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: rgba(250, 247, 242, 0.7);
-  width: min(800px, 85vw);
+  background-color: rgba(250, 247, 242, 0.6);
+  width: 900px;
   margin: 0 auto;
+  height: 180px;
   padding: 5px 20px;
   border-radius: 20px;
   box-sizing: border-box;
@@ -221,7 +224,7 @@
   justify-content: center;
   align-items: end;
   width: 100%;
-  padding: 12px;
+  padding: 15px;
 }
 
 #location-search,
@@ -230,12 +233,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  min-width: 180px;
-  color: #2d2926b3;
+  min-width: 200px;
+  color: rgb(71, 70, 70);
   border-right: 1px solid #d4a5a54d;
-  font-family: Inter, sans-serif;
-  font-weight: 700;
-  padding-right: 20px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  padding-right: 30px;
 }
 
 #location-search p,
@@ -250,11 +254,10 @@
 #location-search input,
 #venue-type-select,
 #date-search input {
-  width: 100%;
-  min-width: 180px;
+  width: 200px;
   padding: 0 0;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 18px;
   box-sizing: border-box;
   border: none;
   background-color: transparent;
@@ -275,8 +278,9 @@
   width: 100%;
   max-width: 200px;
   padding: 10px 30px;
-  font-size: 16px;
+  font-size: 19px;
   border-radius: 50px;
+  font-weight: bold;
   background-color: #8c5e58;
   color: #faf7f2;
   border: none;
@@ -317,6 +321,10 @@
   #date-search input {
     width: 100%;
   }
+}
+
+.fa-regular.fa-magnifying-glass{
+  color:#ffffff;
 }
 
 #mouse-image img{
@@ -395,6 +403,7 @@
 .featured-venue-card {
   padding: 5px;
   margin: 20px;
+  width: 350px;
   background-color: #faf7f2;
   border-radius: 30px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
@@ -421,7 +430,7 @@
   position: relative;
   border-radius: 5px;
   overflow: hidden;
-  height:200px;
+  height:220px;
 }
 
 .featured-venue-card-image::after {
@@ -481,7 +490,7 @@ gap: 8px;
   width: fit-content;
   padding: 2.5px 10px;
   font-size: medium;
-  color:#080807;
+  color:#543c3a;
   position: absolute;
   bottom: 10px;
   right: 10px;
@@ -501,6 +510,7 @@ gap: 8px;
 .hall-details p {
   display: inline-flex;
   align-items: center;
+  font-size: 14px;
   gap: 6px;
 }
 
@@ -533,11 +543,11 @@ gap: 8px;
 #browse-venue-type {
   padding: 20px 5vw;
   color: #2d2926;
-  background: #efe5dc;
+  background: #f4f2f0;
 }
 
 #venue-card-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -568,7 +578,8 @@ gap: 8px;
 .venue-type-card {
   display: block;
   position: relative;
-  min-width: 0;
+  width: 300px;
+  height: 150px;
   overflow: hidden;
   border-radius: 18px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
@@ -725,12 +736,12 @@ gap: 8px;
 
   #about-image-container img {
     width: 100%;
-    height: 440px;
+    height: 500px;
     margin-left: 0;
   }
 
   .details-box {
-    min-width: 100px;
+    width:auto;
     padding: 12px 14px;
     font-size: 1.1rem;
   }
@@ -766,7 +777,7 @@ gap: 8px;
   color: #2d2926b3;
   line-height: 1.3;
   text-align: justify;
-  font-weight: 100;
+  font-weight: 120;
 }
 
 .detail-text > div:first-child {
@@ -778,7 +789,7 @@ gap: 8px;
   justify-content: center;
   border-radius: 50%;
   background-color: #aa70673b;
-  color: #8c5e58;
+  color: #6d534f;
   font-size: 1.25rem;
   line-height: 1;
   margin: 10px;
@@ -815,7 +826,7 @@ gap: 8px;
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: 455px;
+  min-height: 465px;
   display: grid;
   place-items: center;
   color: #faf7f2;
