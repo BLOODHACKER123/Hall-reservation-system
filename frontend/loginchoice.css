@@ -13,12 +13,6 @@
   box-sizing: border-box;
 }
 
-body {
-  overflow-x: hidden;
-  background: var(--login-bg);
-  color: var(--login-ink);
-}
-
 
 .login-area {
   display: flex;
