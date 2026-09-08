@@ -1,3 +1,93 @@
+<?php
+if($_SERVER['REQUEST_METHOD']==='POST'){
+   header('Content-Type: text/plain; charset=utf-8');
+
+  foreach(['name','email','role','password','confirm_password'] as $field) {
+   if(isset($_POST[$field]) && !is_string($_POST[$field])){
+      http_response_code(400);
+      exit('Invalid form data.');
+   }
+  }
+
+    $name=trim($_POST['name']?? '');
+    $email=trim($_POST['email']?? '');
+    $role=$_POST['role']?? '';
+    $password=$_POST['password']?? '';
+    $confirm_password=$_POST['confirm_password']?? '';
+
+$errors=[];
+
+    if ($name === '') {
+            $errors[] = 'Full name is required.';
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = 'Enter a valid email address.';
+    }
+
+     if (!in_array($role, ['customer', 'owner'], true)) {
+        $errors[] = 'Select a valid account type.';
+    }
+
+     if (strlen($password) < 8) {
+        $errors[] = 'Password must be at least 8 bytes long.';
+    }
+
+     if ($password !== $confirm_password) {
+        $errors[] = 'Passwords do not match.';
+    }
+
+    if (!empty($errors)) {
+        http_response_code(422);
+        echo implode("\n", $errors);
+        exit;
+    }
+ require_once __DIR__ . '/../backend/config/database.php';
+
+ try{
+  $check=$pdo->prepare(
+    ' SELECT id FROM users
+      WHERE email=:email LIMIT 1'
+  );
+
+  $check->execute(['email'=> $email]);
+  if($check->fetch()){
+     http_response_code(409);
+     exit('This email is already registered.');
+  }
+
+   $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+  $statement = $pdo->prepare(
+        'INSERT INTO users (name, email, password, role)
+         VALUES (:name, :email, :password, :role)'
+    );
+
+   $statement->execute([
+    'name' => $name,
+    'email' => $email,
+    'password' => $passwordHash,
+    'role' => $role
+   ]);
+
+   http_response_code(201);
+   echo 'Account created successfully!';
+
+ } catch (PDOException $error) {
+    
+    if ((int) ($error->errorInfo[1] ?? 0) === 1062) {
+        http_response_code(409);
+        exit('This email is already registered.');
+    }
+
+    error_log($error->getMessage());
+
+    http_response_code(500);
+    echo 'Unable to create the account. Please try again.';
+}
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,8 +138,8 @@
         <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
         <label for="password">Password</label>
         <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
-        <label for="confirm-password">Confirm password</label>
-        <input id="confirm-password" name="confirm_password" type="password" autocomplete="new-password" minlength="8" placeholder="Re-enter your password" required>
+        <label for="confirm_password">Confirm password</label>
+        <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" minlength="8" placeholder="Re-enter your password" required>
         <button type="submit">Create account <span aria-hidden="true">→</span></button>
       </form>
       <p class="signup">Already have an account? <a href="login.php">Sign in</a></p>

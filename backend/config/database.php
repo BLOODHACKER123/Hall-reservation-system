@@ -1,17 +1,15 @@
 <?php
 
-//db connection
-
 $host = "127.0.0.1";
 $username = "root";
-$password ="Dimuth";
+$dbpassword ="Dimuth";
 $dbname = "venuevista";
 
 try {
     $pdo = new PDO(
         "mysql:host=$host;dbname=$dbname;charset=utf8mb4",
         $username,
-        $password,
+        $dbpassword,
         [
             PDO::ATTR_EMULATE_PREPARES => false,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -23,6 +21,5 @@ try {
     die("Database connection failed: " . $error->getMessage());
 }
 
-echo "Connected";
 
 ?>

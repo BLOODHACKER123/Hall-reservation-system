@@ -1,3 +1,70 @@
+<?php
+
+session_start();
+
+if($_SERVER['REQUEST_METHOD']==='POST'){
+header('Content-Type: text/plain; charset=utf-8');
+
+  $email = $_POST['email'] ?? '';
+  $password = $_POST['password'] ?? '';
+
+  if (!is_string($email) || !is_string($password)) {
+      http_response_code(400);
+      exit('Invalid form data.');
+  }
+
+  $email = trim($email);
+
+   if (!filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
+        http_response_code(422);
+        exit('Enter a valid email and your password.');
+    }
+
+     require_once __DIR__ . '/../backend/config/database.php';
+
+    try {
+        $statement = $pdo->prepare(
+            'SELECT id, name, password, role, status
+             FROM users
+             WHERE email = :email
+             LIMIT 1'
+        );
+        
+        $statement->execute(['email' => $email]);
+        $user = $statement->fetch(PDO::FETCH_ASSOC);
+
+
+        if (!$user || !password_verify($password, $user['password'])) {
+            http_response_code(401);
+            exit('Invalid email or password.');
+        }
+
+        if ($user['status'] !== 'active') {
+            http_response_code(403);
+            exit('Your account is blocked.');
+        }
+
+                
+          session_regenerate_id(true);
+
+          $_SESSION['user_id'] = $user['id'];
+          $_SESSION['user_name'] = $user['name'];
+          $_SESSION['user_role'] = $user['role'];
+
+          echo 'Logged in successfully!';
+
+    }catch(PDOException $error){
+        error_log($error->getMessage());
+
+        http_response_code(500);
+        echo 'Unable to log in. Please try again.';
+    }
+
+    exit;
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
