@@ -1,3 +1,9 @@
+<?php
+require_once __DIR__ . '/../backend/auth/guard.php';
+
+requireRole('admin');
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -1,3 +1,12 @@
+<?php
+ header('Content-Type: application/json; charset=utf-8');
+
+
+  require_once __DIR__ . '/../backend/auth/guard.php';
+  requireRole('owner');
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
