@@ -1,5 +1,9 @@
 <?php
-session_start();
+
+require_once __DIR__ .  '/guard.php';
+
+requireLogin();
+
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -20,3 +24,4 @@ echo json_encode([
         'role' => $_SESSION['user_role']
     ]
 ]);
+
