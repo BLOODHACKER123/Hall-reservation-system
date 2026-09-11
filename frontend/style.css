@@ -277,10 +277,10 @@
   gap: 8px;
   width: 100%;
   max-width: 200px;
-  padding: 10px 30px;
-  font-size: 19px;
+  padding: 15px 20px;
+  font-size: 1rem;
   border-radius: 50px;
-  font-weight: bold;
+  font-weight: 500;
   background-color: #8c5e58;
   color: #faf7f2;
   border: none;
