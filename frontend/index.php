@@ -1,3 +1,18 @@
+<?php
+ require_once __DIR__ . '/../backend/config/database.php';
+
+  ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+  try {
+      $stmt = $pdo->query("SELECT DISTINCT venue_type as name FROM halls WHERE venue_type IS NOT NULL AND venue_type != '' ORDER BY venue_type ASC");
+      $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+  } catch (PDOException $e) {
+      
+      $categories = []; 
+  }
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -9,7 +24,8 @@
     <link rel="icon" type="image/x-icon" href="images/venuevista-logo.png" />
     <link rel="stylesheet" href="common.css" />
     <link rel="stylesheet" href="style.css" />
-    <script src="https://kit.fontawesome.com/YOUR_KIT_CODE.js" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/YOUR_KIT_CODE.js" crossorigin="anonymous" defer></script> //Note to Dimuth: Add the kit
+    <script src="../backend/js/locationSearch.js" defer></script>
   </head>
   <body>
 
@@ -51,9 +67,12 @@
                 id="location-input"
                 name="location"
                 type="text"
+                list="city-suggestions"
                 placeholder="City or Area"
+                autocomplete="on"
                 required
               />
+              <datalist id="city-suggestions"></datalist>
             </div>
 
             <div id="venue-type-search">
@@ -63,20 +82,20 @@
               </p>
               <select
                 id="venue-type-select"
-                name="event-type"
+                name="venueType"
                 title="Select a venue type"
                 required
               >
                 <option value="" selected disabled>Select a venue type</option>
-                <option value="Wedding Venue">Wedding Venue</option>
-                <option value="Banquet Hall">Banquet Hall</option>
-                <option value="Hotel">Hotel</option>
-                <option value="Conference Venue">Conference Venue</option>
-                <option value="Garden Venue">Garden Venue</option>
-                <option value="Seminar Hall">Seminar Hall</option>
-                <option value="Auditorium">Auditorium</option>
-                <option value="Rooftop venue">Rooftop venue</option>
-                <option value="Meeting">Meeting</option>
+                <?php if(!empty($categories)): ?>
+                    <?php foreach($categories as $category): ?>
+                        <option value="<?= htmlspecialchars($category) ?>">
+                            <?= htmlspecialchars($category) ?>
+                        </option>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <option value="" disabled>No categories available</option>
+                <?php endif; ?>
               </select>
             </div>
 
@@ -87,7 +106,7 @@
               <input
                 id="event-date-input"
                 type="date"
-                name="date"
+                name="Date"
                 placeholder="Select a date"
                 required
               />
@@ -96,15 +115,15 @@
 
           <div id="search-btn-container">
             <button id="search-venues-button" type="submit">
-              <i class="fa-regular fa-magnifying-glass"></i>
+              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
               Search Venues
             </button>
           </div>
           <p id="search-message" role="status" aria-live="polite"></p>
         </form>
-        <div id="mouse-image">
+        <!-- <div id="mouse-image">
           <img src="images/mouse.png" alt="Hero Image" />
-        </div>
+        </div> -->
       </div>
     </section>
 
