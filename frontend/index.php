@@ -1,3 +1,18 @@
+<?php
+ require_once __DIR__ . '/../backend/config/database.php';
+
+  ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+  try {
+      $stmt = $pdo->query("SELECT DISTINCT venue_type as name FROM halls WHERE venue_type IS NOT NULL AND venue_type != '' ORDER BY venue_type ASC");
+      $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+  } catch (PDOException $e) {
+      
+      $categories = []; 
+  }
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,13 +21,14 @@
     <title>VenueSpot</title>
     <link rel="stylesheet" href="common.css" />
     <link rel="stylesheet" href="style.css" />
+    <script src="../backend/js/locationSearch.js"></script>
   </head>
   <body>
     
     <section id="hero-section">
       <div id="container">
         <div id="nav-bar" class="site-nav">
-          <a id="logo" href="index.html">VenueVista</a>
+          <a id="logo" href="index.php">VenueVista</a>
           <nav id="nav-links">
             <a href="search.html">Browse Venues</a>
             <a href="list.html">List a Venue</a>
@@ -34,7 +50,7 @@
           space that tells your story.
         </p>
 
-        <form id="venue-search">
+        <form id="venue-search" action="search.php" method="GET">
           <div id="venue-search-inputs">
             <div id="location-search">
               <p>
@@ -43,10 +59,14 @@
               </p>
               <input
                 id="location-input"
+                name="location"
                 type="text"
+                list="city-suggestions"
                 placeholder="City or Area"
+                autocomplete="on"
                 required
               />
+              <datalist id="city-suggestions"></datalist>
             </div>
 
             <div id="venue-type-search">
@@ -61,15 +81,15 @@
                 required
               >
                 <option value="" selected disabled>Select a venue type</option>
-                <option value="Wedding Venue">Wedding Venue</option>
-                <option value="Banquet Hall">Banquet Hall</option>
-                <option value="Hotel">Hotel</option>
-                <option value="Conference Venue">Conference Venue</option>
-                <option value="Garden Venue">Garden Venue</option>
-                <option value="Seminar Hall">Seminar Hall</option>
-                <option value="Auditorium">Auditorium</option>
-                <option value="Rooftop venue">Rooftop venue</option>
-                <option value="Meeting">Meeting</option>
+                <?php if(!empty($categories)): ?>
+                    <?php foreach($categories as $category): ?>
+                        <option value="<?= htmlspecialchars($category) ?>">
+                            <?= htmlspecialchars($category) ?>
+                        </option>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <option value="" disabled>No categories available</option>
+                <?php endif; ?>
               </select>
             </div>
 
@@ -80,7 +100,7 @@
               <input
                 id="event-date-input"
                 type="date"
-                name="eventDate"
+                name="Date"
                 placeholder="Select a date"
                 required
               />
@@ -95,9 +115,9 @@
           </div>
           <p id="search-message" role="status" aria-live="polite"></p>
         </form>
-        <div id="mouse-image">
+        <!-- <div id="mouse-image">
           <img src="images/mouse.png" alt="Hero Image" />
-        </div>
+        </div> -->
       </div>
     </section>
 

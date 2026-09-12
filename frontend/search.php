@@ -1,3 +1,63 @@
+<?php
+
+require_once __DIR__ . '/../backend/config/database.php';
+
+try {
+    $cat_stmt = $pdo->query("SELECT DISTINCT venue_type as name FROM halls WHERE venue_type IS NOT NULL AND venue_type != '' ORDER BY venue_type ASC");
+    $categories = $cat_stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (PDOException $e) {
+    $categories = [];
+}
+
+$search_location = $_GET['location'] ?? '';
+$search_type = $_GET['event-type'] ?? '';
+$search_date = $_GET['date'] ?? '';
+$search_guests = $_GET['guests'] ?? '';
+$search_sort = $_GET['sort'] ?? 'newest';
+
+$query = "
+    SELECT h.*, hi.image_url 
+    FROM halls h
+    LEFT JOIN hall_images hi ON h.hall_id = hi.hall_id AND hi.is_primary = TRUE
+    WHERE h.is_active = TRUE
+";
+$params = [];
+
+if (!empty($search_location)) {
+    $query .= " AND (h.district LIKE :location OR h.address LIKE :location)";
+    $params[':location'] = '%' . $search_location . '%';
+}
+
+if (!empty($search_type)) {
+    $query .= " AND h.venue_type = :type";
+    $params[':type'] = $search_type;
+}
+
+if (!empty($search_guests)) {
+    if ($search_guests == '1-50') { $query .= " AND h.capacity <= 50"; }
+    elseif ($search_guests == '51-150') { $query .= " AND h.capacity BETWEEN 51 AND 150"; }
+    elseif ($search_guests == '151-300') { $query .= " AND h.capacity BETWEEN 151 AND 300"; }
+    elseif ($search_guests == '301+') { $query .= " AND h.capacity >= 301"; }
+}
+
+if ($search_sort == 'price-low') {
+    $query .= " ORDER BY h.base_price_per_hour ASC";
+} elseif ($search_sort == 'price-high') {
+    $query .= " ORDER BY h.base_price_per_hour DESC";
+} else {
+    $query .= " ORDER BY h.created_at DESC"; 
+}
+
+
+try {
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+    $venues = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Query failed: " . $e->getMessage());
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,13 +89,13 @@
 
     <section id="search-section">
       <div id="search-container">
-        <form id="search-form" action="search.html" method="get">
+        <form id="search-form" action="search.php" method="get">
           <label class="search-field search-location">
             <span class="field-icon" aria-hidden="true">⌕</span>
             <input type="text" name="location" placeholder="Location..." aria-label="Location" />
           </label>
           <label class="search-field">
-            <select name="event-type" aria-label="Venue type">
+            <select name="venueType" aria-label="Venue type">
                <option value="" selected>All Types</option>
                 <option value="Wedding Venue">Wedding Venue</option>
                 <option value="Banquet Hall">Banquet Hall</option>
