@@ -9,22 +9,44 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
+$city = $_GET['city'] ?? '';
+
+if (!is_string($city)) {
+    http_response_code(400);
+    echo json_encode(['message' => 'City must be text.']);
+    exit;
+}
+
+$city = trim($city);
+
+if (mb_strlen($city, 'UTF-8') > 100) {
+    http_response_code(400);
+    echo json_encode(['message' => 'City must be 100 characters or fewer.']);
+    exit;
+}
+
 require_once __DIR__ . '/../config/database.php';
 
 try {
-    $statement = $pdo->prepare(
-        "SELECT v.id, v.name, v.type, v.city,
-                v.min_capacity, v.max_capacity, v.base_price
-         FROM venues AS v
-         INNER JOIN users AS u ON u.id = v.owner_id
-         WHERE v.status = 'approved'
-           AND u.status = 'active'
-           AND u.role = 'owner'
-         ORDER BY v.created_at DESC, v.id DESC
-         LIMIT 50"
-    );
+   $sql = "SELECT v.id, v.name, v.type, v.city,
+               v.min_capacity, v.max_capacity, v.base_price
+        FROM venues AS v
+        INNER JOIN users AS u ON u.id = v.owner_id
+        WHERE v.status = 'approved'
+          AND u.status = 'active'
+          AND u.role = 'owner'";
 
-    $statement->execute();
+$params = [];
+
+if ($city !== '') {
+    $sql .= ' AND v.city = :city';
+    $params['city'] = $city;
+}
+
+$sql .= ' ORDER BY v.created_at DESC, v.id DESC LIMIT 50';
+
+$statement = $pdo->prepare($sql);
+$statement->execute($params);
 
     $venues = $statement->fetchAll(PDO::FETCH_ASSOC);
 
