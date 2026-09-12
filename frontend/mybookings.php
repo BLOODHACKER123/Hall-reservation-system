@@ -15,16 +15,16 @@
 	<section id="navigation-section">
       <div id="container">
         <div id="nav-bar">
-          <a id="logo" href="index.html">VenueVista</a>
+          <a id="logo" href="index.php">VenueVista</a>
           <nav id="nav-links">
-            <a href="search.html">Browse Venues</a>
-            <a href="list.html">List A Venue</a>
-            <a href="ownerdashboard.html">Owners Dashboard</a>
-            <a href="admin.html">Admin</a>
+            <a href="search.php">Browse Venues</a>
+            <a href="list.php">List A Venue</a>
+            <a href="ownerdashboard.php">Owners Dashboard</a>
+            <a href="admin.php">Admin</a>
           </nav>
           <div id="nav-buttons">
-            <a id="list-venue-button" href="list.html">List A Venue</a>
-            <a id="login-button" href="loginchoice.html">Login</a>
+            <a id="list-venue-button" href="list.php">List A Venue</a>
+            <a id="login-button" href="loginchoice.php">Login</a>
           </div>
         </div>
       </div>
@@ -35,7 +35,7 @@
 			<div class="calendar-icon" aria-hidden="true"><span></span><i></i><b></b></div>
 			<h1 id="booking-title">My Bookings</h1>
 			<p class="intro">Enter the email you used when booking to<br>view your reservations.</p>
-			<form action="#" method="get">
+			<form action="mybookings.php" method="get">
 				<label class="sr-only" for="booking-email">Booking email</label>
 				<input id="booking-email" name="email" type="email" autocomplete="email" placeholder="your@email.com" required>
 				<button type="submit">View Bookings</button>
@@ -62,19 +62,19 @@
           <div class="footer-nav-links">
 
             <p>DISCOVER</p>
-            <a href="search.html">Browse Venues</a>
-            <a href="search.html">Wedding Venues</a>
-            <a href="search.html">Banquet Halls</a>
-            <a href="search.html">Conference Halls</a>
+            <a href="search.php">Browse Venues</a>
+            <a href="search.php">Wedding Venues</a>
+            <a href="search.php">Banquet Halls</a>
+            <a href="search.php">Conference Halls</a>
           
           </div>
 
           <div class="footer-nav-links">
             <p>FOR OWNERS</p> 
             
-                <a href="list.html">List Your Venue</a>
-                <a href="ownerdashboard.html">Owner Dashboard</a>
-                <a href="mybookings.html">My Bookings</a>
+                <a href="list.php">List Your Venue</a>
+                <a href="ownerdashboard.php">Owner Dashboard</a>
+                <a href="mybookings.php">My Bookings</a>
               
           </div>
         

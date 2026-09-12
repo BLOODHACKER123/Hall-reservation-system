@@ -16,9 +16,8 @@ if (siteNav) {
 
 if (searchForm) {
 	searchForm.addEventListener('submit', (event) => {
-		event.preventDefault();
-
 		if (!searchForm.checkValidity()) {
+			event.preventDefault();
 			searchForm.reportValidity();
 			return;
 		}

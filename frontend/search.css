@@ -1,7 +1,7 @@
 /* Featured Venue Section Styles */
 
 #featured-venue {
-  padding: 64px 8vw;
+  padding: 20px 3vw;
   color: #2d2926;
   background: #faf7f2;
 }
@@ -9,12 +9,15 @@
 #featured-venue > div > p {
   margin: 0 0 8px;
   color: #8c5e58;
-  font-family: Arial, sans-serif;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-family: Cormorant Garamond,serif;
+  font-size: 1rem;
+  font-weight: 300;
   letter-spacing: 0.15em;
   text-transform: uppercase;
+  padding: 5px;
+  margin: 20px;
 }
+
 
 #featured-venue h2 {
   margin: 0;
@@ -22,6 +25,7 @@
   font-family: Cormorant-Garamond, serif;
   font-weight: 100;
 }
+
 
 #featured-venue > div > a {
   display: flex;

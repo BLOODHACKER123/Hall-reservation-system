@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  font-family: Georgia, serif;
+  font-family: Arial,sans-serif;
   background-color: #faf7f2;
   background-size: cover;
   background-position: center;
@@ -39,9 +39,9 @@ body {
 
 
 #navigation-section #nav-links {
-  font-family: Inter,Arial;
+  font-family: Arial,sans-serif;
   display: flex;
-  gap: 70px;
+  gap: 50px;
   flex-wrap: wrap;
   justify-content: center;
   justify-self: center;
@@ -64,11 +64,11 @@ body {
 #navigation-section #search-venues-button {
   color: #faf7f2;
   background-color: #8c5e58;
-  border: 2px solid #523530;
+  border: 1.5px solid #523530;
   border-radius: 50px;
   padding: 10px 18px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 #navigation-section #login-button,
@@ -78,13 +78,14 @@ body {
 
 #navigation-section #logo {
   display: flex;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 100;
   text-decoration: none;
   color: #8c5e58;
+  font-family: Cormorant-Garamond,serif;
 }
 
-/* Reuse the shared light navigation treatment when the homepage is scrolled. */
+
 #hero-section #nav-bar.site-nav.is-scrolled {
   color: #2d2926;
   background-color: #fefdfc;

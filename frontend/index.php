@@ -18,39 +18,45 @@ error_reporting(E_ALL);
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VenueSpot</title>
+    <title>VenueVista</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="icon" type="image/x-icon" href="images/venuevista-logo.png" />
     <link rel="stylesheet" href="common.css" />
     <link rel="stylesheet" href="style.css" />
-    <script src="../backend/js/locationSearch.js"></script>
+    <script src="https://kit.fontawesome.com/YOUR_KIT_CODE.js" crossorigin="anonymous" defer></script> //Note to Dimuth: Add the kit
+    <script src="../backend/js/locationSearch.js" defer></script>
   </head>
   <body>
-    
-    <section id="hero-section">
+
+    <section id="navigation-section" class="home-navigation">
       <div id="container">
         <div id="nav-bar" class="site-nav">
           <a id="logo" href="index.php">VenueVista</a>
           <nav id="nav-links">
-            <a href="search.html">Browse Venues</a>
-            <a href="list.html">List a Venue</a>
-            <a href="ownerdashboard.html">Owners Dashboard</a>
-            <a href="admin.html">Admin</a>
+            <a href="search.php">Browse Venues</a>
+            <a href="list.php">List a Venue</a>
+            <a href="ownerdashboard.php">Owners Dashboard</a>
+            <a href="admin.php">Admin</a>
           </nav>
           <div id="nav-buttons">
-            <a id="list-venue-button" href="list.html">List a Venue</a>
-            <a id="login-button" href="loginchoice.html">Login</a>
+            <a id="list-venue-button" href="list.php">List a Venue</a>
+            <a id="login-button" href="loginchoice.php">Login</a>
           </div>
         </div>
       </div>
+    </section>
 
+    <section id="hero-section">
       <div id="hero-text">
         <p id="hero-title">DISCOVER EXTRAORDINARY SPACES</p>
         <h1 id="hero-heading">Every Moment Deserves a Perfect Venue</h1>
         <p id="hero-description">
-          From intimate gatherings to grand celebrations — find and book the
+          From intimate gatherings to grand celebrations, find and book the
           space that tells your story.
         </p>
 
-        <form id="venue-search" action="search.php" method="GET">
+        <form id="venue-search" action="search.php" method="get">
           <div id="venue-search-inputs">
             <div id="location-search">
               <p>
@@ -124,12 +130,12 @@ error_reporting(E_ALL);
     <section id="featured-venue">
       <div>
         <p>Handpicked for You</p>
-        <h2>Featured Venues</h2>
-        <a href="search.html">View All Venues →</a>
+        <h1>Featured Venues</h1>
+        <a href="search.php">View All Venues →</a>
 
         <div id="featured-venue-cards">
-          <div class="venue-card">
-            <div class="venue-card-image">
+          <div class="featured-venue-card">
+            <div class="featured-venue-card-image">
               <img
                 src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&auto=format&fit=crop&q=80"
                 alt="Venue 1"
@@ -157,12 +163,12 @@ error_reporting(E_ALL);
                 <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
                 reviews
               </p>
-              <a href="search.html">view Details → </a>
+              <a href="search.php">View Details → </a>
             </div>
           </div>
 
-          <div class="venue-card">
-            <div class="venue-card-image">
+          <div class="featured-venue-card">
+            <div class="featured-venue-card-image">
               <img
                 src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80"
                 alt="Venue 1"
@@ -190,12 +196,12 @@ error_reporting(E_ALL);
                 <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
                 reviews
               </p>
-              <a href="search.html">view Details → </a>
+              <a href="search.php">View Details → </a>
             </div>
           </div>
 
-          <div class="venue-card">
-            <div class="venue-card-image">
+          <div class="featured-venue-card">
+            <div class="featured-venue-card-image">
               <img
                 src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1200&auto=format&fit=crop&q=80"
                 alt="Venue 1"
@@ -223,7 +229,7 @@ error_reporting(E_ALL);
                 <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
                 reviews
               </p>
-              <a href="search.html">view Details → </a>
+              <a href="search.php">View Details → </a>
             </div>
           </div>
           
@@ -237,50 +243,50 @@ error_reporting(E_ALL);
         <h1>Browse by Venue Type</h1>
 
         <div id="venue-type-cards">
-          <a class="venue-type-card" href="search.html">
+          <a class="venue-type-card" href="search.php">
            
             <img
               src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&auto=format&fit=crop&q=60"
               alt="Banquet hall"/>
              <p>Banquet Hall</p>
           </a>
-          <a class="venue-type-card" href="search.html">
+          <a class="venue-type-card" href="search.php">
             <img
               src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=400&auto=format&fit=crop&q=60"
               alt="Wedding venue"/>
             <p>Wedding Venue</p>
           </a>
-          <a class="venue-type-card" href="search.html">
+          <a class="venue-type-card" href="search.php">
             <img
               src="https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&auto=format&fit=crop&q=60"
               alt="Conference venue"/>
             <p>Conference Venue</p>
           </a>
-          <a class="venue-type-card" href="search.html">
+          <a class="venue-type-card" href="search.php">
             <img
               src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&auto=format&fit=crop&q=60"
               alt="Garden venue"/>
             <p>Garden Venue</p>
           </a>
-          <a class="venue-type-card" href="search.html">
+          <a class="venue-type-card" href="search.php">
             <img
               src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&auto=format&fit=crop&q=60"
               alt="Rooftop venue" />
             <p>Rooftop Venue</p>
           </a>
-          <a class="venue-type-card" href="search.html">
+          <a class="venue-type-card" href="search.php">
             <img
               src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&auto=format&fit=crop&q=60"
               alt="Hotel venue"/>
             <p>Hotel Venue</p>
           </a>
-          <a class="venue-type-card" href="search.html">
+          <a class="venue-type-card" href="search.php">
             <img
               src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&auto=format&fit=crop&q=60"
               alt="Auditorium"/>
             <p>Auditorium</p>
           </a>
-          <a class="venue-type-card" href="search.html">
+          <a class="venue-type-card" href="search.php">
             <img
               src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&auto=format&fit=crop&q=60"
               alt="Meeting space"/>
@@ -312,7 +318,7 @@ error_reporting(E_ALL);
               <p>Every venue is personally reviewed and approved by our team to ensure the highest standards.</p>
             </div>
           </div>
-
+          <br>
           <div class="detail-text">
             <div>◎</div>
             <div>
@@ -320,7 +326,7 @@ error_reporting(E_ALL);
               <p>Reserve your dream venue in minutes. Real-time availability, no back-and-forth emails.</p>
             </div>
           </div>
-
+          <br>
           <div class="detail-text">
             <div>⬡</div>
             <div>
@@ -328,7 +334,7 @@ error_reporting(E_ALL);
               <p>All packages, packages and catering options clearly laid out. No hidden fees, ever.</p>
             </div>
           </div>
-
+          <br>
           <div class="detail-text">
             <div>❖</div>
             <div>
@@ -349,7 +355,7 @@ error_reporting(E_ALL);
         <h1>Reach Thousands</h1>
         <p>Join hundreds of venue owners who trust VenueVista to
             connect them with the right clients.</p>
-        <a href="list.html">Start Listing Today →</a>
+        <a href="list.php">Start Listing Today →</a>
 
       </div>
     </section>
@@ -373,19 +379,19 @@ error_reporting(E_ALL);
           <div class="footer-nav-links">
 
             <p>DISCOVER</p>
-            <a href="search.html">Browse Venues</a>
-            <a href="search.html">Wedding Venues</a>
-            <a href="search.html">Banquet Halls</a>
-            <a href="search.html">Conference Halls</a>
+            <a href="search.php">Browse Venues</a>
+            <a href="search.php">Wedding Venues</a>
+            <a href="search.php">Banquet Halls</a>
+            <a href="search.php">Conference Halls</a>
           
           </div>
 
           <div class="footer-nav-links">
             <p>FOR OWNERS</p> 
             
-                <a href="list.html">List Your Venue</a>
-                <a href="ownerdashboard.html">Owner Dashboard</a>
-                <a href="mybookings.html">My Bookings</a>
+                <a href="list.php">List Your Venue</a>
+                <a href="ownerdashboard.php">Owner Dashboard</a>
+                <a href="mybookings.php">My Bookings</a>
               
           </div>
         

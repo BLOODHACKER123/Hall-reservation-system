@@ -15,61 +15,21 @@
   box-sizing: border-box;
 }
 
-body {
-  overflow-x: hidden;
-  background: var(--signup-bg);
-  color: var(--signup-ink);
+#image-logo{
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
 }
 
-#navigation-section {
-  background: #ffffff;
-  border-top: 2px solid #252329;
-  border-bottom: 1px solid var(--signup-line);
+#image-logo img{
+  width: 40px;
+  height: 40px;
+  display: block;
 }
 
-#navigation-section #container {
-  width: 100%;
-  max-width: none;
-  padding: 0 clamp(20px, 3.2vw, 60px);
-}
-
-#navigation-section #nav-bar {
-  min-height: 98px;
-  padding: 0;
-  background: #ffffff;
-}
-
-#navigation-section #logo {
-  color: #9a706a;
-  font: 400 22px Georgia, serif;
-}
-
-#navigation-section #nav-links {
-  gap: clamp(24px, 4vw, 72px);
-}
-
-#navigation-section #nav-links a {
-  color: var(--signup-text);
-  font: 600 17px Arial, sans-serif;
-}
-
-#navigation-section #nav-buttons {
-  gap: 12px;
-}
-
-#navigation-section #list-venue-button,
-#navigation-section #login-button {
-  padding: 11px 26px;
-  border: 2px solid #684943;
-  border-radius: 999px;
-  color: #ffffff;
-  background: var(--signup-rose);
-  font: 600 16px Arial, sans-serif;
-}
-
-#navigation-section #login-button {
-  padding-inline: 27px;
-}
 
 .login-area {
   display: grid;
@@ -213,50 +173,5 @@ body {
   text-decoration: none;
 }
 
-@media (max-width: 760px) {
-  #navigation-section #nav-bar {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    padding: 18px 0;
-    text-align: center;
-  }
 
-  #navigation-section #logo,
-  #navigation-section #nav-links,
-  #navigation-section #nav-buttons {
-    justify-self: center;
-  }
-
-  #navigation-section #logo {
-    justify-content: center;
-  }
-
-  #navigation-section #nav-links {
-    gap: 10px 18px;
-  }
-
-  #navigation-section #nav-links a {
-    font-size: 14px;
-  }
-
-  #navigation-section #list-venue-button,
-  #navigation-section #login-button {
-    padding: 9px 17px;
-    font-size: 14px;
-  }
-
-  .login-area {
-    min-height: 590px;
-    padding: 35px 14px 55px;
-  }
-
-  .login-card {
-    padding: 32px 24px 30px;
-    border-radius: 24px;
-  }
-
-  #login-title {
-    font-size: 27px;
-  }
-}
-
+  
