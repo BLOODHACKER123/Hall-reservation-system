@@ -25,7 +25,6 @@ error_reporting(E_ALL);
     <link rel="stylesheet" href="common.css" />
     <script src="navigation.js" defer></script>
     <link rel="stylesheet" href="style.css" />
-    <script src="https://kit.fontawesome.com/YOUR_KIT_CODE.js" crossorigin="anonymous" defer></script> <!-- Note to Dimuth: Add the kit -->
     <script src="../backend/js/locationSearch.js" defer></script>
   </head>
   <body>
@@ -122,9 +121,6 @@ error_reporting(E_ALL);
           </div>
           <p id="search-message" role="status" aria-live="polite"></p>
         </form>
-        <!-- <div id="mouse-image">
-          <img src="images/mouse.png" alt="Hero Image" />
-        </div> -->
       </div>
     </section>
 

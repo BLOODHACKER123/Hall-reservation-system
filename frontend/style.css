@@ -233,35 +233,6 @@
   }
 }
 
-.fa-regular.fa-magnifying-glass{
-  color:#ffffff;
-}
-
-#mouse-image img{
-  width: 44px;
-  margin:20px;
-  animation: mouse-bob 1.8s ease-in-out infinite;
-  transform-origin: center;
-}
-
-@keyframes mouse-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.95;
-  }
-  50% {
-    transform: translateY(10px);
-    opacity: 0.65;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #mouse-image img {
-    animation: none;
-  }
-}
-
 #search-message {
   min-height: 1.25em;
   margin: 12px 0 0;

@@ -6,22 +6,22 @@ const eventDateInput = document.querySelector('#event-date-input');
 const siteNav = document.querySelector('#nav-bar.site-nav');
 
 if (siteNav) {
-	const updateNavState = () => {
-		siteNav.classList.toggle('is-scrolled', window.scrollY > 40);
-	};
+  const updateNavState = () => {
+    siteNav.classList.toggle('is-scrolled', window.scrollY > 40);
+  };
 
-	updateNavState();
-	window.addEventListener('scroll', updateNavState, { passive: true });
+  updateNavState();
+  window.addEventListener('scroll', updateNavState, { passive: true });
 }
 
 if (searchForm) {
-	searchForm.addEventListener('submit', (event) => {
-		if (!searchForm.checkValidity()) {
-			event.preventDefault();
-			searchForm.reportValidity();
-			return;
-		}
+  searchForm.addEventListener('submit', event => {
+    if (!searchForm.checkValidity()) {
+      event.preventDefault();
+      searchForm.reportValidity();
+      return;
+    }
 
-		searchMessage.textContent = `Searching for ${venueTypeSelect.value.toLowerCase()}s in ${locationInput.value.trim()} on ${eventDateInput.value}.`;
-	});
+    searchMessage.textContent = `Searching for ${venueTypeSelect.value.toLowerCase()}s in ${locationInput.value.trim()} on ${eventDateInput.value}.`;
+  });
 }

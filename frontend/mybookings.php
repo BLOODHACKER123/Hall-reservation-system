@@ -43,7 +43,48 @@
 			</form>
 		</section>
 	</main>
-	
-  <?php require __DIR__ . '/partials/account-footer.php'; ?>
+
+  <section id="footer-section">
+    <div id="footer-body">
+      <div id="footer-top">
+        <div id="footer-details-block">
+          <h1>VenueVista</h1>
+          <p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells a story.</p>
+
+          <div class="social-links">
+            <a href="">INSTAGRAM</a>
+            <a href="">PINTEREST</a>
+            <a href="">FACEBOOK</a>
+          </div>
+        </div>
+
+        <div class="footer-nav-links">
+          <p>DISCOVER</p>
+          <a href="search.php">Browse Venues</a>
+          <a href="search.php">Wedding Venues</a>
+          <a href="search.php">Banquet Halls</a>
+          <a href="search.php">Conference Halls</a>
+        </div>
+
+        <div class="footer-nav-links">
+          <p>FOR OWNERS</p>
+          <a href="list.php">List Your Venue</a>
+          <a href="ownerdashboard.php">Owner Dashboard</a>
+          <a href="mybookings.php">My Bookings</a>
+        </div>
+      </div>
+
+      <div id="footer-bottom">
+        <p>@ 2026 VenueVista. All rights reserved.</p>
+
+        <div class="footer-links">
+          <a href="">Privacy Policy</a>
+          <a href="">Terms of Service</a>
+          <a href="">Contact</a>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
 </body>
 </html>
