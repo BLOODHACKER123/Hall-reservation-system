@@ -23,8 +23,9 @@ error_reporting(E_ALL);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="icon" type="image/x-icon" href="images/venuevista-logo.png" />
     <link rel="stylesheet" href="common.css" />
+    <script src="navigation.js" defer></script>
     <link rel="stylesheet" href="style.css" />
-    <script src="https://kit.fontawesome.com/YOUR_KIT_CODE.js" crossorigin="anonymous" defer></script> //Note to Dimuth: Add the kit
+    <script src="https://kit.fontawesome.com/YOUR_KIT_CODE.js" crossorigin="anonymous" defer></script> <!-- Note to Dimuth: Add the kit -->
     <script src="../backend/js/locationSearch.js" defer></script>
   </head>
   <body>

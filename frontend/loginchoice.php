@@ -9,10 +9,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="common.css">
+  <script src="navigation.js" defer></script>
   <link rel="stylesheet" href="loginchoice.css">
   
 </head>
-<body>
+<body class="account-page">
 
 <section id="navigation-section">
       <div id="container">
@@ -47,52 +48,6 @@
     </section>
   </main>
 
-  <section id="footer-section">
-      <div id="footer-body">
-        <div id="footer-top">
-
-          <div id="footer-details-block">
-            <h1>VenueVista</h1>
-            <p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells 
-              a story.</p>
-
-            <div class="social-links">
-              <a href="">INSTAGRAM</a>
-              <a href="">PINTEREST</a>
-              <a href="">FACEBOOK</a>
-            </div>
-          </div>
-        
-          <div class="footer-nav-links">
-
-            <p>DISCOVER</p>
-            <a href="search.php">Browse Venues</a>
-            <a href="search.php">Wedding Venues</a>
-            <a href="search.php">Banquet Halls</a>
-            <a href="search.php">Conference Halls</a>
-          
-          </div>
-
-          <div class="footer-nav-links">
-            <p>FOR OWNERS</p> 
-            
-                <a href="list.php">List Your Venue</a>
-                <a href="ownerdashboard.php">Owner Dashboard</a>
-                <a href="mybookings.php">My Bookings</a>
-              
-          </div>
-        
-        </div>
-        <div id="footer-bottom">
-            <p>@ 2026 VenueVista. All rights reserved.</p>
-
-            <div class="footer-links">
-            <a href="">Privacy Policy</a>
-            <a href="">Terms of Service</a>
-            <a href="">Contact</a>
-            </div>
-          </div>
-      </div>
-    </section> 
+  <?php require __DIR__ . '/partials/account-footer.php'; ?>
 </body>
 </html>

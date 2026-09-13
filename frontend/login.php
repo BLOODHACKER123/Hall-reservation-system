@@ -76,9 +76,10 @@ header('Content-Type: text/plain; charset=utf-8');
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
   <link rel="icon" type="image/x-icon" href="images/venuevista-logo.png" />
   <link rel="stylesheet" href="common.css">
+  <script src="navigation.js" defer></script>
   <link rel="stylesheet" href="signup.css">
 </head>
-<body>
+<body class="account-page">
   <section id="navigation-section">
     <div id="container">
       <div id="nav-bar">
@@ -120,5 +121,6 @@ header('Content-Type: text/plain; charset=utf-8');
       <p class="signup">Don't have an account? <a href="signup.php">Create one</a></p>
     </section>
   </main>
+  <?php require __DIR__ . '/partials/account-footer.php'; ?>
 </body>
 </html>

@@ -66,6 +66,7 @@ try {
 	<title>Browse Venues | VenueVista</title>
   <link rel="icon" type="image/x-icon" href="images/venuevista-logo.png" />
   <link rel="stylesheet" href="common.css">
+  <script src="navigation.js" defer></script>
   <link rel="stylesheet" href="search.css">
 	
 </head>

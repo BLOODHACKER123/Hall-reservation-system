@@ -8,12 +8,6 @@
   --listing-line: #e9e3de;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
 
 .page-content {
   width: min(100% - 40px, 750px);
@@ -45,14 +39,13 @@
 }
 
 .steps {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: start;
   gap: 10px;
   margin: 15px;
   margin-bottom: 30px;
   list-style: none;
-  overflow: hidden;
   padding: 0;
 }
 
@@ -60,6 +53,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   max-width: 100%;
   color: #92766e;
   font: 200 0.75rem Inter,sans-serif;
@@ -78,6 +72,7 @@
   place-items: center;
   width: 20px;
   height: 20px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: #f1efec;
   color: #92766e;
@@ -190,6 +185,7 @@
 }
 
 .form-step fieldset {
+  min-width: 0;
   margin: 0 0 30px;
   padding: 0;
   border: 0;
@@ -198,7 +194,7 @@
 .type-options,
 .choice-pills {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 0;
 }
@@ -254,8 +250,8 @@
   cursor: pointer;
 }
 
-.form-actions button:hover{
-  border: 2px solid #b18c86;
+.form-actions button:not(:disabled):hover {
+  border-color: #b18c86;
 }
 
 .form-actions .next,
@@ -266,13 +262,12 @@
 }
 
 .form-actions .previous:not(:disabled) {
-  min-width: 196px;
-  min-height: 68px;
+  min-height: 45px;
   padding: 0 28px;
   border-color: #e5ddd7;
   background: #ffffff;
   color: #2e2b29;
-  font-size: 20px;
+  font-size: 0.875rem;
 }
 
 .form-actions .previous:not(:disabled):hover {
@@ -285,11 +280,53 @@
   opacity: .62;
 }
 
+.two-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.two-fields > div {
+  min-width: 0;
+}
+
+.inline-field {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+}
+
+.inline-field input {
+  flex: 1;
+}
+
+.summary p {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 20px;
+}
+
+.summary b {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.type-options input:focus-visible + span,
+.choice-pills input:focus-visible + span {
+  outline: 2px solid var(--listing-rose);
+  outline-offset: 3px;
+}
+
 @media (max-width: 760px) {
 
   .page-content {
     width: min(100% - 28px, 560px);
     padding-top: 30px;
+  }
+
+  .page-content > h1 {
+    font-size: clamp(2rem, 8vw, 3rem);
   }
 
   .page-content > .intro {
@@ -306,6 +343,56 @@
   .choice-pills {
     grid-template-columns: 1fr;
   }
+
+  .steps {
+    margin-inline: 0;
+    gap: 8px;
+  }
+
+  .steps li {
+    flex-direction: column;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .steps li:not(:last-child)::after {
+    display: none;
+  }
+
+  .steps strong {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .listing-form input,
+  .listing-form textarea {
+    font-size: 16px;
+  }
 }
 
+@media (max-width: 480px) {
+  .two-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .form-actions,
+  .inline-field {
+    flex-direction: column;
+  }
+
+  .form-actions button,
+  .inline-field .add-button {
+    width: 100%;
+  }
+
+  .inline-field {
+    margin-bottom: 30px;
+  }
+
+  .inline-field input {
+    flex: auto;
+    margin-bottom: 0;
+  }
+}
 

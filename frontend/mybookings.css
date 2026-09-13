@@ -8,18 +8,11 @@
   --booking-line: #eee7e2;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
 
 .page-area {
   display: grid;
-  min-height: 650px;
   place-items: center;
-  padding: 52px 20px 76px;
+  padding: 48px 20px;
   background: var(--booking-bg);
 }
 
@@ -159,40 +152,12 @@
 }
 
 @media (max-width: 760px) {
-  #navigation-section #nav-bar {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    padding: 18px 0;
-    text-align: center;
-  }
-
-  #navigation-section #logo,
-  #navigation-section #nav-links,
-  #navigation-section #nav-buttons {
-    justify-self: center;
-  }
-
-  #navigation-section #logo {
-    justify-content: center;
-  }
-
-  #navigation-section #nav-links {
-    gap: 10px 18px;
-  }
-
-  #navigation-section #nav-links a {
-    font-size: 14px;
-  }
-
-  #navigation-section #list-venue-button,
-  #navigation-section #login-button {
-    padding: 9px 17px;
-    font-size: 14px;
+  #booking-email {
+    font-size: 16px;
   }
 
   .page-area {
-    min-height: 570px;
-    padding: 36px 14px 54px;
+    padding: 36px 16px;
   }
 
   .booking-card {

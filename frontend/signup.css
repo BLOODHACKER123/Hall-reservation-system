@@ -9,12 +9,6 @@
   --signup-line: #e9e2dc;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
 #image-logo{
   width: 40px;
   height: 40px;
@@ -34,8 +28,7 @@
 .login-area {
   display: grid;
   place-items: center;
-  min-height: 670px;
-  padding: 54px 20px 78px;
+  padding: 48px 20px;
   background: var(--signup-bg);
 }
 
@@ -114,6 +107,8 @@
 
 .password-label {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
   align-items: center;
   justify-content: space-between;
 }
@@ -173,5 +168,20 @@
   text-decoration: none;
 }
 
+@media (max-width: 760px) {
+  .login-area {
+    padding: 36px 16px;
+  }
 
-  
+  .login-card {
+    min-width: 0;
+    padding: 32px 24px;
+    border-radius: 24px;
+  }
+
+  .login-card select,
+  .login-card form > input:not([type="checkbox"]) {
+    font-size: 16px;
+  }
+}
+

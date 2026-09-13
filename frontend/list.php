@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
   <link rel="icon" type="image/x-icon" href="images/venuevista-logo.png" />
   <link rel="stylesheet" href="common.css">
+  <script src="navigation.js" defer></script>
   <link rel="stylesheet" href="list.css">
   <script src="list.js" defer></script>
 </head>

@@ -4,7 +4,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
+  width: min(100%, 540px);
+  min-width: 0;
+  padding: 20px 0;
 }
 
 #dashboard-container {
@@ -12,8 +14,8 @@
   flex-direction: column;
   align-items: center;
   padding: 20px;
-  width: 500px;
-  height: 350px;
+  width: min(100%, 500px);
+  min-height: 350px;
   background-color: #FEFDFC;
   box-shadow: 0 0 10px rgba(71, 66, 66, 0.1);
   border-radius: 20px;
@@ -28,12 +30,6 @@
   --dashboard-bg: #faf8f5;
   --dashboard-field: #f2f0ed;
   --dashboard-line: #eee7e2;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
 }
 
 
@@ -153,6 +149,10 @@
   }
 
   #dashboard-container p {
+    font-size: 16px;
+  }
+
+  #owner-email {
     font-size: 16px;
   }
 }
