@@ -27,6 +27,5 @@ try {
     die("Database connection failed: " . $error->getMessage());
 }
 
-echo "Database connection successful!";
 
 ?>

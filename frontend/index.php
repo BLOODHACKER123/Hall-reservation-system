@@ -1,17 +1,64 @@
 <?php
- require_once __DIR__ . '/../backend/config/database.php';
+session_start();
+require_once __DIR__ . '/../backend/config/database.php';
 
-  ini_set('display_errors', 1);
+ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-  try {
-      $stmt = $pdo->query("SELECT DISTINCT venue_type as name FROM halls WHERE venue_type IS NOT NULL AND venue_type != '' ORDER BY venue_type ASC");
-      $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
-  } catch (PDOException $e) {
-      
-      $categories = []; 
-  }
+// 1. Fetch Categories for the Search Dropdown
+try {
+    $stmt = $pdo->query("SELECT DISTINCT venue_type as name FROM halls WHERE venue_type IS NOT NULL AND venue_type != '' ORDER BY venue_type ASC");
+    $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (PDOException $e) {
+    $categories = []; 
+}
+
+// 2. Fetch 3 Featured Venues
+try {
+    $featured_stmt = $pdo->query("
+        SELECT h.*, hi.image_url 
+        FROM halls h
+        LEFT JOIN hall_images hi ON h.hall_id = hi.hall_id AND hi.is_primary = 1
+        WHERE h.venue_type IS NOT NULL
+        ORDER BY h.hall_id DESC 
+        LIMIT 3
+    ");
+    $featured_venues = $featured_stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $featured_venues = [];
+}
+
+// 3. Fetch Venue Types for the Category Cards
+try {
+    $type_stmt = $pdo->query("
+        SELECT h.venue_type, MAX(hi.image_url) as image_url
+        FROM halls h
+        LEFT JOIN hall_images hi ON h.hall_id = hi.hall_id
+        WHERE h.venue_type IS NOT NULL AND h.venue_type != ''
+        GROUP BY h.venue_type
+        LIMIT 8
+    ");
+    $venue_type_cards = $type_stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $venue_type_cards = [];
+}
+
+// 4. Fetch Top 3 Popular Venue Types by Order/Reservation Count
+try {
+    $popular_stmt = $pdo->query("
+        SELECT h.venue_type, COUNT(r.reservation_id) AS order_count
+        FROM halls h
+        LEFT JOIN reservations r ON h.hall_id = r.hall_id
+        WHERE h.venue_type IS NOT NULL AND h.venue_type != ''
+        GROUP BY h.venue_type
+        ORDER BY order_count DESC, h.venue_type ASC
+        LIMIT 3
+    ");
+    $popular_categories = $popular_stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (PDOException $e) {
+    $popular_categories = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,19 +76,36 @@ error_reporting(E_ALL);
   </head>
   <body>
 
+    <!-- DYNAMIC NAVIGATION BAR -->
     <section id="navigation-section" class="home-navigation">
       <div id="container">
         <div id="nav-bar" class="site-nav">
           <a id="logo" href="index.php">VenueVista</a>
           <nav id="nav-links">
             <a href="search.php">Browse Venues</a>
-            <a href="list.php">List a Venue</a>
-            <a href="ownerdashboard.php">Owners Dashboard</a>
-            <a href="admin.php">Admin</a>
+            
+            <?php if (isset($_SESSION['user_type'])): ?>
+                <?php if ($_SESSION['user_type'] === 'Vendor'): ?>
+                    <a href="list.php">List a Venue</a>
+                    <a href="ownerdashboard.php">Owners Dashboard</a>
+                <?php elseif ($_SESSION['user_type'] === 'Admin'): ?>
+                    <a href="admin.php">Admin Dashboard</a>
+                <?php elseif ($_SESSION['user_type'] === 'Customer'): ?>
+                    <a href="mybookings.php">My Bookings</a>
+                <?php endif; ?>
+            <?php endif; ?>
           </nav>
+          
           <div id="nav-buttons">
-            <a id="list-venue-button" href="list.php">List a Venue</a>
-            <a id="login-button" href="loginchoice.php">Login</a>
+            <?php if (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'Vendor'): ?>
+                <a id="list-venue-button" href="list.php">List a Venue</a>
+            <?php endif; ?>
+            
+            <?php if(isset($_SESSION['user_id'])): ?>
+                <a id="login-button" href="../backend/config/logout.php">Logout</a>
+            <?php else: ?>
+                <a id="login-button" href="loginchoice.php">Login</a>
+            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -131,105 +195,43 @@ error_reporting(E_ALL);
         <a href="search.php">View All Venues →</a>
 
         <div id="featured-venue-cards">
-          <div class="featured-venue-card">
-            <div class="featured-venue-card-image">
-              <img
-                src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&auto=format&fit=crop&q=80"
-                alt="Venue 1"
-              />
-              <div class="hall-type-tag">Wedding Venue</div>
-              <div class="featured-tag">Featured</div>
-              <div class="rating-tag">★4.8</div>
-            </div>
+          <?php if (!empty($featured_venues)): ?>
+            <?php foreach ($featured_venues as $venue): ?>
+              <div class="featured-venue-card">
+                <div class="featured-venue-card-image">
+                  <?php 
+                    $imgSrc = !empty($venue['image_url']) ? $venue['image_url'] : 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&auto=format&fit=crop&q=80'; 
+                  ?>
+                  <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($venue['name'] ?? 'Venue') ?>" />
+                  <div class="hall-type-tag"><?= htmlspecialchars($venue['venue_type'] ?? 'Venue') ?></div>
+                  <div class="featured-tag">Featured</div>
+                  <div class="rating-tag">★4.8</div>
+                </div>
 
-            <div class="location-details">
-              <p>The Grand Rosewood Ballroom</p>
-              <p class="cost">$8,500/day</p>
-              <br />
-              <p>
-                <i class="fa-solid fa-location-dot" aria-hidden="true"></i> New
-                York, NY
-              </p>
-            </div>
-            <div class="hall-details">
-              <p>
-                <i class="fa-solid fa-user-group" aria-hidden="true"></i>
-                100-600 guest
-              </p>
-              <p>
-                <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
-                reviews
-              </p>
-              <a href="search.php">View Details → </a>
-            </div>
-          </div>
-
-          <div class="featured-venue-card">
-            <div class="featured-venue-card-image">
-              <img
-                src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80"
-                alt="Venue 1"
-              />
-              <div class="hall-type-tag">Rooftop Venue</div>
-              <div class="featured-tag">Featured</div>
-              <div class="rating-tag">★4.7</div>
-            </div>
-
-            <div class="location-details">
-              <p>Skyline Garden Terrace</p>
-              <p class="cost">$5,500/day</p>
-              <br />
-              <p>
-                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-                Chicago,IL
-              </p>
-            </div>
-            <div class="hall-details">
-              <p>
-                <i class="fa-solid fa-user-group" aria-hidden="true"></i> 50-250
-                guest
-              </p>
-              <p>
-                <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
-                reviews
-              </p>
-              <a href="search.php">View Details → </a>
-            </div>
-          </div>
-
-          <div class="featured-venue-card">
-            <div class="featured-venue-card-image">
-              <img
-                src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1200&auto=format&fit=crop&q=80"
-                alt="Venue 1"
-              />
-              <div class="hall-type-tag">Garden Venue</div>
-              <div class="featured-tag">Featured</div>
-              <div class="rating-tag">★4.9</div>
-            </div>
-
-            <div class="location-details">
-              <p>The Verdant Garden Estate</p>
-              <p class="cost">$6,500/day</p>
-              <br />
-              <p>
-                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-                NAPA,CA
-              </p>
-            </div>
-            <div class="hall-details">
-              <p>
-                <i class="fa-solid fa-user-group" aria-hidden="true"></i> 30-300
-                guest
-              </p>
-              <p>
-                <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 128
-                reviews
-              </p>
-              <a href="search.php">View Details → </a>
-            </div>
-          </div>
-          
+                <div class="location-details">
+                  <p><?= htmlspecialchars($venue['name'] ?? 'Unnamed Venue') ?></p>
+                  <p class="cost">$<?= number_format($venue['price'] ?? $venue['base_price_per_hour'] ?? 0, 2) ?>/day</p>
+                  <br />
+                  <p>
+                    <i class="fa-solid fa-location-dot" aria-hidden="true"></i> 
+                    <?= htmlspecialchars($venue['district'] ?? 'Unknown Location') ?>
+                  </p>
+                </div>
+                <div class="hall-details">
+                  <p>
+                    <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+                    Up to <?= htmlspecialchars($venue['capacity'] ?? 'N/A') ?> guests
+                  </p>
+                  <p>
+                    <i class="fa-solid fa-comment-dots" aria-hidden="true"></i> 0 reviews
+                  </p>
+                  <a href="search.php?hall_id=<?= urlencode($venue['hall_id'] ?? '') ?>">View Details → </a>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <p>No featured venues available at the moment.</p>
+          <?php endif; ?>
         </div>
       </div>
     </section>
@@ -240,55 +242,19 @@ error_reporting(E_ALL);
         <h1>Browse by Venue Type</h1>
 
         <div id="venue-type-cards">
-          <a class="venue-type-card" href="search.php">
-           
-            <img
-              src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&auto=format&fit=crop&q=60"
-              alt="Banquet hall"/>
-             <p>Banquet Hall</p>
-          </a>
-          <a class="venue-type-card" href="search.php">
-            <img
-              src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=400&auto=format&fit=crop&q=60"
-              alt="Wedding venue"/>
-            <p>Wedding Venue</p>
-          </a>
-          <a class="venue-type-card" href="search.php">
-            <img
-              src="https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&auto=format&fit=crop&q=60"
-              alt="Conference venue"/>
-            <p>Conference Venue</p>
-          </a>
-          <a class="venue-type-card" href="search.php">
-            <img
-              src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&auto=format&fit=crop&q=60"
-              alt="Garden venue"/>
-            <p>Garden Venue</p>
-          </a>
-          <a class="venue-type-card" href="search.php">
-            <img
-              src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&auto=format&fit=crop&q=60"
-              alt="Rooftop venue" />
-            <p>Rooftop Venue</p>
-          </a>
-          <a class="venue-type-card" href="search.php">
-            <img
-              src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&auto=format&fit=crop&q=60"
-              alt="Hotel venue"/>
-            <p>Hotel Venue</p>
-          </a>
-          <a class="venue-type-card" href="search.php">
-            <img
-              src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&auto=format&fit=crop&q=60"
-              alt="Auditorium"/>
-            <p>Auditorium</p>
-          </a>
-          <a class="venue-type-card" href="search.php">
-            <img
-              src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&auto=format&fit=crop&q=60"
-              alt="Meeting space"/>
-            <p>Meeting Space</p>
-          </a>
+          <?php if (!empty($venue_type_cards)): ?>
+            <?php foreach ($venue_type_cards as $card): ?>
+              <a class="venue-type-card" href="search.php?venueType=<?= urlencode($card['venue_type']) ?>">
+                <?php 
+                  $cardImg = !empty($card['image_url']) ? $card['image_url'] : 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&auto=format&fit=crop&q=60'; 
+                ?>
+                <img src="<?= htmlspecialchars($cardImg) ?>" alt="<?= htmlspecialchars($card['venue_type']) ?>" />
+                <p><?= htmlspecialchars($card['venue_type']) ?></p>
+              </a>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <p>No categories available.</p>
+          <?php endif; ?>
         </div>
 
       </div>
@@ -346,14 +312,12 @@ error_reporting(E_ALL);
 
     <section id="list-venue-section">
       <div id="list-venue-body">
-
         <p>OWN A VENUE?</p>
         <p>List Your Space</p>
         <h1>Reach Thousands</h1>
         <p>Join hundreds of venue owners who trust VenueVista to
             connect them with the right clients.</p>
-        <a href="list.php">Start Listing Today →</a>
-
+        <a href="loginchoice.php">Start Listing Today →</a>
       </div>
     </section>
 
@@ -363,45 +327,43 @@ error_reporting(E_ALL);
 
           <div id="footer-details-block">
             <h1>VenueVista</h1>
-            <p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells 
-              a story.</p>
-
+            <p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells a story.</p>
             <div class="social-links">
               <a href="">INSTAGRAM</a>
               <a href="">PINTEREST</a>
               <a href="">FACEBOOK</a>
             </div>
           </div>
-        
-          <div class="footer-nav-links">
 
+          <!-- DYNAMIC DISCOVER SECTION -->
+          <div class="footer-nav-links">
             <p>DISCOVER</p>
             <a href="search.php">Browse Venues</a>
-            <a href="search.php">Wedding Venues</a>
-            <a href="search.php">Banquet Halls</a>
-            <a href="search.php">Conference Halls</a>
-          
+            <?php foreach ($popular_categories as $pop_category): ?>
+              <a href="search.php?venueType=<?= urlencode($pop_category) ?>">
+                <?= htmlspecialchars($pop_category) ?>
+              </a>
+            <?php endforeach; ?>
           </div>
 
           <div class="footer-nav-links">
-            <p>FOR OWNERS</p> 
-            
-                <a href="list.php">List Your Venue</a>
-                <a href="ownerdashboard.php">Owner Dashboard</a>
-                <a href="mybookings.php">My Bookings</a>
-              
+            <p>FOR OWNERS</p>
+            <a href="list.php">List Your Venue</a>
+            <a href="ownerdashboard.php">Owner Dashboard</a>
+            <a href="mybookings.php">My Bookings</a>
           </div>
-        
-        </div>
-        <div id="footer-bottom">
-            <p>@ 2026 VenueVista. All rights reserved.</p>
 
-            <div class="footer-links">
+        </div>
+
+        <div id="footer-bottom">
+          <p>@ 2026 VenueVista. All rights reserved.</p>
+          <div class="footer-links">
             <a href="">Privacy Policy</a>
             <a href="">Terms of Service</a>
             <a href="">Contact</a>
-            </div>
           </div>
+        </div>
+
       </div>
     </section>
 

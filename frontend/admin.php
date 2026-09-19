@@ -1,10 +1,57 @@
 <?php
+session_start();
 require_once __DIR__ . '/../backend/config/database.php';
+
+// Redirect to login if user is not authenticated
+if (!isset($_SESSION['user_id'])) {
+    header("Location: loginchoice.php");
+    exit;
+}
+
+// Kick out anyone who is not an Admin
+if ($_SESSION['user_type'] !== 'Admin') {
+    header("Location: index.php");
+    exit;
+}
 
 // Force errors to display
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
+// Ensure strict PDO errors are active
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+$admin_msg = '';
+
+// Handle Create New Admin
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
+    $first_name = trim($_POST['first_name'] ?? '');
+    $last_name = trim($_POST['last_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $password =$_POST['password'] ?? '';
+
+    if (!empty($first_name) && !empty($last_name) && !empty($email) && !empty($phone) && !empty($password)) {
+        try {
+            $pdo->beginTransaction();
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            
+            $stmt =$pdo->prepare("INSERT INTO users (first_name, last_name, email, phone, password, user_type, is_active) VALUES (?, ?, ?, ?, ?, 'Admin', 1)");
+            $stmt->execute([$first_name, $last_name,$email, $phone,$hashed_password]);
+            $new_admin_id =$pdo->lastInsertId();
+            
+            $stmt2 =$pdo->prepare("INSERT INTO admins (user_id, admin_level, role) VALUES (?, 1, 'System Admin')");
+            $stmt2->execute([$new_admin_id]);
+            
+            $pdo->commit();$admin_msg = "<p style='color: green; font-weight: bold; margin-bottom: 15px;'>New admin created successfully!</p>";
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();$admin_msg = "<p style='color: red; font-weight: bold; margin-bottom: 15px;'>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
+        }
+    } else {
+        $admin_msg = "<p style='color: red; font-weight: bold; margin-bottom: 15px;'>Please fill in all required fields.</p>";
+    }
+}
 
 // Handle Approve / Reject Actions for Venues
 if (isset($_GET['action']) && isset($_GET['id'])) {
@@ -69,7 +116,18 @@ try {
     ");
     $customers_list =$customers_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-} catch (PDOException $e) {$pending_list = $approved_list =$bookings_list = $vendors_list =$customers_list = [];
+    // 6. All Admins
+    $admins_stmt =$pdo->query("
+        SELECT u.user_id, u.first_name, u.last_name, u.email, u.phone, u.created_at, a.role 
+        FROM users u 
+        JOIN admins a ON u.user_id = a.user_id 
+        WHERE u.user_type = 'Admin' 
+        ORDER BY u.created_at ASC
+    ");
+    $admins_list =$admins_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (PDOException $e) {
+    $pending_list =$approved_list =$bookings_list =$vendors_list =$customers_list =$admins_list = [];
 }
 ?>
 
@@ -86,23 +144,41 @@ try {
 </head>
 
 <body>
+  
+  <!-- DYNAMIC NAVIGATION BAR -->
   <section id="navigation-section">
-      <div id="container">
-        <div id="nav-bar">
-          <a id="logo" href="index.php">VenueVista</a>
-          <nav id="nav-links">
-            <a href="search.php">Browse Venues</a>
-            <a href="list.php">List a Venue</a>
-            <a href="ownerdashboard.php">Owners Dashboard</a>
-            <a href="admin.php" class="active">Admin</a>
-          </nav>
-          <div id="nav-buttons">
-            <a id="list-venue-button" href="list.php">List a Venue</a>
-            <a id="login-button" href="loginchoice.php">Login</a>
-          </div>
+    <div id="container">
+      <div id="nav-bar">
+        <a id="logo" href="index.php">VenueVista</a>
+        <nav id="nav-links">
+          <a href="search.php">Browse Venues</a>
+          
+          <?php if (isset($_SESSION['user_type'])): ?>
+              <?php if ($_SESSION['user_type'] === 'Vendor'): ?>
+                  <a href="list.php">List a Venue</a>
+                  <a href="ownerdashboard.php">Owners Dashboard</a>
+              <?php elseif ($_SESSION['user_type'] === 'Admin'): ?>
+                  <a href="admin.php" class="active">Admin Dashboard</a>
+              <?php elseif ($_SESSION['user_type'] === 'Customer'): ?>
+                  <a href="mybookings.php">My Bookings</a>
+              <?php endif; ?>
+          <?php endif; ?>
+        </nav>
+        
+        <div id="nav-buttons">
+          <?php if (!isset($_SESSION['user_type']) ||$_SESSION['user_type'] !== 'Admin'): ?>
+              <a id="list-venue-button" href="list.php">List a Venue</a>
+          <?php endif; ?>
+          
+          <?php if(isset($_SESSION['user_id'])): ?>
+              <a id="login-button" href="../backend/config/logout.php">Logout</a>
+          <?php else: ?>
+              <a id="login-button" href="loginchoice.php">Login</a>
+          <?php endif; ?>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
  
   <main class="admin-content">
@@ -119,6 +195,7 @@ try {
       <a class="tab-link" href="#vendors" data-target="panel-vendors">Vendors</a>
       <a class="tab-link" href="#customers" data-target="panel-customers">Customers</a>
       <a class="tab-link" href="#all-bookings" data-target="panel-bookings">Bookings</a>
+      <a class="tab-link" href="#system-admins" data-target="panel-admins">System Admins</a>
     </nav>
 
     <!-- 1. Overview Panel -->
@@ -140,7 +217,7 @@ try {
           <?php foreach ($pending_list as$venue): ?>
             <article>
               <h3><?= htmlspecialchars($venue['name']) ?></h3>
-              <p><strong>Type:</strong> <?= htmlspecialchars($venue['venue_type']) ?> \vert{} <strong>Location:</strong> <?= htmlspecialchars($venue['district']) ?></p>
+              <p><strong>Type:</strong> <?= htmlspecialchars($venue['venue_type']) ?> | <strong>Location:</strong> <?= htmlspecialchars($venue['district']) ?></p>
               
               <details>
                   <summary><strong>View Full Details</strong></summary>
@@ -182,7 +259,7 @@ try {
           <?php foreach ($approved_list as$venue): ?>
             <article>
               <h3><?= htmlspecialchars($venue['name']) ?></h3>
-              <p><strong>Type:</strong> <?= htmlspecialchars($venue['venue_type']) ?> \vert{} <strong>Location:</strong> <?= htmlspecialchars($venue['district']) ?></p>
+              <p><strong>Type:</strong> <?= htmlspecialchars($venue['venue_type']) ?> | <strong>Location:</strong> <?= htmlspecialchars($venue['district']) ?></p>
               
               <details>
                   <summary><strong>View Full Details</strong></summary>
@@ -214,7 +291,7 @@ try {
           <?php foreach ($vendors_list as$vendor): ?>
             <article>
               <h3><?= htmlspecialchars($vendor['first_name'] . ' ' .$vendor['last_name']) ?></h3>
-              <p><strong>Business:</strong> <?= htmlspecialchars($vendor['business_name']) ?> \vert{} <strong>Total Venues:</strong> <?= htmlspecialchars($vendor['venue_count']) ?></p>
+              <p><strong>Business:</strong> <?= htmlspecialchars($vendor['business_name']) ?> | <strong>Total Venues:</strong> <?= htmlspecialchars($vendor['venue_count']) ?></p>
               
               <details>
                   <summary><strong>View Vendor Details</strong></summary>
@@ -242,7 +319,7 @@ try {
           <?php foreach ($customers_list as$customer): ?>
             <article>
               <h3><?= htmlspecialchars($customer['first_name'] . ' ' .$customer['last_name']) ?></h3>
-              <p><strong>Total Bookings:</strong> <?= htmlspecialchars($customer['booking_count']) ?> \vert{} <strong>Loyalty Points:</strong> <?= htmlspecialchars($customer['loyalty_points']) ?></p>
+              <p><strong>Total Bookings:</strong> <?= htmlspecialchars($customer['booking_count']) ?> | <strong>Loyalty Points:</strong> <?= htmlspecialchars($customer['loyalty_points']) ?></p>
               
               <details>
                   <summary><strong>View Customer Details</strong></summary>
@@ -269,7 +346,7 @@ try {
           <?php foreach ($bookings_list as$booking): ?>
             <article>
               <h3>Order #<?= $booking['reservation_id'] ?> - <?= htmlspecialchars($booking['hall_name']) ?></h3>
-              <p><strong>Customer:</strong> <?= htmlspecialchars($booking['first_name'] . ' ' . $booking['last_name']) ?> \vert{} <strong>Status:</strong> <?= htmlspecialchars($booking['status']) ?></p>
+              <p><strong>Customer:</strong> <?= htmlspecialchars($booking['first_name'] . ' ' . $booking['last_name']) ?> | <strong>Status:</strong> <?= htmlspecialchars($booking['status']) ?></p>
               
               <details>
                   <summary><strong>View Order Details</strong></summary>
@@ -293,55 +370,130 @@ try {
       <?php endif; ?>
     </section>
 
+    <!-- 7. System Admins Panel -->
+    <section class="admin-panel" id="panel-admins" style="display: none;">
+      <h2>Manage System Admins</h2>
+      
+      <!-- List Current Admins -->
+      <div style="margin-bottom: 40px;">
+          <?php if (!empty($admins_list)): ?>
+              <?php foreach ($admins_list as$admin): ?>
+                <article>
+                  <h3><?= htmlspecialchars($admin['first_name'] . ' ' .$admin['last_name']) ?></h3>
+                  <p><strong>Email:</strong> <?= htmlspecialchars($admin['email']) ?> | <strong>Phone:</strong> <?= htmlspecialchars($admin['phone']) ?></p>
+                  <p><strong>Role:</strong> <?= htmlspecialchars($admin['role']) ?> | <strong>Joined:</strong> <?= date('F j, Y', strtotime($admin['created_at'])) ?></p>
+                  <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
+                </article>
+              <?php endforeach; ?>
+          <?php else: ?>
+              <p>No other admins found.</p>
+          <?php endif; ?>
+      </div>
+
+      <!-- Form to Create New Admin -->
+      <h3>Create New Admin Account</h3>
+      <?= $admin_msg ?>
+      <form action="admin.php#system-admins" method="POST" style="max-width: 400px; display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+          <input type="hidden" name="create_admin" value="1">
+          <input type="text" name="first_name" placeholder="First Name" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          <input type="text" name="last_name" placeholder="Last Name" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          <input type="email" name="email" placeholder="Email Address" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          <input type="text" name="phone" placeholder="Phone Number (e.g. +9477...)" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          <input type="password" name="password" placeholder="Secure Password" required minlength="8" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          <button type="submit" class="filter-button" style="padding: 10px 20px; cursor: pointer;">Create Admin</button>
+      </form>
+    </section>
+
   </main>
 
-  <section id="footer-section">
-      <div id="footer-body">
-        <div id="footer-top">
+      <section id="footer-section">
 
-          <div id="footer-details-block">
-            <h1>VenueVista</h1>
-            <p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells 
-              a story.</p>
+<div id="footer-body">
 
-            <div class="social-links">
-              <a href="">INSTAGRAM</a>
-              <a href="">PINTEREST</a>
-              <a href="">FACEBOOK</a>
-            </div>
-          </div>
-        
-          <div class="footer-nav-links">
+<div id="footer-top">
 
-            <p>DISCOVER</p>
-            <a href="search.php">Browse Venues</a>
-            <a href="search.php">Wedding Venues</a>
-            <a href="search.php">Banquet Halls</a>
-            <a href="search.php">Conference Halls</a>
-          
-          </div>
 
-          <div class="footer-nav-links">
-            <p>FOR OWNERS</p> 
-            
-                <a href="list.php">List Your Venue</a>
-                <a href="ownerdashboard.php">Owner Dashboard</a>
-                <a href="mybookings.php">My Bookings</a>
-              
-          </div>
-        
-        </div>
-        <div id="footer-bottom">
-            <p>@ 2026 VenueVista. All rights reserved.</p>
 
-            <div class="footer-links">
-            <a href="">Privacy Policy</a>
-            <a href="">Terms of Service</a>
-            <a href="">Contact</a>
-            </div>
-          </div>
-      </div>
-    </section>    
+<div id="footer-details-block">
+
+<h1>VenueVista</h1>
+
+<p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells
+
+a story.</p>
+
+
+
+<div class="social-links">
+
+<a href="">INSTAGRAM</a>
+
+<a href="">PINTEREST</a>
+
+<a href="">FACEBOOK</a>
+
+</div>
+
+</div>
+
+
+<div class="footer-nav-links">
+
+
+
+<p>DISCOVER</p>
+
+<a href="search.php">Browse Venues</a>
+
+<a href="search.php">Wedding Venues</a>
+
+<a href="search.php">Banquet Halls</a>
+
+<a href="search.php">Conference Halls</a>
+
+
+</div>
+
+
+
+<div class="footer-nav-links">
+
+<p>FOR OWNERS</p>
+
+
+<a href="list.php">List Your Venue</a>
+
+<a href="ownerdashboard.php">Owner Dashboard</a>
+
+<a href="mybookings.php">My Bookings</a>
+
+
+</div>
+
+
+</div>
+
+<div id="footer-bottom">
+
+<p>@ 2026 VenueVista. All rights reserved.</p>
+
+
+
+<div class="footer-links">
+
+<a href="">Privacy Policy</a>
+
+<a href="">Terms of Service</a>
+
+<a href="">Contact</a>
+
+</div>
+
+</div>
+
+</div>
+
+</section>   
 
     <!-- Logic for Tabs -->
     <script>

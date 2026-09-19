@@ -1,90 +1,82 @@
 <?php
-if($_SERVER['REQUEST_METHOD']==='POST'){
-   header('Content-Type: text/plain; charset=utf-8');
+session_start();
+require_once __DIR__ . '/../backend/config/database.php';
 
-  foreach(['name','email','role','password','confirm_password'] as $field) {
-   if(isset($_POST[$field]) && !is_string($_POST[$field])){
-      http_response_code(400);
-      exit('Invalid form data.');
-   }
-  }
+$error_message = '';
+$success_message = '';
 
-    $name=trim($_POST['name']?? '');
-    $email=trim($_POST['email']?? '');
-    $role=$_POST['role']?? '';
-    $password=$_POST['password']?? '';
-    $confirm_password=$_POST['confirm_password']?? '';
+$name = $_POST['name'] ?? '';
+$email = $_POST['email'] ?? '';
+$phone = $_POST['phone'] ?? '';
+$role = $_POST['role'] ?? 'customer';
 
-$errors=[];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
 
-    if ($name === '') {
-            $errors[] = 'Full name is required.';
+    if (empty($name) || empty($email) || empty($phone) || empty($password)) {
+        $error_message = 'All fields are required.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error_message = 'Please enter a valid email address.';
+    } elseif (strlen($password) < 8) {
+        $error_message = 'Password must be at least 8 characters long.';
+    } elseif ($password !== $confirm_password) {
+        $error_message = 'Passwords do not match.';
+    } elseif (!in_array($role, ['customer', 'owner'], true)) {
+        $error_message = 'Invalid account type selected.';
+    } else {
+        try {
+            $pdo->beginTransaction();
+
+            // Check if email or phone already exists
+            $check = $pdo->prepare('SELECT user_id FROM users WHERE email = :email OR phone = :phone LIMIT 1');
+            $check->execute(['email' => $email, 'phone' => $phone]);
+            if ($check->fetch()) {
+                throw new Exception('An account with this email or phone number already exists.');
+            }
+
+            // Split Name into First and Last
+            $name_parts = explode(' ', trim($name), 2);
+            $first_name = $name_parts[0];
+            $last_name = $name_parts[1] ?? '';
+
+            // Map frontend role to database ENUM
+            $db_role = ($role === 'owner') ? 'Vendor' : 'Customer';
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+            // Insert Base User
+            $stmt = $pdo->prepare('INSERT INTO users (first_name, last_name, email, phone, password, user_type) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt->execute([$first_name, $last_name, $email, $phone, $passwordHash, $db_role]);
+            $user_id = $pdo->lastInsertId();
+
+            // Insert into respective subclass table
+            if ($db_role === 'Customer') {
+                $pdo->prepare('INSERT INTO customers (user_id) VALUES (?)')->execute([$user_id]);
+            } elseif ($db_role === 'Vendor') {
+                // Insert placeholder business details to satisfy DB constraints. Will be updated later.
+                $pdo->prepare('INSERT INTO vendors (user_id, business_name, business_address) VALUES (?, ?, ?)')
+                    ->execute([$user_id, $first_name . "'s Venue", 'Address pending']);
+            }
+
+            $pdo->commit();
+            
+            // Auto-login after signup
+            $_SESSION['user_id'] = $user_id;
+            $_SESSION['user_name'] = $first_name;
+            $_SESSION['user_type'] = $db_role;
+
+            // Redirect based on role
+            $redirect = ($db_role === 'Vendor') ? 'ownerdashboard.php' : 'index.php';
+            header("Location: " . $redirect);
+            exit;
+
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $error_message = $e->getMessage();
+        }
     }
-
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Enter a valid email address.';
-    }
-
-     if (!in_array($role, ['customer', 'owner'], true)) {
-        $errors[] = 'Select a valid account type.';
-    }
-
-     if (strlen($password) < 8) {
-        $errors[] = 'Password must be at least 8 bytes long.';
-    }
-
-     if ($password !== $confirm_password) {
-        $errors[] = 'Passwords do not match.';
-    }
-
-    if (!empty($errors)) {
-        http_response_code(422);
-        echo implode("\n", $errors);
-        exit;
-    }
- require_once __DIR__ . '/../backend/config/database.php';
-
- try{
-  $check=$pdo->prepare(
-    ' SELECT id FROM users
-      WHERE email=:email LIMIT 1'
-  );
-
-  $check->execute(['email'=> $email]);
-  if($check->fetch()){
-     http_response_code(409);
-     exit('This email is already registered.');
-  }
-
-   $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
-  $statement = $pdo->prepare(
-        'INSERT INTO users (name, email, password, role)
-         VALUES (:name, :email, :password, :role)'
-    );
-
-   $statement->execute([
-    'name' => $name,
-    'email' => $email,
-    'password' => $passwordHash,
-    'role' => $role
-   ]);
-
-   http_response_code(201);
-   echo 'Account created successfully!';
-
- } catch (PDOException $error) {
-    
-    if ((int) ($error->errorInfo[1] ?? 0) === 1062) {
-        http_response_code(409);
-        exit('This email is already registered.');
-    }
-
-    error_log($error->getMessage());
-
-    http_response_code(500);
-    echo 'Unable to create the account. Please try again.';
-}
 }
 ?>
 
@@ -114,7 +106,7 @@ $errors=[];
             <a href="admin.php">Admin</a>
           </nav>
           <div id="nav-buttons">
-            <a id="list-venue-button" href="list.php">List a Venue</a>
+    
             <a id="login-button" href="loginchoice.php">Login</a>
           </div>
         </div>
@@ -127,20 +119,36 @@ $errors=[];
       <p class="eyebrow">JOIN VENUEVISTA</p>
       <h1 id="login-title">Create your account</h1>
       <p class="subtitle">Manage your venues and reservations in one place.</p>
+
+      <?php if (!empty($error_message)): ?>
+          <div style="background: #fce8e6; color: #c5221f; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; text-align: center;">
+              <?= htmlspecialchars($error_message) ?>
+          </div>
+      <?php endif; ?>
+
       <form action="signup.php" method="post">
         <label for="role">Account type</label>
         <select id="role" name="role">
-          <option value="customer">Customer</option>
-          <option value="owner">Venue owner</option>
+          <option value="customer" <?= $role === 'customer' ? 'selected' : '' ?>>Customer</option>
+          <option value="owner" <?= $role === 'owner' ? 'selected' : '' ?>>Venue owner</option>
         </select>
+        
         <label for="name">Full name</label>
-        <input id="name" name="name" type="text" autocomplete="name" placeholder="Your full name" required>
+        <input id="name" name="name" type="text" autocomplete="name" placeholder="Your full name" value="<?= htmlspecialchars($name) ?>" required>
+        
+        <!-- Added Phone Field for Database Requirement -->
+        <label for="phone">Phone number</label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+94 77 123 4567" value="<?= htmlspecialchars($phone) ?>" required>
+        
         <label for="email">Email address</label>
-        <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+        <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" value="<?= htmlspecialchars($email) ?>" required>
+        
         <label for="password">Password</label>
         <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
+        
         <label for="confirm_password">Confirm password</label>
         <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" minlength="8" placeholder="Re-enter your password" required>
+        
         <button type="submit">Create account <span aria-hidden="true">→</span></button>
       </form>
       <p class="signup">Already have an account? <a href="login.php">Sign in</a></p>
@@ -148,45 +156,17 @@ $errors=[];
   </main>
   
   <section id="footer-section">
-    <div id="footer-body">
-      <div id="footer-top">
-        <div id="footer-details-block">
-          <h1>VenueVista</h1>
-          <p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells a story.</p>
-
-          <div class="social-links">
-            <a href="">INSTAGRAM</a>
-            <a href="">PINTEREST</a>
-            <a href="">FACEBOOK</a>
+      <div id="footer-body">
+        <div id="footer-top">
+          <div id="footer-details-block">
+            <h1>VenueVista</h1>
+            <p>Discover extraordinary spaces for life's most meaningful moments.</p>
           </div>
         </div>
-
-        <div class="footer-nav-links">
-          <p>DISCOVER</p>
-          <a href="search.php">Browse Venues</a>
-          <a href="search.php">Wedding Venues</a>
-          <a href="search.php">Banquet Halls</a>
-          <a href="search.php">Conference Halls</a>
-        </div>
-
-        <div class="footer-nav-links">
-          <p>FOR OWNERS</p>
-          <a href="list.php">List Your Venue</a>
-          <a href="ownerdashboard.php">Owner Dashboard</a>
-          <a href="mybookings.php">My Bookings</a>
+        <div id="footer-bottom">
+            <p>@ 2026 VenueVista. All rights reserved.</p>
         </div>
       </div>
-
-      <div id="footer-bottom">
-        <p>@ 2026 VenueVista. All rights reserved.</p>
-
-        <div class="footer-links">
-          <a href="">Privacy Policy</a>
-          <a href="">Terms of Service</a>
-          <a href="">Contact</a>
-        </div>
-      </div>
-    </div>
-  </section>
+    </section> 
 </body>
 </html>

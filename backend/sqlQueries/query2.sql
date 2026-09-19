@@ -14,3 +14,13 @@ INSERT INTO halls (vendor_id, name, description, district, address, capacity, en
 -- Add an image for the new hall
 INSERT INTO hall_images (hall_id, image_url, caption, is_primary) VALUES
 (2, 'https://images.unsplash.com/photo-1519225421980-715cb0215aed', 'Garden View', TRUE);
+
+CREATE TABLE hall_packages (
+    package_id INT AUTO_INCREMENT PRIMARY KEY,
+    hall_id INT NOT NULL,
+    package_name VARCHAR(150) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    description TEXT,
+    includes TEXT,
+    FOREIGN KEY (hall_id) REFERENCES halls(hall_id) ON DELETE CASCADE
+);

@@ -1,3 +1,18 @@
+<?php
+session_start();
+
+if (isset($_SESSION['user_id'])) {
+    $user_type = $_SESSION['user_type'] ?? '';
+    if ($user_type === 'Admin') {
+        header("Location: admin.php");
+    } elseif ($user_type === 'Vendor') {
+        header("Location: ownerdashboard.php");
+    } else {
+        header("Location: index.php");
+    }
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,23 +30,22 @@
 </head>
 <body class="account-page">
 
-<section id="navigation-section">
-      <div id="container">
-        <div id="nav-bar">
-          <a id="logo" href="index.php">VenueVista</a>
-          <nav id="nav-links">
-            <a href="search.php">Browse Venues</a>
-            <a href="list.php">List a Venue</a>
-            <a href="ownerdashboard.php">Owners Dashboard</a>
-            <a href="admin.php">Admin</a>
-          </nav>
-          <div id="nav-buttons">
-            <a id="list-venue-button" href="list.php">List a Venue</a>
-            <a id="login-button" href="loginchoice.php">Login</a>
-          </div>
+  <!-- DYNAMIC NAVIGATION BAR -->
+  <section id="navigation-section">
+    <div id="container">
+      <div id="nav-bar">
+        <a id="logo" href="index.php">VenueVista</a>
+        <nav id="nav-links">
+          <a href="search.php">Browse Venues</a>
+      
+        </nav>
+        
+        <div id="nav-buttons">
+              <a id="login-button" href="loginchoice.php">Login</a>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
   <main class="login-area">
     <section class="login-choice" aria-labelledby="login-title">
@@ -49,45 +63,16 @@
   </main>
 
  <section id="footer-section">
-    <div id="footer-body">
-      <div id="footer-top">
-        <div id="footer-details-block">
-          <h1>VenueVista</h1>
-          <p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells a story.</p>
-
-          <div class="social-links">
-            <a href="">INSTAGRAM</a>
-            <a href="">PINTEREST</a>
-            <a href="">FACEBOOK</a>
+      <div id="footer-body">
+        <div id="footer-top">
+          <div id="footer-details-block">
+            <h1>VenueVista</h1>
+            <p>Discover extraordinary spaces for life's most meaningful moments.</p>
           </div>
         </div>
-
-        <div class="footer-nav-links">
-          <p>DISCOVER</p>
-          <a href="search.php">Browse Venues</a>
-          <a href="search.php">Wedding Venues</a>
-          <a href="search.php">Banquet Halls</a>
-          <a href="search.php">Conference Halls</a>
-        </div>
-
-        <div class="footer-nav-links">
-          <p>FOR OWNERS</p>
-          <a href="list.php">List Your Venue</a>
-          <a href="ownerdashboard.php">Owner Dashboard</a>
-          <a href="mybookings.php">My Bookings</a>
+        <div id="footer-bottom">
+            <p>@ 2026 VenueVista. All rights reserved.</p>
         </div>
       </div>
-
-      <div id="footer-bottom">
-        <p>@ 2026 VenueVista. All rights reserved.</p>
-
-        <div class="footer-links">
-          <a href="">Privacy Policy</a>
-          <a href="">Terms of Service</a>
-          <a href="">Contact</a>
-        </div>
-      </div>
-    </div>
-  </section>
+    </section> 
 </body>
-</html>
