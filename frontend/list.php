@@ -125,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $name =$email = $venue_type =$city = $address =$description = $min_capacity =$max_capacity = $base_price =$venue_rules = $cancellation_policy = '';$selected_seating = $selected_catering =$selected_amenities = [];
             
-        } catch (Throwable $e) { // CATCHES EVERYTHING (Both PDO exceptions and PHP Fatal Errors)
+        } catch (Throwable $e) {
             if (isset($pdo) && $pdo->inTransaction()) {$pdo->rollBack();
             }
             $error_message = "SYSTEM CRASH PREVENTED: " . $e->getMessage() . " on line " . $e->getLine();
@@ -143,12 +143,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="stylesheet" href="common.css">
   <script src="navigation.js" defer></script>
   <link rel="stylesheet" href="list.css">
-  <script src="list.js" defer></script>
+ 
   
   <style>
       /* Real-time validation styles */
       input.valid-field, textarea.valid-field { border-color: #2e7d32 !important; outline-color: #2e7d32 !important; }
       input.invalid-field, textarea.invalid-field { border-color: #c62828 !important; outline-color: #c62828 !important; }
+      
+      /* In-page validation banner */
+      #js-error-banner {
+          display: none;
+          background: #fce8e6;
+          color: #c5221f;
+          padding: 15px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          text-align: center;
+          font-weight: 500;
+          border: 1px solid #f5c6cb;
+          animation: fadeIn 0.3s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to { opacity: 1; transform: translateY(0); }
+      }
   </style>
 </head>
 <body>
@@ -160,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <a id="logo" href="index.php">VenueVista</a>
           <nav id="nav-links">
             <a href="search.php">Browse Venues</a>
-            <a href="list.php">List a Venue</a>
+            <a href="list.php" class="active">List a Venue</a>
             
             <?php if (isset($_SESSION['user_type'])): ?>
                 <?php if ($_SESSION['user_type'] === 'Vendor'): ?>
@@ -192,6 +211,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <p class="eyebrow">JOIN VENUEVISTA</p>
     <h1>List Your Venue</h1>
     <p class="intro">Reach thousands of customers looking for the perfect space. It's free to list.</p>
+
+    <!-- In-page client-side dynamic error box -->
+    <div id="js-error-banner" role="alert" aria-live="assertive"></div>
 
     <?php if (!empty($success_message)): ?>
         <div style="background: #e6f4ea; color: #137333; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: 500;">
@@ -313,6 +335,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </form>
   </main>
+
   <section id="footer-section">
       <div id="footer-body">
         <div id="footer-top">
@@ -325,140 +348,167 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>@ 2026 VenueVista. All rights reserved.</p>
         </div>
       </div>
-    </section> 
+  </section> 
 
 <script>
-      document.addEventListener('DOMContentLoaded', function() {
-          // --- 1. MULTI-STEP FORM NAVIGATION ---
-          const steps = document.querySelectorAll('.form-step');
-          const indicators = document.querySelectorAll('.steps li');
-          const nextBtn = document.querySelector('.next');
-          const prevBtn = document.querySelector('.previous');
-          let currentStep = 0;
+   document.addEventListener('DOMContentLoaded', function() {
+    const steps = document.querySelectorAll('.form-step');
+    const indicators = document.querySelectorAll('.steps li');
+    const nextBtn = document.querySelector('.next');
+    const prevBtn = document.querySelector('.previous');
+    const errorBanner = document.getElementById('js-error-banner');
+    let currentStep = 0;
 
-          function updateFormView() {
-              steps.forEach((step, index) => {
-                  step.style.display = index === currentStep ? 'block' : 'none';
-              });
-              indicators.forEach((indicator, index) => {
-                  indicator.classList.toggle('current', index === currentStep);
-              });
-              
-              prevBtn.disabled = currentStep === 0;
-              
-              if (currentStep === steps.length - 1) {
-                  nextBtn.innerHTML = 'Submit Listing <span aria-hidden="true">→</span>';
-                  nextBtn.type = 'submit';
-                  updateLiveSummary(); // Populate summary before submitting
-              } else {
-                  nextBtn.innerHTML = 'Next <span aria-hidden="true">→</span>';
-                  nextBtn.type = 'button';
-              }
-          }
+    function showError(message) {
+        if (!errorBanner) return;
+        errorBanner.textContent = message;
+        errorBanner.style.display = 'block';
+        errorBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
-          nextBtn.addEventListener('click', (e) => {
-              if (currentStep < steps.length - 1) {
-                  e.preventDefault();
-                  
-                  // Optional: Force HTML5 validation on current step before moving
-                  const currentInputs = steps[currentStep].querySelectorAll('input[required], textarea[required]');
-                  let allValid = true;
-                  currentInputs.forEach(input => {
-                      if (!input.checkValidity()) {
-                          input.classList.add('invalid-field');
-                          allValid = false;
-                      }
-                  });
-                  
-                  if (allValid) {
-                      currentStep++;
-                      updateFormView();
-                  } else {
-                      alert("Please fill in all required fields marked with a red border before continuing.");
-                  }
-              }
-          });
+    function clearError() {
+        if (!errorBanner) return;
+        errorBanner.textContent = '';
+        errorBanner.style.display = 'none';
+    }
 
-          prevBtn.addEventListener('click', () => {
-              if (currentStep > 0) {
-                  currentStep--;
-                  updateFormView();
-              }
-          });
+    function updateFormView() {
+        // Enforce visible step display
+        steps.forEach((step, index) => {
+            step.style.display = index === currentStep ? 'block' : 'none';
+            step.classList.toggle('active-step', index === currentStep);
+        });
 
-          updateFormView(); // Initialize first view
+        // Sync step indicators with the active step
+        indicators.forEach((indicator, index) => {
+            indicator.classList.remove('current', 'completed');
+            if (index === currentStep) {
+                indicator.classList.add('current');
+            } else if (index < currentStep) {
+                indicator.classList.add('completed');
+            }
+        });
 
-          // --- 2. LIVE SUMMARY UPDATER ---
-          function updateLiveSummary() {
-              // Using optional chaining because summary elements might not exist in the DOM
-              const sumName = document.getElementById('summary-name');
-              const vName = document.getElementById('venue-name');
-              if (sumName && vName) sumName.textContent = vName.value || '—';
-              
-              const sumType = document.getElementById('summary-type');
-              const typeChecked = document.querySelector('input[name="venue-type"]:checked');
-              if (sumType) sumType.textContent = typeChecked ? typeChecked.value : '—';
-              
-              const sumLoc = document.getElementById('summary-location');
-              const city = document.getElementById('city');
-              if (sumLoc && city) sumLoc.textContent = city.value || '—';
-              
-              const sumCap = document.getElementById('summary-capacity');
-              const maxCap = document.getElementById('max-capacity');
-              if (sumCap && maxCap) sumCap.textContent = maxCap.value || '—';
-              
-              const sumPrice = document.getElementById('summary-price');
-              const basePrice = document.getElementById('base-price');
-              if (sumPrice && basePrice) sumPrice.textContent = basePrice.value ? '$' + basePrice.value : '$—';
-          }
+        prevBtn.disabled = currentStep === 0;
 
-          document.querySelector('.listing-form').addEventListener('input', updateLiveSummary);
-          document.querySelector('.listing-form').addEventListener('change', updateLiveSummary);
+        if (currentStep === steps.length - 1) {
+            nextBtn.innerHTML = 'Submit Listing <span aria-hidden="true">→</span>';
+            nextBtn.type = 'submit';
+        } else {
+            nextBtn.innerHTML = 'Next <span aria-hidden="true">→</span>';
+            nextBtn.type = 'button';
+        }
+    }
 
-          // --- 3. DYNAMIC PACKAGE CLONING ---
-          const addBtn = document.getElementById('add-package-btn');
-          const container = document.getElementById('package-container');
-          
-          if(addBtn && container) {
-              addBtn.addEventListener('click', function() {
-                  const newEntry = document.createElement('div');
-                  newEntry.className = 'package-entry';
-                  newEntry.style.marginTop = '20px';
-                  newEntry.style.paddingTop = '20px';
-                  newEntry.style.borderTop = '1px dashed #d4a5a54d';
-                  
-                  newEntry.innerHTML = `
-                    <input type="text" name="package_name[]" placeholder="Package name (e.g. Gold)">
-                    <div class="two-fields">
-                      <input type="number" name="package_price[]" placeholder="Price ($)">
-                      <input type="text" name="package_desc[]" placeholder="Short description">
-                    </div>
-                    <input type="text" name="package_includes[]" placeholder="Includes (comma-separated)">
-                    <button type="button" class="remove-pkg" style="background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; margin-top: 10px;">- Remove this package</button>
-                  `;
-                  
-                  container.insertBefore(newEntry, addBtn);
-                  
-                  newEntry.querySelector('.remove-pkg').addEventListener('click', function() {
-                      newEntry.remove();
-                  });
-              });
-          }
+    function validateCurrentStep() {
+        const currentSection = steps[currentStep];
+        const currentInputs = currentSection.querySelectorAll('input[required], textarea[required], select[required]');
+        let allValid = true;
+        let firstInvalidField = null;
 
-          // --- 4. REAL-TIME VALIDATION COLORS ---
-          const requiredInputs = document.querySelectorAll('input[required], textarea[required]');
-          requiredInputs.forEach(input => {
-              input.addEventListener('input', function() {
-                  if (this.checkValidity()) {
-                      this.classList.remove('invalid-field');
-                      this.classList.add('valid-field');
-                  } else {
-                      this.classList.remove('valid-field');
-                      this.classList.add('invalid-field');
-                  }
-              });
-          });
-      });
+        currentInputs.forEach(input => {
+            if (input.type === 'radio') {
+                const radioGroup = currentSection.querySelectorAll(`input[name="${input.name}"]`);
+                const isChecked = Array.from(radioGroup).some(r => r.checked);
+                if (!isChecked) {
+                    allValid = false;
+                    if (!firstInvalidField) firstInvalidField = radioGroup[0];
+                }
+            } else {
+                if (!input.checkValidity() || input.value.trim() === '') {
+                    input.classList.add('invalid-field');
+                    input.classList.remove('valid-field');
+                    allValid = false;
+                    if (!firstInvalidField) firstInvalidField = input;
+                } else {
+                    input.classList.remove('invalid-field');
+                    input.classList.add('valid-field');
+                }
+            }
+        });
+
+        if (!allValid) {
+            showError("Please fill in all required fields highlighted in red before proceeding.");
+            if (firstInvalidField) {
+                firstInvalidField.focus();
+            }
+            return false;
+        }
+
+        clearError();
+        return true;
+    }
+
+    // Intercept click on the Next/Submit control
+    nextBtn.addEventListener('click', function(e) {
+        if (currentStep < steps.length - 1) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (validateCurrentStep()) {
+                currentStep++;
+                updateFormView();
+            }
+        } else {
+            // Final submission validation
+            if (!validateCurrentStep()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+    });
+
+    prevBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (currentStep > 0) {
+            clearError();
+            currentStep--;
+            updateFormView();
+        }
+    });
+
+    // Real-time error clearing when user edits fields
+    document.querySelectorAll('.listing-form input, .listing-form textarea, .listing-form select').forEach(input => {
+        const resetValidation = function() {
+            if (this.checkValidity() && this.value.trim() !== '') {
+                this.classList.remove('invalid-field');
+                this.classList.add('valid-field');
+            }
+            clearError();
+        };
+        input.addEventListener('input', resetValidation);
+        input.addEventListener('change', resetValidation);
+    });
+
+    // Package cloning handler
+    const addBtn = document.getElementById('add-package-btn');
+    const packageContainer = document.getElementById('package-container');
+    if (addBtn && packageContainer) {
+        addBtn.addEventListener('click', function() {
+            const newEntry = document.createElement('div');
+            newEntry.className = 'package-entry';
+            newEntry.style.marginTop = '20px';
+            newEntry.style.paddingTop = '20px';
+            newEntry.style.borderTop = '1px dashed #d4a5a54d';
+            newEntry.innerHTML = `
+                <input type="text" name="package_name[]" placeholder="Package name (e.g. Gold)">
+                <div class="two-fields">
+                    <input type="number" name="package_price[]" placeholder="Price ($)">
+                    <input type="text" name="package_desc[]" placeholder="Short description">
+                </div>
+                <input type="text" name="package_includes[]" placeholder="Includes (comma-separated)">
+                <button type="button" class="remove-pkg" style="background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; margin-top: 10px;">- Remove this package</button>
+            `;
+            packageContainer.insertBefore(newEntry, addBtn);
+            newEntry.querySelector('.remove-pkg').addEventListener('click', function() {
+                newEntry.remove();
+            });
+        });
+    }
+
+    // Initialize clean view state
+    updateFormView();
+});
     </script>
 </body>
 </html>

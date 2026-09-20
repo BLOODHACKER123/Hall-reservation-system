@@ -95,6 +95,9 @@ try {
                 <?php endif; ?>
             <?php endif; ?>
           </nav>
+          <div id="nav-buttons">
+             <?php include __DIR__ . '/navbar_user_menu.php'; ?>
+          </div>
           
           <div id="nav-buttons">
             <?php if (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'Vendor'): ?>
