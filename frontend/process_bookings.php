@@ -62,12 +62,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
     $card_type_selected = trim($_POST['card_type'] ?? 'Visa');
 
     // Validation
-    if (empty($event_date) || empty($start_time) \vert{}\vert{} empty($end_time) || $guest_count <= 0) {$error_msg = "Please fill in all event details (date, times, and guest count).";
+    if (empty($event_date) || empty($start_time) || empty($end_time) || $guest_count <= 0) {$error_msg = "Please fill in all event details (date, times, and guest count).";
     } elseif (strtotime($event_date) < strtotime(date('Y-m-d'))) {$error_msg = "Event date cannot be in the past.";
     } elseif (strtotime("$event_date$end_time") <= strtotime("$event_date$start_time")) {
         $error_msg = "Event end time must be after the start time.";
     } elseif ($guest_count > $venue['capacity']) {$error_msg = "Guest count exceeds the venue maximum capacity ({$venue['capacity']}).";
-    } elseif (empty($card_holder) || strlen($card_number_raw) < 13 \vert{}\vert{} empty($card_expiry) || empty($card_cvv)) {$error_msg = "Please enter valid credit or debit card details.";
+    } elseif (empty($card_holder) || strlen($card_number_raw) < 13 || empty($card_expiry) || empty($card_cvv)) {$error_msg = "Please enter valid credit or debit card details.";
     } else {
         try {
             // Verify and recalculate promo discount server-side
