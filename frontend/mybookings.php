@@ -15,7 +15,6 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 if ($_SESSION['user_type'] !== 'Customer') {
-    // If Admin or Vendor tries to access, send to homepage
     header("Location: index.php");
     exit;
 }
@@ -30,7 +29,6 @@ $error_msg = '';
 if (isset($_GET['action']) && $_GET['action'] == 'cancel' && isset($_GET['id'])) {
     $res_id = intval($_GET['id']);
     
-    // Verify this booking belongs to this customer and is still pending
     $check_stmt = $pdo->prepare("SELECT status FROM reservations WHERE reservation_id = ? AND customer_id = ?");
     $check_stmt->execute([$res_id, $customer_id]);
     $booking = $check_stmt->fetch(PDO::FETCH_ASSOC);
@@ -44,12 +42,13 @@ if (isset($_GET['action']) && $_GET['action'] == 'cancel' && isset($_GET['id']))
     }
 }
 
-// 4. FETCH CUSTOMER BOOKINGS
+// 4. FETCH CUSTOMER BOOKINGS (Includes checking for existing reviews)
 try {
     $stmt = $pdo->prepare("
-        SELECT r.*, h.name as venue_name, h.district as location 
+        SELECT r.*, h.name as venue_name, h.district as location, rev.review_id 
         FROM reservations r 
         JOIN halls h ON r.hall_id = h.hall_id 
+        LEFT JOIN reviews rev ON r.reservation_id = rev.reservation_id
         WHERE r.customer_id = ? 
         ORDER BY r.created_at DESC
     ");
@@ -92,10 +91,13 @@ try {
       .booking-details p { margin: 5px 0; }
       .booking-details strong { color: #333; }
 
-      .booking-actions { margin-top: 10px; display: flex; gap: 10px; }
-      .btn { padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+      .booking-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; }
+      .btn { padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: 0.2s; display: inline-block; }
       .btn-primary { background: #523530; color: #fff; }
       .btn-primary:hover { background: #3d2723; }
+      .btn-review { background: #f59e0b; color: #fff; border-color: #f59e0b; font-weight: 600; }
+      .btn-review:hover { background: #d97706; color: #fff; }
+      .reviewed-tag { font-size: 0.85rem; color: #2e7d32; font-weight: bold; padding: 6px 12px; background: #e8f5e9; border-radius: 4px; }
       .btn-danger { background: transparent; color: #c62828; border-color: #c62828; }
       .btn-danger:hover { background: #c62828; color: #fff; }
 
@@ -176,6 +178,10 @@ try {
                 if ($status === 'confirmed') $status_class = 'status-confirmed';
                 if ($status === 'cancelled') $status_class = 'status-cancelled';
                 if ($status === 'completed') $status_class = 'status-completed';
+
+                // Check if the event datetime has already passed
+                $is_event_passed = strtotime($booking['end_datetime']) < time();
+                $has_reviewed = !empty($booking['review_id']);
             ?>
             <div class="booking-card">
                 <div class="booking-header">
@@ -203,6 +209,16 @@ try {
                 <div class="booking-actions">
                     <a href="search.php?hall_id=<?= $booking['hall_id'] ?>" class="btn" style="border-color: #ccc; color: #333;">View Venue</a>
                     
+                    <!-- REVIEW BUTTON LOGIC -->
+                    <?php if ($status !== 'cancelled' && $is_event_passed): ?>
+                        <?php if (!$has_reviewed): ?>
+                            <a href="search.php?hall_id=<?= $booking['hall_id'] ?>" class="btn btn-review">★ Write a Review</a>
+                        <?php else: ?>
+                            <span class="reviewed-tag">✓ Reviewed</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    <!-- CANCELLATION LOGIC -->
                     <?php if ($status === 'pending'): ?>
                         <a href="mybookings.php?action=cancel&id=<?= $booking['reservation_id'] ?>" 
                            class="btn btn-danger" 
@@ -229,7 +245,7 @@ try {
             <p>@ 2026 VenueVista. All rights reserved.</p>
         </div>
       </div>
-    </section> 
+  </section> 
  
 </body>
 </html>

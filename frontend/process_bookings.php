@@ -6,7 +6,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
 if (!isset($_SESSION['user_id'])) {
     header("Location: loginchoice.php");
     exit;
@@ -20,14 +19,12 @@ if ($_SESSION['user_type'] !== 'Customer') {
 $customer_id = $_SESSION['user_id'];
 $error_msg = '';
 
-
 $hall_id = intval($_POST['hall_id'] ?? $_GET['hall_id'] ?? 0);
 
 if ($hall_id <= 0) {
     header("Location: search.php");
     exit;
 }
-
 
 try {
     $stmt = $pdo->prepare("SELECT * FROM halls WHERE hall_id = ? AND is_active = 1");
@@ -49,7 +46,6 @@ $base_price = floatval($venue['base_price_per_hour']);
 $security_deposit = floatval($venue['security_deposit']);
 $total_amount = $base_price + $security_deposit;
 
-
 $event_date = trim($_POST['event_date'] ?? '');
 $start_time = trim($_POST['start_time'] ?? '09:00');
 $end_time = trim($_POST['end_time'] ?? '22:00');
@@ -62,10 +58,10 @@ $billing_email = trim($_POST['billing_email'] ?? $customer_info['email']);
 // Process booking and payment submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
     $card_holder = trim($_POST['card_holder'] ?? '');
-    $card_number = trim($_POST['card_number'] ?? '');
+    $card_number_raw = preg_replace('/\D/', '', $_POST['card_number'] ?? '');
     $card_expiry = trim($_POST['card_expiry'] ?? '');
     $card_cvv = trim($_POST['card_cvv'] ?? '');
-    $payment_method = trim($_POST['payment_method'] ?? 'Credit Card');
+    $card_type_selected = trim($_POST['card_type'] ?? 'Visa');
 
     // Validation
     if (empty($event_date) || empty($start_time) || empty($end_time) || $guest_count <= 0) {
@@ -76,8 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
         $error_msg = "Event end time must be after the start time.";
     } elseif ($guest_count > $venue['capacity']) {
         $error_msg = "Guest count exceeds the venue maximum capacity ({$venue['capacity']}).";
-    } elseif (empty($card_holder) || empty($card_number) || empty($card_expiry) || empty($card_cvv)) {
-        $error_msg = "Please complete all payment fields.";
+    } elseif (empty($card_holder) || strlen($card_number_raw) < 13 || empty($card_expiry) || empty($card_cvv)) {
+        $error_msg = "Please enter valid credit or debit card details.";
     } else {
         try {
             $pdo->beginTransaction();
@@ -85,39 +81,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
             $start_datetime = "$event_date $start_time:00";
             $end_datetime = "$event_date $end_time:00";
 
-            // 1. Create Reservation
+            // 1. Insert Reservation (Table: reservations)
             $res_stmt = $pdo->prepare("
                 INSERT INTO reservations (
                     customer_id, hall_id, start_datetime, end_datetime, 
-                    guest_count, locked_price_per_hour, total_booking_amount, 
-                    special_requests, status, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())
+                    status, locked_price_per_hour, total_booking_amount, 
+                    guest_count, special_requests, created_at
+                ) VALUES (?, ?, ?, ?, 'Pending', ?, ?, ?, ?, NOW())
             ");
             $res_stmt->execute([
                 $customer_id, $hall_id, $start_datetime, $end_datetime,
-                $guest_count, $base_price, $total_amount, $special_requests
+                $base_price, $total_amount, $guest_count, $special_requests
             ]);
             $reservation_id = $pdo->lastInsertId();
 
-            // 2. Record Payment Transaction
-            $transaction_ref = 'TXN-' . strtoupper(substr(uniqid(), -8));
+            // 2. Insert Base Payment (Table: payments)
             $pay_stmt = $pdo->prepare("
                 INSERT INTO payments (
-                    reservation_id, amount, payment_method, status, 
-                    transaction_reference, created_at
-                ) VALUES (?, ?, ?, 'Success', ?, NOW())
+                    reservation_id, amount, payment_type, payment_method, status, paid_at
+                ) VALUES (?, ?, 'advance', 'card', 'Success', NOW())
             ");
             $pay_stmt->execute([
-                $reservation_id, $total_amount, $payment_method, $transaction_ref
+                $reservation_id, $total_amount
+            ]);
+            $payment_id = $pdo->lastInsertId();
+
+            // 3. Insert Card Specific Subclass (Table: payment_card)
+            $transaction_ref = 'TXN-' . strtoupper(bin2hex(random_bytes(5)));
+            $card_last4 = substr($card_number_raw, -4);
+            
+            $card_stmt = $pdo->prepare("
+                INSERT INTO payment_card (
+                    payment_id, transaction_reference, card_last4, card_type
+                ) VALUES (?, ?, ?, ?)
+            ");
+            $card_stmt->execute([
+                $payment_id, $transaction_ref, $card_last4, $card_type_selected
             ]);
 
-            // 3. Update customer stats
-            $pdo->prepare("UPDATE customers SET booking_count = booking_count + 1, loyalty_points = loyalty_points + 10 WHERE user_id = ?")
-                ->execute([$customer_id]);
+            // 4. Update Customer stats
+            $pdo->prepare("
+                UPDATE customers 
+                SET booking_count = booking_count + 1, 
+                    loyalty_points = loyalty_points + 10 
+                WHERE user_id = ?
+            ")->execute([$customer_id]);
 
             $pdo->commit();
 
-            // Redirect customer directly to view their pending reservation
             header("Location: mybookings.php");
             exit;
 
@@ -125,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            $error_msg = "Transaction failed: " . $e->getMessage();
+            $error_msg = "Payment processing failed: " . $e->getMessage();
         }
     }
 }
@@ -159,7 +170,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
 </head>
 <body>
 
-  <!-- Dynamic Navigation Bar -->
   <section id="navigation-section">
     <div id="container">
       <div id="nav-bar">
@@ -176,7 +186,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
   </section>
 
   <main class="checkout-wrapper">
-    <!-- Left Column: Form collecting all Event & Payment details -->
     <div class="checkout-panel">
         <h2>Complete Your Reservation</h2>
 
@@ -201,17 +210,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
                 <div class="form-group">
                     <label for="guest_count">
                         Estimated Guests <em>*</em> 
-                        <small style="color: #666; font-weight: normal;">(Venue max: <?= htmlspecialchars($venue['capacity']) ?>)</small>
+                        <small style="color: #666; font-weight: normal;">(Max: <?= htmlspecialchars($venue['capacity']) ?>)</small>
                     </label>
                     <input 
                         type="number" 
                         id="guest_count" 
                         name="guest_count" 
                         value="<?= $guest_count > 0 ? htmlspecialchars($guest_count) : '' ?>" 
-                        placeholder="Enter number of guests (max <?= htmlspecialchars($venue['capacity']) ?>)" 
+                        placeholder="Max <?= htmlspecialchars($venue['capacity']) ?>" 
                         min="1" 
                         max="<?= htmlspecialchars($venue['capacity']) ?>" 
-                        oninput="if(parseInt(this.value) > <?= (int)$venue['capacity'] ?>) { this.setCustomValidity('Guest count cannot exceed the maximum capacity of <?= (int)$venue['capacity'] ?>.'); } else { this.setCustomValidity(''); }"
+                        oninput="if(parseInt(this.value) > <?= (int)$venue['capacity'] ?>) { this.setCustomValidity('Guest count cannot exceed maximum venue capacity of <?= (int)$venue['capacity'] ?>.'); } else { this.setCustomValidity(''); }"
                         required>
                 </div>
             </div>
@@ -251,20 +260,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
                 </div>
             </div>
 
-            <!-- 3. PAYMENT PARTICULARS -->
-            <div class="form-section-title">3. Payment Information</div>
+            <!-- 3. PAYMENT PARTICULARS (payment_card subclass) -->
+            <div class="form-section-title">3. Card Payment Details</div>
 
             <div class="form-group">
-                <label for="payment_method">Payment Method</label>
-                <select id="payment_method" name="payment_method">
-                    <option value="Credit Card">Credit Card (Visa / Mastercard)</option>
-                    <option value="Debit Card">Debit Card</option>
+                <label for="card_type">Card Type</label>
+                <select id="card_type" name="card_type">
+                    <option value="Visa">Visa</option>
+                    <option value="Mastercard">Mastercard</option>
+                    <option value="Amex">American Express</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="card_holder">Cardholder Name <em>*</em></label>
-                <input type="text" id="card_holder" name="card_holder" placeholder="Name on card" required>
+                <input type="text" id="card_holder" name="card_holder" placeholder="Name as printed on card" required>
             </div>
 
             <div class="form-group">
@@ -283,7 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
                 </div>
             </div>
 
-            <button type="submit" class="btn-pay">Pay $<?= number_format($total_amount, 2) ?> &amp; Confirm Booking</button>
+            <button type="submit" class="btn-pay">Pay $<?= number_format($total_amount, 2) ?> &amp; Confirm Reservation</button>
         </form>
     </div>
 
@@ -312,7 +322,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
             <hr style="border:0; border-top: 1px dashed #ccc; margin: 15px 0;">
 
             <div class="summary-item">
-                <span>Base Daily Rate</span>
+                <span>Base Rate</span>
                 <span>$<?= number_format($base_price, 2) ?></span>
             </div>
             <div class="summary-item">
@@ -333,6 +343,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
         </div>
     </div>
   </main>
+
   <section id="footer-section">
       <div id="footer-body">
         <div id="footer-top">
@@ -345,15 +356,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
             <p>@ 2026 VenueVista. All rights reserved.</p>
         </div>
       </div>
-    </section> 
+  </section> 
 
   <script>
-    // Format credit card with spaces
     document.getElementById('card_number').addEventListener('input', function (e) {
         e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim();
     });
 
-    // Format expiry date with slash
     document.getElementById('card_expiry').addEventListener('input', function (e) {
         let val = e.target.value.replace(/[^\d]/g, '');
         if (val.length >= 2) {

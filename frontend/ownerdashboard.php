@@ -24,21 +24,21 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 $owner_data = null;
-$venues = [];$bookings = [];
-$error_msg = '';$success_msg = '';
+$venues = [];
+$bookings = [];
+$error_msg = '';
+$success_msg = '';
 
 try {
     // Authenticate Vendor
     if (isset($_SESSION['user_id'])) {
-        $stmt =$pdo->prepare("SELECT u.user_id, u.first_name, u.last_name, u.email, u.phone, v.business_name, v.business_address, v.verification_status FROM users u JOIN vendors v ON u.user_id = v.user_id WHERE u.user_id = ? AND u.user_type = 'Vendor'");
+        $stmt = $pdo->prepare("SELECT u.user_id, u.first_name, u.last_name, u.email, u.phone, v.business_name, v.business_address, v.verification_status FROM users u JOIN vendors v ON u.user_id = v.user_id WHERE u.user_id = ? AND u.user_type = 'Vendor'");
         $stmt->execute([$_SESSION['user_id']]);
-        $owner_data =$stmt->fetch(PDO::FETCH_ASSOC);
+        $owner_data = $stmt->fetch(PDO::FETCH_ASSOC);
     }
-    
-   
 
     if ($owner_data) {
-        $vendor_id =$owner_data['user_id'];
+        $vendor_id = $owner_data['user_id'];
 
         // Handle Profile Update Submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
@@ -52,30 +52,43 @@ try {
                 $pdo->beginTransaction();
                 
                 // Update base user details
-                $update_user =$pdo->prepare("UPDATE users SET first_name = ?, last_name = ?, phone = ? WHERE user_id = ?");
-                $update_user->execute([$first_name,$last_name, $phone,$vendor_id]);
+                $update_user = $pdo->prepare("UPDATE users SET first_name = ?, last_name = ?, phone = ? WHERE user_id = ?");
+                $update_user->execute([$first_name, $last_name, $phone, $vendor_id]);
                 
                 // Update vendor-specific details
-                $update_vendor =$pdo->prepare("UPDATE vendors SET business_name = ?, business_address = ? WHERE user_id = ?");
-                $update_vendor->execute([$business_name, $business_address,$vendor_id]);
+                $update_vendor = $pdo->prepare("UPDATE vendors SET business_name = ?, business_address = ? WHERE user_id = ?");
+                $update_vendor->execute([$business_name, $business_address, $vendor_id]);
                 
-                $pdo->commit();$success_msg = "Business profile updated successfully!";
+                $pdo->commit();
+                $success_msg = "Business profile updated successfully!";
                 
                 // Refresh $owner_data instantly
-                $stmt =$pdo->prepare("SELECT u.user_id, u.first_name, u.last_name, u.email, u.phone, v.business_name, v.business_address, v.verification_status FROM users u JOIN vendors v ON u.user_id = v.user_id WHERE u.user_id = ?");
+                $stmt = $pdo->prepare("SELECT u.user_id, u.first_name, u.last_name, u.email, u.phone, v.business_name, v.business_address, v.verification_status FROM users u JOIN vendors v ON u.user_id = v.user_id WHERE u.user_id = ?");
                 $stmt->execute([$vendor_id]);
-                $owner_data =$stmt->fetch(PDO::FETCH_ASSOC);
+                $owner_data = $stmt->fetch(PDO::FETCH_ASSOC);
                 
             } catch (Throwable $e) {
-                if ($pdo->inTransaction()) $pdo->rollBack();$error_msg = "Failed to update profile: " . $e->getMessage();
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                $error_msg = "Failed to update profile: " . $e->getMessage();
             }
         }
 
         // Handle Take Offline Quick Action
-        if (isset($_GET['action']) && isset($_GET['hall_id']) &&$_GET['action'] === 'toggle_offline') {
+        if (isset($_GET['action']) && isset($_GET['hall_id']) && $_GET['action'] === 'toggle_offline') {
             $hall_id = intval($_GET['hall_id']);
-            $toggle_stmt =$pdo->prepare("UPDATE halls SET is_active = 0 WHERE hall_id = ? AND vendor_id = ?");
-            $toggle_stmt->execute([$hall_id, $vendor_id]);$success_msg = "Venue taken offline successfully. An admin must re-approve it to bring it back online.";
+            $toggle_stmt = $pdo->prepare("UPDATE halls SET is_active = 0 WHERE hall_id = ? AND vendor_id = ?");
+            $toggle_stmt->execute([$hall_id, $vendor_id]);
+            $success_msg = "Venue taken offline successfully.";
+            header("Location: ownerdashboard.php#venues");
+            exit;
+        }
+
+        // Handle Request to Publish Online Action
+        if (isset($_GET['action']) && isset($_GET['hall_id']) &&$_GET['action'] === 'request_online') {
+            $hall_id = intval($_GET['hall_id']);
+            // Keeps is_active = 0 until admin reviews and approves it
+            $req_stmt =$pdo->prepare("UPDATE halls SET is_active = 0 WHERE hall_id = ? AND vendor_id = ?");
+            $req_stmt->execute([$hall_id, $vendor_id]);$success_msg = "Approval request sent to Admin! Your venue will go live as soon as it is approved.";
             header("Location: ownerdashboard.php#venues");
             exit;
         }
@@ -106,7 +119,9 @@ try {
         $bookings =$stmt_bookings->fetchAll(PDO::FETCH_ASSOC);
 
         // Financials
-        $total_earnings = 0; $pending_earnings = 0; $total_bookings = count($bookings);
+        $total_earnings = 0;
+        $pending_earnings = 0;
+        $total_bookings = count($bookings);
         foreach ($bookings as$b) {
             if (strtolower($b['status']) === 'confirmed' || strtolower($b['status']) === 'completed') {
                 $total_earnings +=$b['total_booking_amount'];
@@ -117,7 +132,8 @@ try {
     } else {
         $error_msg = "No vendor accounts found.";
     }
-} catch (Throwable $e) {$error_msg = "Database Error: " . $e->getMessage(); }
+} catch (Throwable $e) {$error_msg = "Database Error: " . $e->getMessage();
+}
 ?>
 
 <!DOCTYPE html>
@@ -141,10 +157,37 @@ try {
       .action-btn:hover { background: #f0f0f0; }
       .btn-primary { background: #523530; color: white; border-color: #523530; }
       .btn-primary:hover { background: #3d2723; color: white; }
+      .btn-success { background: #2e7d32; color: white; border-color: #2e7d32; }
+      .btn-success:hover { background: #1b5e20; color: white; }
       .form-group { margin-bottom: 15px; }
       .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
       .form-group input { width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
       .form-group input:disabled { background-color: #e9ecef; cursor: not-allowed; }
+
+      /* In-Page Confirmation Modal */
+      .custom-modal-overlay {
+          display: none;
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 9999;
+          justify-content: center;
+          align-items: center;
+          animation: modalFadeIn 0.2s ease-out;
+      }
+      .custom-modal-box {
+          background: #fff;
+          padding: 25px 30px;
+          border-radius: 8px;
+          max-width: 450px;
+          width: 90%;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+          text-align: left;
+      }
+      .custom-modal-box h3 { margin-top: 0; color: #523530; }
+      .custom-modal-box p { color: #555; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; }
+      .custom-modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+      @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
@@ -217,7 +260,7 @@ try {
         <!-- VENUES PANEL -->
         <section class="admin-panel" id="panel-venues" style="display: none;">
             <h2>Manage Your Venues</h2>
-            <p style="margin-bottom: 20px; font-size: 14px; color: #555;">Note: Any updates to venue details will require Admin re-approval before they appear to the public.</p>
+            <p style="margin-bottom: 20px; font-size: 14px; color: #555;">Note: Any updates or requests to publish will require Admin approval before appearing publicly.</p>
             <?php if (empty($venues)): ?><p>You haven't listed any venues yet.</p><?php else: ?>
                 <?php foreach ($venues as$venue): ?>
                     <article style="background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
@@ -228,15 +271,24 @@ try {
                                 <?php if ($venue['is_active']): ?>
                                     <span class="status-badge status-active">Online (Visible to Public)</span>
                                 <?php else: ?>
-                                    <span class="status-badge status-pending">Pending Admin Approval / Offline</span>
+                                    <span class="status-badge status-pending">Offline / Pending Admin Review</span>
                                 <?php endif; ?>
                             </div>
-                            <div style="display: flex; gap: 10px;">
+                            <div style="display: flex; gap: 10px; align-items: center;">
                                 <?php if ($venue['is_active']): ?>
-                                    <a href="ownerdashboard.php?action=toggle_offline&hall_id=<?= $venue['hall_id'] ?>" class="action-btn" onclick="return confirm('Take venue offline?');">Take Offline</a>
+                                    <button type="button" 
+                                            class="action-btn trigger-confirm" 
+                                            data-title="Take Venue Offline?" 
+                                            data-desc="Are you sure you want to take '<?= htmlspecialchars($venue['name'], ENT_QUOTES) ?>' offline? It will be hidden from search results." 
+                                            data-href="ownerdashboard.php?action=toggle_offline&hall_id=<?= $venue['hall_id'] ?>">
+                                        Take Offline
+                                    </button>
                                 <?php else: ?>
-                                    <button class="action-btn" disabled style="opacity: 0.5;">Offline</button>
+                                    <button type="button" class="action-btn" disabled style="background-color: #e9ecef; color: #6c757d; border-color: #ced4da; cursor: not-allowed;">
+                                        Offline
+                                    </button>
                                 <?php endif; ?>
+
                                 <a href="edit.php?hall_id=<?= $venue['hall_id'] ?>" class="action-btn btn-primary">Edit Details</a>
                             </div>
                         </div>
@@ -260,7 +312,6 @@ try {
                             <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">View Full Order Details</summary>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #fff; padding: 15px; border: 1px solid #eee; border-radius: 6px;">
                                 
-                                <!-- Customer Info -->
                                 <div>
                                     <p style="margin: 0 0 5px 0; font-size: 14px; color: #666;">CUSTOMER DETAILS</p>
                                     <p style="margin: 0 0 5px 0;"><strong>Name:</strong> <?= htmlspecialchars($booking['customer_fname'] . ' ' .$booking['customer_lname']) ?></p>
@@ -268,7 +319,6 @@ try {
                                     <p style="margin: 0 0 5px 0;"><strong>Email:</strong> <a href="mailto:<?= htmlspecialchars($booking['customer_email']) ?>"><?= htmlspecialchars($booking['customer_email']) ?></a></p>
                                 </div>
 
-                                <!-- Event Info -->
                                 <div>
                                     <p style="margin: 0 0 5px 0; font-size: 14px; color: #666;">EVENT DETAILS</p>
                                     <p style="margin: 0 0 5px 0;"><strong>Start:</strong> <?= date('F j, Y, g:i a', strtotime($booking['start_datetime'])) ?></p>
@@ -276,7 +326,6 @@ try {
                                     <p style="margin: 0 0 5px 0;"><strong>Guests:</strong> <?= htmlspecialchars($booking['guest_count']) ?> people</p>
                                 </div>
 
-                                <!-- Financials -->
                                 <div>
                                     <p style="margin: 0 0 5px 0; font-size: 14px; color: #666;">FINANCIALS</p>
                                     <p style="margin: 0 0 5px 0;"><strong>Locked Rate:</strong> $<?= number_format($booking['locked_price_per_hour'], 2) ?> / day</p>
@@ -284,7 +333,6 @@ try {
                                     <p style="margin: 0 0 5px 0;"><strong>Booked On:</strong> <?= date('F j, Y', strtotime($booking['created_at'])) ?></p>
                                 </div>
                                 
-                                <!-- Requests -->
                                 <div>
                                     <p style="margin: 0 0 5px 0; font-size: 14px; color: #666;">SPECIAL REQUESTS</p>
                                     <p style="margin: 0; color: #c5221f; font-weight: bold;"><?= htmlspecialchars($booking['special_requests'] ?: 'None specified.') ?></p>
@@ -295,7 +343,14 @@ try {
                         <div style="margin-top: 20px; display: flex; gap: 10px;">
                             <?php if (strtolower($booking['status']) === 'pending'): ?>
                                 <a href="ownerdashboard.php?action=approve_booking&reservation_id=<?= $booking['reservation_id'] ?>" class="action-btn btn-primary">Approve Booking</a>
-                                <a href="ownerdashboard.php?action=reject_booking&reservation_id=<?= $booking['reservation_id'] ?>" class="action-btn" onclick="return confirm('Reject this booking? This cannot be undone.');">Decline</a>
+                                
+                                <button type="button" 
+                                        class="action-btn trigger-confirm" 
+                                        data-title="Decline Reservation?" 
+                                        data-desc="Are you sure you want to decline Order #<?= $booking['reservation_id'] ?>? This booking will be marked as cancelled." 
+                                        data-href="ownerdashboard.php?action=reject_booking&reservation_id=<?= $booking['reservation_id'] ?>">
+                                    Decline
+                                </button>
                             <?php endif; ?>
                             
                             <?php 
@@ -373,6 +428,18 @@ try {
         <?php endif; ?>
     </main>
 
+    <!-- IN-PAGE CONFIRMATION MODAL -->
+    <div class="custom-modal-overlay" id="confirmModal">
+        <div class="custom-modal-box">
+            <h3 id="modalTitle">Confirm Action</h3>
+            <p id="modalDesc">Are you sure you want to perform this action?</p>
+            <div class="custom-modal-actions">
+                <button type="button" class="action-btn" id="modalCancelBtn">Cancel</button>
+                <a href="#" class="action-btn btn-primary" id="modalConfirmBtn">Yes, Proceed</a>
+            </div>
+        </div>
+    </div>
+
     <section id="footer-section">
       <div id="footer-body">
         <div id="footer-top">
@@ -389,6 +456,7 @@ try {
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
+          // Tab Switching Logic
           const tabLinks = document.querySelectorAll('.tab-link');
           const panels = document.querySelectorAll('.admin-panel');
           function switchTab(targetId, activeTabElement) {
@@ -409,6 +477,33 @@ try {
               const activeTab = document.querySelector(`.tab-link[href="${window.location.hash}"]`);
               if (activeTab) switchTab(activeTab.getAttribute('data-target'), activeTab);
           }
+
+          // In-Page Custom Modal Handling
+          const modal = document.getElementById('confirmModal');
+          const modalTitle = document.getElementById('modalTitle');
+          const modalDesc = document.getElementById('modalDesc');
+          const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+          const modalCancelBtn = document.getElementById('modalCancelBtn');
+
+          document.querySelectorAll('.trigger-confirm').forEach(btn => {
+              btn.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  modalTitle.textContent = btn.getAttribute('data-title') || 'Confirm Action';
+                  modalDesc.textContent = btn.getAttribute('data-desc') || 'Are you sure you want to proceed?';
+                  modalConfirmBtn.setAttribute('href', btn.getAttribute('data-href'));
+                  modal.style.display = 'flex';
+              });
+          });
+
+          modalCancelBtn.addEventListener('click', () => {
+              modal.style.display = 'none';
+          });
+
+          window.addEventListener('click', (e) => {
+              if (e.target === modal) {
+                  modal.style.display = 'none';
+              }
+          });
       });
     </script>
 </body>
