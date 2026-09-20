@@ -24,3 +24,18 @@ CREATE TABLE hall_packages (
     includes TEXT,
     FOREIGN KEY (hall_id) REFERENCES halls(hall_id) ON DELETE CASCADE
 );
+
+
+DROP TABLE IF EXISTS audit_logs;
+
+CREATE TABLE audit_logs (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    user_role VARCHAR(50) DEFAULT 'Guest',
+    action TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45) NOT NULL,
+    INDEX idx_user_id (user_id),
+    INDEX idx_user_role (user_role),
+    INDEX idx_timestamp (timestamp)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

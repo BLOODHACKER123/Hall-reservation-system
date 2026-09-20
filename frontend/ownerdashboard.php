@@ -3,6 +3,7 @@ session_start();
 
 $db_path = __DIR__ . '/../backend/config/database.php';
 require_once __DIR__ . '/../backend/config/notify.php';
+require_once __DIR__ . '/../backend/utils/auditLogger.php';
 if (!file_exists($db_path)) {
     die("<h3 style='color:red;'>Database configuration file missing at: $db_path</h3>");
 }
