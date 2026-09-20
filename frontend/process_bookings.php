@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../backend/config/database.php';
+require_once __DIR__ . '/../backend/config/notify.php';
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -16,8 +17,7 @@ if ($_SESSION['user_type'] !== 'Customer') {
     exit;
 }
 
-$customer_id = $_SESSION['user_id'];
-$error_msg = '';
+$customer_id = $_SESSION['user_id'];$error_msg = '';
 
 $hall_id = intval($_POST['hall_id'] ?? $_GET['hall_id'] ?? 0);
 
@@ -27,62 +27,72 @@ if ($hall_id <= 0) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT * FROM halls WHERE hall_id = ? AND is_active = 1");
+    $stmt =$pdo->prepare("SELECT * FROM halls WHERE hall_id = ? AND is_active = 1");
     $stmt->execute([$hall_id]);
-    $venue = $stmt->fetch(PDO::FETCH_ASSOC);
+    $venue =$stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$venue) {
         die("<h2 style='text-align:center; color:#c5221f; margin-top:50px;'>Venue not available or does not exist.</h2>");
     }
 
-    $cust_stmt = $pdo->prepare("SELECT first_name, last_name, email, phone FROM users WHERE user_id = ?");
+    $cust_stmt =$pdo->prepare("SELECT first_name, last_name, email, phone FROM users WHERE user_id = ?");
     $cust_stmt->execute([$customer_id]);
-    $customer_info = $cust_stmt->fetch(PDO::FETCH_ASSOC);
+    $customer_info =$cust_stmt->fetch(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
     die("Database Error: " . $e->getMessage());
 }
 
-$base_price = floatval($venue['base_price_per_hour']);
-$security_deposit = floatval($venue['security_deposit']);
-$total_amount = $base_price + $security_deposit;
+$base_price = floatval($venue['base_price_per_hour']);$security_deposit = floatval($venue['security_deposit']);$total_amount = $base_price +$security_deposit;
 
 $event_date = trim($_POST['event_date'] ?? '');
 $start_time = trim($_POST['start_time'] ?? '09:00');
 $end_time = trim($_POST['end_time'] ?? '22:00');
 $guest_count = intval($_POST['guest_count'] ?? 0);
 $special_requests = trim($_POST['special_requests'] ?? '');
-$billing_name = trim($_POST['billing_name'] ?? ($customer_info['first_name'] . ' ' . $customer_info['last_name']));
-$billing_phone = trim($_POST['billing_phone'] ?? $customer_info['phone']);
-$billing_email = trim($_POST['billing_email'] ?? $customer_info['email']);
+$applied_promo_code = strtoupper(trim($_POST['applied_promo_code'] ?? ''));
+$billing_name = trim($_POST['billing_name'] ?? ($customer_info['first_name'] . ' ' .$customer_info['last_name']));
+$billing_phone = trim($_POST['billing_phone'] ?? $customer_info['phone']);$billing_email = trim($_POST['billing_email'] ?? $customer_info['email']);
 
 // Process booking and payment submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
     $card_holder = trim($_POST['card_holder'] ?? '');
-    $card_number_raw = preg_replace('/\D/', '', $_POST['card_number'] ?? '');
+    $card_number_raw = preg_replace('/\D/', '',$_POST['card_number'] ?? '');
     $card_expiry = trim($_POST['card_expiry'] ?? '');
     $card_cvv = trim($_POST['card_cvv'] ?? '');
     $card_type_selected = trim($_POST['card_type'] ?? 'Visa');
 
     // Validation
-    if (empty($event_date) || empty($start_time) || empty($end_time) || $guest_count <= 0) {
-        $error_msg = "Please fill in all event details (date, times, and guest count).";
-    } elseif (strtotime($event_date) < strtotime(date('Y-m-d'))) {
-        $error_msg = "Event date cannot be in the past.";
-    } elseif (strtotime("$event_date $end_time") <= strtotime("$event_date $start_time")) {
+    if (empty($event_date) || empty($start_time) \vert{}\vert{} empty($end_time) || $guest_count <= 0) {$error_msg = "Please fill in all event details (date, times, and guest count).";
+    } elseif (strtotime($event_date) < strtotime(date('Y-m-d'))) {$error_msg = "Event date cannot be in the past.";
+    } elseif (strtotime("$event_date$end_time") <= strtotime("$event_date$start_time")) {
         $error_msg = "Event end time must be after the start time.";
-    } elseif ($guest_count > $venue['capacity']) {
-        $error_msg = "Guest count exceeds the venue maximum capacity ({$venue['capacity']}).";
-    } elseif (empty($card_holder) || strlen($card_number_raw) < 13 || empty($card_expiry) || empty($card_cvv)) {
-        $error_msg = "Please enter valid credit or debit card details.";
+    } elseif ($guest_count > $venue['capacity']) {$error_msg = "Guest count exceeds the venue maximum capacity ({$venue['capacity']}).";
+    } elseif (empty($card_holder) || strlen($card_number_raw) < 13 \vert{}\vert{} empty($card_expiry) || empty($card_cvv)) {$error_msg = "Please enter valid credit or debit card details.";
     } else {
         try {
+            // Verify and recalculate promo discount server-side
+            $discount_amount = 0;
+            if (!empty($applied_promo_code)) {
+                $p_stmt =$pdo->prepare("
+                    SELECT discount_rate FROM promotions 
+                    WHERE hall_id = ? AND promo_code = ? AND status = 'Active' 
+                      AND CURDATE() BETWEEN start_date AND end_date
+                ");
+                $p_stmt->execute([$hall_id,$applied_promo_code]);
+                $promo_rate =$p_stmt->fetchColumn();
+                if ($promo_rate) {$discount_amount = ($base_price * floatval($promo_rate)) / 100;
+                }
+            }
+
+            $final_total = max(0, ($base_price - $discount_amount) +$security_deposit);
+
             $pdo->beginTransaction();
 
-            $start_datetime = "$event_date $start_time:00";
-            $end_datetime = "$event_date $end_time:00";
+            $start_datetime = "$event_date$start_time:00";
+            $end_datetime = "$event_date$end_time:00";
 
             // 1. Insert Reservation (Table: reservations)
-            $res_stmt = $pdo->prepare("
+            $res_stmt =$pdo->prepare("
                 INSERT INTO reservations (
                     customer_id, hall_id, start_datetime, end_datetime, 
                     status, locked_price_per_hour, total_booking_amount, 
@@ -90,51 +100,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
                 ) VALUES (?, ?, ?, ?, 'Pending', ?, ?, ?, ?, NOW())
             ");
             $res_stmt->execute([
-                $customer_id, $hall_id, $start_datetime, $end_datetime,
-                $base_price, $total_amount, $guest_count, $special_requests
+                $customer_id,$hall_id, $start_datetime,$end_datetime,
+                $base_price,$final_total, $guest_count,$special_requests
             ]);
-            $reservation_id = $pdo->lastInsertId();
+            $reservation_id =$pdo->lastInsertId();
 
             // 2. Insert Base Payment (Table: payments)
-            $pay_stmt = $pdo->prepare("
+            $pay_stmt =$pdo->prepare("
                 INSERT INTO payments (
                     reservation_id, amount, payment_type, payment_method, status, paid_at
                 ) VALUES (?, ?, 'advance', 'card', 'Success', NOW())
             ");
             $pay_stmt->execute([
-                $reservation_id, $total_amount
+                $reservation_id,$final_total
             ]);
-            $payment_id = $pdo->lastInsertId();
+            $payment_id =$pdo->lastInsertId();
 
             // 3. Insert Card Specific Subclass (Table: payment_card)
             $transaction_ref = 'TXN-' . strtoupper(bin2hex(random_bytes(5)));
             $card_last4 = substr($card_number_raw, -4);
             
-            $card_stmt = $pdo->prepare("
+            $card_stmt =$pdo->prepare("
                 INSERT INTO payment_card (
                     payment_id, transaction_reference, card_last4, card_type
                 ) VALUES (?, ?, ?, ?)
             ");
             $card_stmt->execute([
-                $payment_id, $transaction_ref, $card_last4, $card_type_selected
+                $payment_id,$transaction_ref, $card_last4,$card_type_selected
             ]);
 
             // 4. Update Customer stats
-            $pdo->prepare("
-                UPDATE customers 
-                SET booking_count = booking_count + 1, 
-                    loyalty_points = loyalty_points + 10 
-                WHERE user_id = ?
-            ")->execute([$customer_id]);
+            $pdo->prepare("                 UPDATE customers                  SET booking_count = booking_count + 1,                      loyalty_points = loyalty_points + 10                  WHERE user_id = ?             ")->execute([$customer_id]);
 
             $pdo->commit();
 
+            // 5. Send notifications BEFORE redirecting
+            createNotification(
+                $pdo,$customer_id, 
+                "Booking Pending", 
+                "Your reservation #$reservation_id for {$venue['name']} was placed successfully.", 
+                "booking"
+            );
+
+            createNotification(
+                $pdo, 
+                (int)$venue['vendor_id'], 
+                "New Booking Request", 
+                "You have a new reservation request #$reservation_id for {$venue['name']}.", 
+                "booking"
+            );
+
+            // 6. Redirect to dashboard
             header("Location: mybookings.php");
             exit;
 
         } catch (Throwable $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
+            if ($pdo->inTransaction()) {$pdo->rollBack();
             }
             $error_msg = "Payment processing failed: " . $e->getMessage();
         }
@@ -166,6 +187,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
       .btn-pay { width: 100%; background: #523530; color: #fff; border: none; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
       .btn-pay:hover { background: #3d2723; }
       .badge-info { background: #e8f0fe; color: #1a73e8; padding: 8px 12px; border-radius: 4px; font-size: 0.85rem; margin-bottom: 20px; display: block; }
+      
+      /* Promo Code Component */
+      .promo-box { display: flex; gap: 8px; margin-top: 15px; }
+      .promo-box input { flex: 1; padding: 10px; border: 1px dashed #523530; border-radius: 6px; text-transform: uppercase; font-weight: bold; font-family: inherit; }
+      .promo-box button { background: #523530; color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+      .promo-msg { font-size: 0.82rem; margin-top: 6px; display: none; }
+      .promo-msg.success { color: #2e7d32; display: block; }
+      .promo-msg.error { color: #c5221f; display: block; }
   </style>
 </head>
 <body>
@@ -176,10 +205,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
         <a id="logo" href="index.php">VenueVista</a>
         <nav id="nav-links">
           <a href="search.php">Browse Venues</a>
+          <a href="wishlist.php">Wishlist</a>
           <a href="mybookings.php">My Bookings</a>
         </nav>
         <div id="nav-buttons">
-          <a id="login-button" href="../backend/config/logout.php">Logout</a>
+          <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>
       </div>
     </div>
@@ -195,9 +225,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
             </div>
         <?php endif; ?>
 
-        <form action="process_bookings.php" method="POST">
+        <form action="process_bookings.php" method="POST" id="checkoutForm">
             <input type="hidden" name="confirm_payment" value="1">
-            <input type="hidden" name="hall_id" value="<?= $venue['hall_id'] ?>">
+            <input type="hidden" name="hall_id" id="form_hall_id" value="<?= $venue['hall_id'] ?>">
+            <input type="hidden" name="applied_promo_code" id="form_applied_promo" value="">
 
             <!-- 1. EVENT PARTICULARS -->
             <div class="form-section-title" style="margin-top: 0;">1. Event Particulars</div>
@@ -293,7 +324,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
                 </div>
             </div>
 
-            <button type="submit" class="btn-pay">Pay $<?= number_format($total_amount, 2) ?> &amp; Confirm Reservation</button>
+            <button type="submit" class="btn-pay" id="btnPaySubmit">Pay $<?= number_format($total_amount, 2) ?> &amp; Confirm Reservation</button>
         </form>
     </div>
 
@@ -325,6 +356,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
                 <span>Base Rate</span>
                 <span>$<?= number_format($base_price, 2) ?></span>
             </div>
+            <div class="summary-item" id="discountSummaryRow" style="display: none; color: #2e7d32; font-weight: bold;">
+                <span id="discountLabel">Promo Discount</span>
+                <span id="discountValue">-$0.00</span>
+            </div>
             <div class="summary-item">
                 <span>Refundable Deposit</span>
                 <span>$<?= number_format($security_deposit, 2) ?></span>
@@ -332,7 +367,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
 
             <div class="summary-total">
                 <span>Total Due Now</span>
-                <span>$<?= number_format($total_amount, 2) ?></span>
+                <span id="displayTotalDue">$<?= number_format($total_amount, 2) ?></span>
+            </div>
+
+            <!-- PROMO CODE INPUT BOX -->
+            <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
+                <label style="font-size: 0.88rem; font-weight: bold; color: #523530;">Have a Promo Code?</label>
+                <div class="promo-box">
+                    <input type="text" id="promoInput" placeholder="ENTER CODE" maxlength="50">
+                    <button type="button" id="btnApplyPromo">Apply</button>
+                </div>
+                <div id="promoMsg" class="promo-msg"></div>
             </div>
 
             <div class="badge-info" style="margin-top: 20px;">
@@ -359,6 +404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
   </section> 
 
   <script>
+    // Format card number & expiry
     document.getElementById('card_number').addEventListener('input', function (e) {
         e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim();
     });
@@ -370,6 +416,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
         } else {
             e.target.value = val;
         }
+    });
+
+    // Asynchronous Promo Code Calculation
+    const basePrice = <?= json_encode($base_price) ?>;
+    const securityDeposit = <?= json_encode($security_deposit) ?>;
+    const hallId = <?= json_encode($venue['hall_id']) ?>;
+
+    document.getElementById('btnApplyPromo').addEventListener('click', function() {
+        const promoInput = document.getElementById('promoInput');
+        const code = promoInput.value.trim().toUpperCase();
+        const promoMsg = document.getElementById('promoMsg');
+        const eventDate = document.getElementById('event_date').value;
+
+        if (!code) {
+            promoMsg.textContent = 'Please enter a code.';
+            promoMsg.className = 'promo-msg error';
+            return;
+        }
+
+        const fd = new FormData();
+        fd.append('hall_id', hallId);
+        fd.append('promo_code', code);
+        fd.append('event_date', eventDate);
+
+        fetch('../backend/ajax/apply_promo.php', {
+            method: 'POST',
+            body: fd
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                promoMsg.textContent = data.message;
+                promoMsg.className = 'promo-msg success';
+
+                // Calculate discounted amounts
+                const discountAmount = (basePrice * data.discount_rate) / 100;
+                const newTotal = (basePrice - discountAmount) + securityDeposit;
+
+                // Update UI Summary
+                document.getElementById('discountSummaryRow').style.display = 'flex';
+                document.getElementById('discountLabel').textContent = `Promo (${data.discount_rate}%)`;
+                document.getElementById('discountValue').textContent = `-$${discountAmount.toFixed(2)}`;
+                document.getElementById('displayTotalDue').textContent = `$${newTotal.toFixed(2)}`;
+                document.getElementById('btnPaySubmit').textContent = `Pay $${newTotal.toFixed(2)} & Confirm Reservation`;
+
+                // Set hidden field to pass code to backend
+                document.getElementById('form_applied_promo').value = data.promo_code;
+                promoInput.disabled = true;
+                this.disabled = true;
+                this.textContent = 'Applied ✓';
+            } else {
+                promoMsg.textContent = data.message;
+                promoMsg.className = 'promo-msg error';
+            }
+        })
+        .catch(err => {
+            console.error('Promo error:', err);
+            promoMsg.textContent = 'Failed to apply promo code.';
+            promoMsg.className = 'promo-msg error';
+        });
     });
   </script>
 </body>
