@@ -87,7 +87,7 @@ try {
           <a href="mybookings.php">My Bookings</a>
         </nav>
         <div id="nav-buttons">
-          <a id="login-button" href="../backend/config/logout.php">Logout</a>
+            <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>
       </div>
     </div>

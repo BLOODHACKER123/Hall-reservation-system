@@ -16,7 +16,7 @@
 }
 
 #navigation-section.home-navigation #nav-bar {
-  transition: background-color .25s ease, color .25s ease, box-shadow .25s ease;
+  transition:background-color .25s ease, color .25s ease, box-shadow .25s ease;
 }
 
 #navigation-section.home-navigation #nav-bar.is-scrolled {

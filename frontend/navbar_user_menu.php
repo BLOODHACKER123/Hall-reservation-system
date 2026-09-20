@@ -65,6 +65,11 @@ if ($nav_user_id && isset($pdo)) {
     line-height: 1.2;
   }
 
+  .divider-wrap {
+  list-style: none;
+  padding: 0;
+}
+
   /* Notifications Dropdown */
   .notif-dropdown-panel {
     display: none;
@@ -122,27 +127,63 @@ if ($nav_user_id && isset($pdo)) {
   .user-menu-trigger {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: #523530;
+    gap: 10px;
+    background: #8c5e58;
     color: #fff;
     border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
+    padding: 6px 14px 6px 8px;
+    border-radius: 999px;
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 500;
-    transition: background 0.2s ease;
+    line-height: 1;
+    transition: background 0.2s ease, transform 0.15s ease;
+    box-shadow: 0 4px 10px rgba(82, 53, 48, 0.12);
   }
-  .user-menu-trigger:hover { background: #3d2723; }
+  .user-menu-trigger:hover { background: #3d2723; transform: translateY(-1px); }
   .user-avatar {
-    width: 26px; height: 26px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
     background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.25);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.8rem;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .nav-icon-image,
+  .menu-icon-image,
+  .menu-item-icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    vertical-align: middle;
+  }
+
+  .menu-item-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .user-menu-trigger span:last-of-type {
+    display: inline-block;
+    white-space: nowrap;
   }
   .user-dropdown-panel {
     display: none;
@@ -175,24 +216,49 @@ if ($nav_user_id && isset($pdo)) {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     padding: 10px 16px;
     color: #444;
     text-decoration: none;
     font-size: 0.9rem;
     transition: background 0.15s;
   }
+  .user-dropdown-panel li a .menu-link-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
   .user-dropdown-panel li a:hover { background: #f5f5f5; color: #523530; }
   .user-dropdown-panel .divider { height: 1px; background: #eee; margin: 6px 0; }
   .user-dropdown-panel .logout-link { color: #c62828 !important; }
   .user-dropdown-panel .logout-link:hover { background: #fce8e6 !important; }
+
+  .menu-disabled-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 10px 16px;
+    color: #999;
+    text-decoration: none;
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: not-allowed;
+    opacity: 0.75;
+  }
 </style>
 
 <?php if ($nav_user_id): ?>
   <div class="nav-user-bar">
+
     <!-- NOTIFICATIONS BELL & DROPDOWN -->
     <div class="nav-icon-container">
       <button type="button" class="nav-bell-btn" id="notifBellBtn" aria-label="Notifications" title="Notifications">
-        🔔
+        <img src="./images/notifacation.png" alt="Notifications" class="nav-icon-image" />
         <span class="nav-badge" id="notifBadge" style="<?= $nav_unread_notifications > 0 ? '' : 'display:none;' ?>">
           <?= $nav_unread_notifications ?>
         </span>
@@ -212,7 +278,7 @@ if ($nav_user_id && isset($pdo)) {
     <!-- USER PROFILE MENU -->
     <div class="user-menu-container">
       <button type="button" class="user-menu-trigger" id="userMenuTrigger">
-        <span class="user-avatar">👤</span>
+        <span class="user-avatar"><img src="./images/user.png" alt="User" class="menu-icon-image" /></span>
         <span><?= htmlspecialchars($nav_user_name) ?></span>
         <span style="font-size: 0.75rem;">▼</span>
       </button>
@@ -225,29 +291,31 @@ if ($nav_user_id && isset($pdo)) {
 
         <ul>
           <?php if ($nav_user_type === 'Customer'): ?>
-            <li><a href="search.php">🔍 Browse Venues</a></li>
-            <li><a href="mybookings.php">📅 My Bookings</a></li>
+            <li><a href="search.php"><span class="menu-link-label"><img src="./images/search-interface-symbol.png" alt="Browse Venues" class="menu-item-icon" /><span>Browse Venues</span></span></a></li>
+            <li><a href="mybookings.php"><span class="menu-link-label"><img src="./images/book.png" alt="My Bookings" class="menu-item-icon" /><span>My Bookings</span></span></a></li>
             <li>
               <a href="wishlist.php">
-                <span>❤️ My Wishlist</span>
+                <span class="menu-link-label"><img src="./images/wishlist.png" alt="My Wishlist" class="menu-item-icon" /><span>My Wishlist</span></span>
                 <span class="nav-badge" style="position:static;"><?= $nav_wishlist_count ?></span>
               </a>
             </li>
-            <li><a href="messages.php">💬 Messages</a></li>
+            <li><a href="messages.php"><span class="menu-link-label"><img src="./images/message.png" alt="Messages" class="menu-item-icon" /><span>Messages</span></span></a></li>
           <?php elseif ($nav_user_type === 'Vendor'): ?>
-            <li><a href="ownerdashboard.php#overview">📊 Dashboard Overview</a></li>
-            <li><a href="ownerdashboard.php#venues">🏢 Manage Venues</a></li>
-            <li><a href="ownerdashboard.php#bookings">📑 Booking Requests</a></li>
-            <li><a href="messages.php">💬 Guest Inquiries</a></li>
-            <li><a href="ownerdashboard.php#financials">💰 Financials</a></li>
-            <li><a href="list.php">➕ List New Venue</a></li>
-            <li><a href="ownerdashboard.php#settings">⚙️ Settings</a></li>
+            <li><a href="ownerdashboard.php#overview"><span class="menu-link-label"><img src="./images/setting.png" alt="Dashboard Overview" class="menu-item-icon" /><span>Dashboard Overview</span></span></a></li>
+            <li><a href="ownerdashboard.php#venues"><span class="menu-link-label"><img src="./images/mall.png" alt="Manage Venues" class="menu-item-icon" /><span>Manage Venues</span></span></a></li>
+            <li><a href="ownerdashboard.php#bookings"><span class="menu-link-label"><img src="./images/book.png" alt="Booking Requests" class="menu-item-icon" /><span>Booking Requests</span></span></a></li>
+            <li><a href="messages.php"><span class="menu-link-label"><img src="./images/history.png" alt="Guest Inquiries" class="menu-item-icon" /><span>Guest Inquiries</span></span></a></li>
+            <li><a href="ownerdashboard.php#financials"><span class="menu-link-label"><img src="./images/financial-analysis.png" alt="Financials" class="menu-item-icon" /><span>Financials</span></span></a></li>
+            <li><a href="list.php"><span class="menu-link-label"><img src="./images/plus.png" alt="List New Venue" class="menu-item-icon" /><span>List New Venue</span></span></a></li>
+            <li><a href="ownerdashboard.php#settings"><span class="menu-link-label"><img src="./images/settings.png" alt="Settings" class="menu-item-icon" /><span>Settings</span></span></a></li>
           <?php elseif ($nav_user_type === 'Admin'): ?>
-            <li><a href="admin.php">🛡️ Admin Dashboard</a></li>
+            <li><a href="admin.php"><span class="menu-link-label"><img src="./images/administrator.png" alt="Admin Dashboard" class="menu-item-icon" /><span>Admin Dashboard</span></span></a></li>
           <?php endif; ?>
 
-          <div class="divider"></div>
-          <li><a href="../backend/config/logout.php" class="logout-link">🚪 Logout</a></li>
+          <li class="divider-wrap">
+            <div class="divider"></div>
+          </li>
+          <li><a href="../backend/config/logout.php" class="logout-link"><span class="menu-link-label"><img src="./images/logout.png" alt="Logout" class="menu-item-icon" /><span>Logout</span></span></a></li>
         </ul>
       </div>
     </div>

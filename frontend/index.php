@@ -6,6 +6,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+
+
 // 1. Fetch Categories for the Search Dropdown
 try {
     $stmt = $pdo->query("SELECT DISTINCT venue_type as name FROM halls WHERE venue_type IS NOT NULL AND venue_type != '' ORDER BY venue_type ASC");
@@ -95,21 +97,14 @@ try {
                 <?php endif; ?>
             <?php endif; ?>
           </nav>
-          <div id="nav-buttons">
-             <?php include __DIR__ . '/navbar_user_menu.php'; ?>
-          </div>
+          
           
           <div id="nav-buttons">
-            <?php if (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'Vendor'): ?>
-                <a id="list-venue-button" href="list.php">List a Venue</a>
-            <?php endif; ?>
-            
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <a id="login-button" href="../backend/config/logout.php">Logout</a>
-            <?php else: ?>
-                <a id="login-button" href="loginchoice.php">Login</a>
-            <?php endif; ?>
-          </div>
+            <?php include __DIR__ . '/navbar_user_menu.php'; ?>
+        </div>
+
+          
+
         </div>
       </div>
     </section>

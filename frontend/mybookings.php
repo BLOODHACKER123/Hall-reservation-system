@@ -128,15 +128,7 @@ try {
         </nav>
         
         <div id="nav-buttons">
-          <?php if (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'Vendor'): ?>
-              <a id="list-venue-button" href="list.php">List a Venue</a>
-          <?php endif; ?>
-          
-          <?php if(isset($_SESSION['user_id'])): ?>
-              <a id="login-button" href="../backend/config/logout.php">Logout</a>
-          <?php else: ?>
-              <a id="login-button" href="loginchoice.php">Login</a>
-          <?php endif; ?>
+            <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>
       </div>
     </div>
