@@ -2,6 +2,7 @@
 session_start();
 
 $db_path = __DIR__ . '/../backend/config/database.php';
+require_once __DIR__ . '/../backend/config/notify.php';
 if (!file_exists($db_path)) {
     die("<h3 style='color:red;'>Database configuration file missing at: $db_path</h3>");
 }
@@ -26,6 +27,7 @@ error_reporting(E_ALL);
 $owner_data = null;
 $venues = [];
 $bookings = [];
+$promotions = [];
 $error_msg = '';
 $success_msg = '';
 
@@ -73,6 +75,52 @@ try {
             }
         }
 
+        // Handle Create Promo Submission
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_promo'])) {
+            $p_hall_id = intval($_POST['hall_id'] ?? 0);
+            $p_code = strtoupper(trim($_POST['promo_code'] ?? ''));
+            $p_discount = floatval($_POST['discount_rate'] ?? 0);
+            $p_start = trim($_POST['start_date'] ?? '');
+            $p_end = trim($_POST['end_date'] ?? '');
+            $p_status = trim($_POST['status'] ?? 'Active');
+
+            if ($p_hall_id > 0 && !empty($p_code) && $p_discount > 0 && !empty($p_start) && !empty($p_end)) {
+                try {
+                    // Check if promo code already exists
+                    $dup_check = $pdo->prepare("SELECT promo_id FROM promotions WHERE promo_code = ?");
+                    $dup_check->execute([$p_code]);
+                    if ($dup_check->fetch()) {
+                        $error_msg = "The promo code '$p_code' already exists. Please use a unique code.";
+                    } else {
+                        $ins_p = $pdo->prepare("
+                            INSERT INTO promotions (hall_id, promo_code, discount_rate, start_date, end_date, status)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        ");
+                        $ins_p->execute([$p_hall_id, $p_code, $p_discount, $p_start, $p_end, $p_status]);
+                        $success_msg = "Promotion code '$p_code' created successfully!";
+                    }
+                } catch (Throwable $e) {
+                    $error_msg = "Failed to create promo: " . $e->getMessage();
+                }
+            } else {
+                $error_msg = "Please fill in all promotion details with a valid discount rate.";
+            }
+        }
+
+        // Handle Delete Promo
+        if (isset($_GET['action']) && $_GET['action'] === 'delete_promo' && isset($_GET['promo_id'])) {
+            $del_id = intval($_GET['promo_id']);
+            $del_stmt = $pdo->prepare("
+                DELETE p FROM promotions p 
+                JOIN halls h ON p.hall_id = h.hall_id 
+                WHERE p.promo_id = ? AND h.vendor_id = ?
+            ");
+            $del_stmt->execute([$del_id, $vendor_id]);
+            $success_msg = "Promotion deleted.";
+            header("Location: ownerdashboard.php#promotions");
+            exit;
+        }
+
         // Handle Take Offline Quick Action
         if (isset($_GET['action']) && isset($_GET['hall_id']) && $_GET['action'] === 'toggle_offline') {
             $hall_id = intval($_GET['hall_id']);
@@ -84,11 +132,11 @@ try {
         }
 
         // Handle Request to Publish Online Action
-        if (isset($_GET['action']) && isset($_GET['hall_id']) &&$_GET['action'] === 'request_online') {
+        if (isset($_GET['action']) && isset($_GET['hall_id']) && $_GET['action'] === 'request_online') {
             $hall_id = intval($_GET['hall_id']);
-            // Keeps is_active = 0 until admin reviews and approves it
-            $req_stmt =$pdo->prepare("UPDATE halls SET is_active = 0 WHERE hall_id = ? AND vendor_id = ?");
-            $req_stmt->execute([$hall_id, $vendor_id]);$success_msg = "Approval request sent to Admin! Your venue will go live as soon as it is approved.";
+            $req_stmt = $pdo->prepare("UPDATE halls SET is_active = 0 WHERE hall_id = ? AND vendor_id = ?");
+            $req_stmt->execute([$hall_id, $vendor_id]);
+            $success_msg = "Approval request sent to Admin! Your venue will go live as soon as it is approved.";
             header("Location: ownerdashboard.php#venues");
             exit;
         }
@@ -96,43 +144,82 @@ try {
         // Handle Booking Approvals / Rejections
         if (isset($_GET['action']) && isset($_GET['reservation_id'])) {
             $res_id = intval($_GET['reservation_id']);
-            if ($_GET['action'] === 'approve_booking') {
-                $stmt =$pdo->prepare("UPDATE reservations SET status = 'Confirmed' WHERE reservation_id = ? AND hall_id IN (SELECT hall_id FROM halls WHERE vendor_id = ?)");
-                $stmt->execute([$res_id,$vendor_id]);
-                $success_msg = "Booking #$res_id confirmed successfully.";
-            } elseif ($_GET['action'] === 'reject_booking') {
-                $stmt =$pdo->prepare("UPDATE reservations SET status = 'Cancelled' WHERE reservation_id = ? AND hall_id IN (SELECT hall_id FROM halls WHERE vendor_id = ?)");
-                $stmt->execute([$res_id,$vendor_id]);
-                $success_msg = "Booking #$res_id has been declined.";
+
+            $fetch_res = $pdo->prepare("
+                SELECT r.customer_id, r.reservation_id, h.name as hall_name 
+                FROM reservations r 
+                JOIN halls h ON r.hall_id = h.hall_id 
+                WHERE r.reservation_id = ? AND h.vendor_id = ?
+            ");
+            $fetch_res->execute([$res_id, $vendor_id]);
+            $target_booking = $fetch_res->fetch(PDO::FETCH_ASSOC);
+
+            if ($target_booking) {
+                if ($_GET['action'] === 'approve_booking') {
+                    $stmt = $pdo->prepare("UPDATE reservations SET status = 'Confirmed' WHERE reservation_id = ?");
+                    $stmt->execute([$res_id]);
+                    createNotification(
+                        $pdo, 
+                        (int)$target_booking['customer_id'], 
+                        "Booking Confirmed!", 
+                        "Your reservation #$res_id at {$target_booking['hall_name']} has been approved.", 
+                        "booking"
+                    );
+                    $success_msg = "Booking #$res_id confirmed successfully.";
+                } elseif ($_GET['action'] === 'reject_booking') {
+                    $stmt = $pdo->prepare("UPDATE reservations SET status = 'Cancelled' WHERE reservation_id = ?");
+                    $stmt->execute([$res_id]);
+                    createNotification(
+                        $pdo, 
+                        (int)$target_booking['customer_id'], 
+                        "Booking Declined", 
+                        "Your reservation #$res_id at {$target_booking['hall_name']} was declined.", 
+                        "booking"
+                    );
+                    $success_msg = "Booking #$res_id has been declined.";
+                }
             }
             header("Location: ownerdashboard.php#bookings");
             exit;
         }
 
-        // Fetch Data
-        $stmt_venues =$pdo->prepare("SELECT * FROM halls WHERE vendor_id = ? ORDER BY created_at DESC");
+        // Fetch Venues Data
+        $stmt_venues = $pdo->prepare("SELECT * FROM halls WHERE vendor_id = ? ORDER BY created_at DESC");
         $stmt_venues->execute([$vendor_id]);
-        $venues =$stmt_venues->fetchAll(PDO::FETCH_ASSOC);
+        $venues = $stmt_venues->fetchAll(PDO::FETCH_ASSOC);
 
-        $stmt_bookings =$pdo->prepare("SELECT r.*, h.name as hall_name, u.first_name as customer_fname, u.last_name as customer_lname, u.email as customer_email, u.phone as customer_phone FROM reservations r JOIN halls h ON r.hall_id = h.hall_id JOIN users u ON r.customer_id = u.user_id WHERE h.vendor_id = ? ORDER BY r.start_datetime DESC");
+        // Fetch Bookings Data
+        $stmt_bookings = $pdo->prepare("SELECT r.*, h.name as hall_name, u.first_name as customer_fname, u.last_name as customer_lname, u.email as customer_email, u.phone as customer_phone FROM reservations r JOIN halls h ON r.hall_id = h.hall_id JOIN users u ON r.customer_id = u.user_id WHERE h.vendor_id = ? ORDER BY r.start_datetime DESC");
         $stmt_bookings->execute([$vendor_id]);
-        $bookings =$stmt_bookings->fetchAll(PDO::FETCH_ASSOC);
+        $bookings = $stmt_bookings->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch Promotions Data
+        $stmt_promos = $pdo->prepare("
+            SELECT p.*, h.name AS hall_name 
+            FROM promotions p 
+            JOIN halls h ON p.hall_id = h.hall_id 
+            WHERE h.vendor_id = ? 
+            ORDER BY p.promo_id DESC
+        ");
+        $stmt_promos->execute([$vendor_id]);
+        $promotions = $stmt_promos->fetchAll(PDO::FETCH_ASSOC);
 
         // Financials
         $total_earnings = 0;
         $pending_earnings = 0;
         $total_bookings = count($bookings);
-        foreach ($bookings as$b) {
+        foreach ($bookings as $b) {
             if (strtolower($b['status']) === 'confirmed' || strtolower($b['status']) === 'completed') {
-                $total_earnings +=$b['total_booking_amount'];
+                $total_earnings += $b['total_booking_amount'];
             } else {
-                $pending_earnings +=$b['total_booking_amount'];
+                $pending_earnings += $b['total_booking_amount'];
             }
         }
     } else {
         $error_msg = "No vendor accounts found.";
     }
-} catch (Throwable $e) {$error_msg = "Database Error: " . $e->getMessage();
+} catch (Throwable $e) {
+    $error_msg = "Database Error: " . $e->getMessage();
 }
 ?>
 
@@ -159,9 +246,11 @@ try {
       .btn-primary:hover { background: #3d2723; color: white; }
       .btn-success { background: #2e7d32; color: white; border-color: #2e7d32; }
       .btn-success:hover { background: #1b5e20; color: white; }
+      .btn-danger { background: transparent; color: #c62828; border-color: #c62828; }
+      .btn-danger:hover { background: #c62828; color: white; }
       .form-group { margin-bottom: 15px; }
       .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
-      .form-group input { width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+      .form-group input, .form-group select { width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; box-sizing: border-box; }
       .form-group input:disabled { background-color: #e9ecef; cursor: not-allowed; }
 
       /* In-Page Confirmation Modal */
@@ -199,29 +288,12 @@ try {
           <a id="logo" href="index.php">VenueVista</a>
           <nav id="nav-links">
             <a href="search.php">Browse Venues</a>
+            <a href="ownerdashboard.php" class="active">Owners Dashboard</a>
             <a href="list.php">List a Venue</a>
-            
-            <?php if (isset($_SESSION['user_type'])): ?>
-                <?php if ($_SESSION['user_type'] === 'Vendor'): ?>
-                    <a href="ownerdashboard.php" class="active">Owners Dashboard</a>
-                <?php elseif ($_SESSION['user_type'] === 'Admin'): ?>
-                    <a href="admin.php">Admin Dashboard</a>
-                <?php elseif ($_SESSION['user_type'] === 'Customer'): ?>
-                    <a href="mybookings.php">My Bookings</a>
-                <?php endif; ?>
-            <?php endif; ?>
           </nav>
           
           <div id="nav-buttons">
-            <?php if (!isset($_SESSION['user_type']) ||$_SESSION['user_type'] !== 'Admin'): ?>
-                <a id="list-venue-button" href="list.php">List a Venue</a>
-            <?php endif; ?>
-            
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <a id="login-button" href="../backend/config/logout.php">Logout</a>
-            <?php else: ?>
-                <a id="login-button" href="loginchoice.php">Login</a>
-            <?php endif; ?>
+            <?php include __DIR__ . '/navbar_user_menu.php'; ?>
           </div>
         </div>
       </div>
@@ -235,7 +307,7 @@ try {
         <div class="owner-header">
             <div>
                 <h1>Owner Dashboard</h1>
-                <p>Welcome back, <strong><?= htmlspecialchars($owner_data['first_name'] . ' ' .$owner_data['last_name']) ?></strong></p>
+                <p>Welcome back, <strong><?= htmlspecialchars($owner_data['first_name'] . ' ' . $owner_data['last_name']) ?></strong></p>
             </div>
             <a href="list.php" class="action-btn btn-primary">+ Add New Venue</a>
         </div>
@@ -244,6 +316,7 @@ try {
             <a class="tab-link active" href="#overview" data-target="panel-overview">Overview</a>
             <a class="tab-link" href="#venues" data-target="panel-venues">My Venues</a>
             <a class="tab-link" href="#bookings" data-target="panel-bookings">Bookings</a>
+            <a class="tab-link" href="#promotions" data-target="panel-promotions">Promotions</a>
             <a class="tab-link" href="#financials" data-target="panel-financials">Financials</a>
             <a class="tab-link" href="#settings" data-target="panel-settings">Settings</a>
         </nav>
@@ -262,7 +335,7 @@ try {
             <h2>Manage Your Venues</h2>
             <p style="margin-bottom: 20px; font-size: 14px; color: #555;">Note: Any updates or requests to publish will require Admin approval before appearing publicly.</p>
             <?php if (empty($venues)): ?><p>You haven't listed any venues yet.</p><?php else: ?>
-                <?php foreach ($venues as$venue): ?>
+                <?php foreach ($venues as $venue): ?>
                     <article style="background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div>
@@ -301,7 +374,7 @@ try {
         <section class="admin-panel" id="panel-bookings" style="display: none;">
             <h2>Reservation Requests</h2>
             <?php if (empty($bookings)): ?><p>No bookings found for your venues yet.</p><?php else: ?>
-                <?php foreach ($bookings as$booking): ?>
+                <?php foreach ($bookings as $booking): ?>
                     <article style="background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
                         <div style="display: flex; justify-content: space-between;">
                             <h3 style="margin: 0 0 10px 0;">Order #<?= $booking['reservation_id'] ?> - <?= htmlspecialchars($booking['hall_name']) ?></h3>
@@ -314,7 +387,7 @@ try {
                                 
                                 <div>
                                     <p style="margin: 0 0 5px 0; font-size: 14px; color: #666;">CUSTOMER DETAILS</p>
-                                    <p style="margin: 0 0 5px 0;"><strong>Name:</strong> <?= htmlspecialchars($booking['customer_fname'] . ' ' .$booking['customer_lname']) ?></p>
+                                    <p style="margin: 0 0 5px 0;"><strong>Name:</strong> <?= htmlspecialchars($booking['customer_fname'] . ' ' . $booking['customer_lname']) ?></p>
                                     <p style="margin: 0 0 5px 0;"><strong>Phone:</strong> <?= htmlspecialchars($booking['customer_phone']) ?></p>
                                     <p style="margin: 0 0 5px 0;"><strong>Email:</strong> <a href="mailto:<?= htmlspecialchars($booking['customer_email']) ?>"><?= htmlspecialchars($booking['customer_email']) ?></a></p>
                                 </div>
@@ -353,14 +426,97 @@ try {
                                 </button>
                             <?php endif; ?>
                             
-                            <?php 
-                                $subject = urlencode("Regarding your booking at " . $booking['hall_name']);
-                                $body = urlencode("Hello " . $booking['customer_fname'] . ",\n\nI am reaching out regarding your upcoming reservation on " . date('F j, Y', strtotime($booking['start_datetime'])) . ".");
-                            ?>
-                            <a href="mailto:<?= htmlspecialchars($booking['customer_email']) ?>?subject=<?= $subject ?>&body=<?= $body ?>" class="action-btn" style="border-color: #007bff; color: #007bff;">Contact Customer</a>
+                            <a href="messages.php?partner_id=<?= $booking['customer_id'] ?>&hall_id=<?= $booking['hall_id'] ?>" class="action-btn btn-primary">Message Customer</a>
                         </div>
                     </article>
                 <?php endforeach; ?>
+            <?php endif; ?>
+        </section>
+
+        <!-- PROMOTIONS PANEL -->
+        <section class="admin-panel" id="panel-promotions" style="display: none;">
+            <h2>Manage Promotions & Discount Codes</h2>
+            
+            <!-- Create Promo Form -->
+            <form action="ownerdashboard.php#promotions" method="POST" style="background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 25px;">
+                <input type="hidden" name="create_promo" value="1">
+                <h3 style="margin-top: 0; color: #523530;">Create a New Promo Code</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div class="form-group">
+                        <label>Select Venue <em>*</em></label>
+                        <select name="hall_id" required style="max-width: 100%;">
+                            <?php foreach ($venues as $v): ?>
+                                <option value="<?= $v['hall_id'] ?>"><?= htmlspecialchars($v['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Promo Code <em>*</em></label>
+                        <input type="text" name="promo_code" placeholder="e.g. FESTIVE20" required style="text-transform: uppercase; max-width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Discount Rate (%) <em>*</em></label>
+                        <input type="number" name="discount_rate" min="1" max="100" step="0.5" placeholder="e.g. 15" required style="max-width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date <em>*</em></label>
+                        <input type="date" name="start_date" value="<?= date('Y-m-d') ?>" required style="max-width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date <em>*</em></label>
+                        <input type="date" name="end_date" required style="max-width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="status" style="max-width: 100%;">
+                            <option value="Active">Active</option>
+                            <option value="Draft">Draft</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="action-btn btn-primary" style="margin-top: 10px;">Create Promotion</button>
+            </form>
+
+            <!-- Promotions List Table -->
+            <h3>Existing Promotions</h3>
+            <?php if (empty($promotions)): ?>
+                <p>No promotional codes created yet for your venues.</p>
+            <?php else: ?>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; background: #fff; border: 1px solid #ddd; border-radius: 6px; overflow: hidden;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #ddd; background: #f9f9f9;">
+                            <th style="padding: 12px;">Promo Code</th>
+                            <th style="padding: 12px;">Applicable Venue</th>
+                            <th style="padding: 12px;">Discount</th>
+                            <th style="padding: 12px;">Validity Window</th>
+                            <th style="padding: 12px;">Status</th>
+                            <th style="padding: 12px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($promotions as $p): ?>
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 12px; font-weight: bold; color: #523530;"><?= htmlspecialchars($p['promo_code']) ?></td>
+                                <td style="padding: 12px;"><?= htmlspecialchars($p['hall_name']) ?></td>
+                                <td style="padding: 12px; font-weight: bold; color: #2e7d32;"><?= htmlspecialchars($p['discount_rate']) ?>%</td>
+                                <td style="padding: 12px;"><?= date('M j, Y', strtotime($p['start_date'])) ?> to <?= date('M j, Y', strtotime($p['end_date'])) ?></td>
+                                <td style="padding: 12px;">
+                                    <span class="status-badge <?= strtolower($p['status']) === 'active' ? 'status-active' : 'status-pending' ?>">
+                                        <?= htmlspecialchars($p['status']) ?>
+                                    </span>
+                                </td>
+                                <td style="padding: 12px;">
+                                    <a href="ownerdashboard.php?action=delete_promo&promo_id=<?= $p['promo_id'] ?>" 
+                                       class="action-btn btn-danger" 
+                                       onclick="return confirm('Delete promo code <?= htmlspecialchars($p['promo_code']) ?>?');">
+                                       Delete
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             <?php endif; ?>
         </section>
 
@@ -378,7 +534,7 @@ try {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($bookings as$booking): ?>
+                    <?php foreach ($bookings as $booking): ?>
                         <tr style="border-bottom: 1px solid #eee;">
                             <td style="padding: 12px;">#<?= $booking['reservation_id'] ?></td>
                             <td style="padding: 12px;"><?= htmlspecialchars($booking['hall_name']) ?></td>

@@ -506,6 +506,10 @@ try {
                         <button type="button" class="btn-book" style="background: #ccc; cursor: not-allowed;" disabled>Only Customers can book</button>
                     <?php else: ?>
                         <a href="process_bookings.php?hall_id=<?= urlencode($venue_detail['hall_id']) ?>" class="btn-book">Proceed to Booking</a>
+                        <a href="messages.php?partner_id=<?= $venue_detail['vendor_id'] ?>&hall_id=<?= $venue_detail['hall_id'] ?>" 
+                        style="display:block; text-align:center; margin-top:10px; color:#523530; font-weight:bold; text-decoration:none; font-size:0.9rem;">
+                        💬 Contact Venue Host
+                        </a>
                     <?php endif; ?>
                 </div>
             </div>
