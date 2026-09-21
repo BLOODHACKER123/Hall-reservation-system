@@ -96,40 +96,7 @@ try {
   <title>Messages | VenueVista</title>
   <link rel="icon" type="image/x-icon" href="images/venuevista-logo.png" />
   <link rel="stylesheet" href="common.css">
-  <style>
-      .inbox-wrapper { max-width: 1100px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 320px 1fr; border: 1px solid #ddd; border-radius: 8px; background: #fff; height: 75vh; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.05); }
-      @media (max-width: 768px) { .inbox-wrapper { grid-template-columns: 1fr; height: auto; } }
-      
-      /* Left Sidebar List */
-      .threads-list { border-right: 1px solid #eee; overflow-y: auto; background: #fafafa; }
-      .threads-header { padding: 15px 20px; border-bottom: 1px solid #eee; font-weight: bold; color: #523530; background: #fff; }
-      .thread-item { display: block; padding: 14px 18px; border-bottom: 1px solid #eee; text-decoration: none; color: inherit; transition: background 0.15s; }
-      .thread-item:hover { background: #f2f2f2; }
-      .thread-item.active { background: #fff; border-left: 4px solid #523530; }
-      .thread-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-      .thread-name { font-weight: bold; font-size: 0.95rem; color: #333; }
-      .thread-badge { background: #e53935; color: #fff; font-size: 0.7rem; font-weight: bold; border-radius: 10px; padding: 2px 6px; }
-      .thread-venue { font-size: 0.8rem; color: #888; margin-bottom: 4px; }
-      .thread-snippet { font-size: 0.85rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-      /* Right Chat Window */
-      .chat-window { display: flex; flex-direction: column; height: 100%; }
-      .chat-header { padding: 15px 20px; border-bottom: 1px solid #eee; background: #fff; display: flex; justify-content: space-between; align-items: center; }
-      .chat-header h3 { margin: 0; color: #333; font-size: 1.05rem; }
-      .chat-header small { color: #888; font-size: 0.85rem; }
-      .messages-body { flex: 1; padding: 20px; overflow-y: auto; background: #fdfdfd; display: flex; flex-direction: column; gap: 12px; }
-      
-      .msg-bubble { max-width: 65%; padding: 10px 14px; border-radius: 8px; font-size: 0.92rem; line-height: 1.4; position: relative; word-wrap: break-word; }
-      .msg-mine { align-self: flex-end; background: #523530; color: #fff; border-bottom-right-radius: 2px; }
-      .msg-theirs { align-self: flex-start; background: #f0f0f0; color: #333; border-bottom-left-radius: 2px; }
-      .msg-time { display: block; font-size: 0.7rem; margin-top: 4px; text-align: right; opacity: 0.75; }
-      
-      .chat-footer { padding: 12px 15px; border-top: 1px solid #eee; background: #fff; display: flex; gap: 10px; }
-      .chat-footer input { flex: 1; padding: 10px 14px; border: 1px solid #ccc; border-radius: 20px; outline: none; font-family: inherit; font-size: 0.92rem; }
-      .chat-footer button { background: #523530; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: background 0.15s; }
-      .chat-footer button:hover { background: #3d2723; }
-      .no-chat-selected { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; color: #888; }
-  </style>
+  <link rel="stylesheet" href="messages.css">
 </head>
 <body>
 
