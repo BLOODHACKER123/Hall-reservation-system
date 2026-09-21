@@ -164,10 +164,15 @@ try {
               <?php endif; ?>
           <?php endif; ?>
         </nav>
-        
-       <div id="nav-buttons">
+
+        <div id="nav-buttons">
+            <button id="audit-logs-btn" type="button">
+              Audit Logs
+            </button>
             <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>
+
+        
         
       </div>
     </div>

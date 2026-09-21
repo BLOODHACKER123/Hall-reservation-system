@@ -68,26 +68,134 @@ $availableRoles = $rolesStmt->fetchAll(PDO::FETCH_COLUMN);
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="common.css" />
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; padding: 24px; color: #1e293b; }
-    .container { max-width: 1300px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; }
-    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 20px; }
-    .filter-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; align-items: flex-end; }
-    .filter-bar label { display: flex; flex-direction: column; font-size: 13px; font-weight: 600; color: #64748b; }
-    .filter-bar input, .filter-bar select { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 4px; }
-    .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
-    .btn-dark { background: #0f172a; color: #fff; }
-    .btn-green { background: #16a34a; color: #fff; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
-    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #f1f5f9; }
-    th { background: #f8fafc; color: #475569; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
-    .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-    .badge-Admin { background: #fee2e2; color: #991b1b; }
-    .badge-Vendor { background: #fef3c7; color: #92400e; }
-    .badge-Customer { background: #dbeafe; color: #1e40af; }
-    .badge-Guest { background: #f1f5f9; color: #475569; }
-    .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+    body { 
+    font-family: -apple-system,BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    background: #f8fafc; 
+    padding: 24px;
+    color: #1e293b; 
+    }
+    .container { 
+      max-width: 1300px; 
+      margin: 0 auto; 
+      background: #fff; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+      padding: 24px; 
+    }
+
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      border-bottom: 1px solid #e2e8f0; 
+      padding-bottom: 16px; 
+      margin-bottom: 20px; 
+    }
+
+    .filter-bar { 
+      display: flex; 
+      gap: 12px; 
+      flex-wrap: wrap; 
+      margin-bottom: 20px; 
+      align-items: flex-end; 
+    }
+
+    .filter-bar label { 
+      display: flex; 
+      flex-direction: column; 
+      font-size: 13px; 
+      font-weight: 600; 
+      color: #64748b; 
+    }
+
+    .filter-bar input, .filter-bar select { 
+      padding: 8px 12px; 
+      border: 1px solid #cbd5e1; 
+      border-radius: 6px; 
+      margin-top: 4px; 
+    }
+
+    .btn { 
+      padding: 8px 16px; 
+      border-radius: 6px; 
+      border: none; 
+      cursor: pointer; 
+      font-weight: 600; 
+      text-decoration: none; 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 6px; 
+      font-size: 13px; 
+    }
+
+    .btn-dark { 
+      background: #0f172a; 
+      color: #fff; 
+    }
+
+    .btn-green { 
+      background: #16a34a; 
+      color: #fff; 
+    }
+
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      font-size: 13px; 
+      margin-top: 10px; 
+    }
+
+    th, td { 
+      text-align: left; 
+      padding: 12px; 
+      border-bottom: 1px solid #f1f5f9; 
+    }
+
+    th { 
+      background: #f8fafc; 
+      color: #475569; 
+      text-transform: uppercase; 
+      font-size: 11px; 
+      letter-spacing: 0.05em; 
+    }
+
+    .badge { 
+      padding: 4px 8px; 
+      border-radius: 4px; 
+      font-size: 11px; 
+      font-weight: 600; 
+    }
+
+    .badge-Admin { 
+      background: #fee2e2; 
+      color: #991b1b; 
+    }
+
+    .badge-Vendor { 
+      background: #fef3c7; 
+      color: #92400e; 
+    }
+
+    .badge-Customer { 
+      background: #dbeafe; 
+      color: #1e40af; 
+    }
+
+    .badge-Guest { 
+      background: #f1f5f9; 
+      color: #475569; 
+    }
+
+    .pagination { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-top: 20px; 
+    }
+
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="header">

@@ -34,7 +34,9 @@ if ($nav_user_id && isset($pdo)) {
   }
 
   .nav-bell-btn {
-    background: transparent;
+    width:36px ;
+    height: 36px;
+    background: #8c5e58;
     border: none;
     font-size: 1.3rem;
     cursor: pointer;
@@ -45,6 +47,7 @@ if ($nav_user_id && isset($pdo)) {
     display: flex;
     align-items: center;
     justify-content: center;
+    
   }
   .nav-bell-btn:hover {
     background: rgba(0,0,0,0.06);
@@ -68,7 +71,26 @@ if ($nav_user_id && isset($pdo)) {
   .divider-wrap {
   list-style: none;
   padding: 0;
+
 }
+
+  #audit-logs-btn{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #8c5e58;
+    color: #fff;
+    border: none;
+    padding: 6px 14px 6px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1;
+    transition: background 0.2s ease, transform 0.15s ease;
+    box-shadow: 0 4px 10px rgba(82, 53, 48, 0.12);
+  }
 
   /* Notifications Dropdown */
   .notif-dropdown-panel {
@@ -164,7 +186,7 @@ if ($nav_user_id && isset($pdo)) {
     width: 18px;
     height: 18px;
     object-fit: contain;
-    vertical-align: middle;
+    vertical-align:middle;
   }
 
   .menu-item-icon {
