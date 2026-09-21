@@ -47,10 +47,14 @@ if ($nav_user_id && isset($pdo)) {
     display: flex;
     align-items: center;
     justify-content: center;
-    
+    transition: background 0.2s ease, transform 0.15s ease;
+    box-shadow: 0 4px 10px rgba(82, 53, 48, 0.12);
   }
+
   .nav-bell-btn:hover {
-    background: rgba(0,0,0,0.06);
+    background: #523530;
+    transform: translateY(-1px);
+  
   }
 
   .nav-badge {
@@ -92,6 +96,11 @@ if ($nav_user_id && isset($pdo)) {
     box-shadow: 0 4px 10px rgba(82, 53, 48, 0.12);
   }
 
+  #audit-logs-btn:hover{
+    background-color: #523530;
+    transform: translateY(-1px);
+  }
+
   /* Notifications Dropdown */
   .notif-dropdown-panel {
     display: none;
@@ -126,6 +135,7 @@ if ($nav_user_id && isset($pdo)) {
   }
   .notif-mark-read:hover { text-decoration: underline; }
   .notif-list {
+    background-color: #2e2b29;
     max-height: 350px;
     overflow-y: auto;
     margin: 0;
