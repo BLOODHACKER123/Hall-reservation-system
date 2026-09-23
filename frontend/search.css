@@ -272,3 +272,261 @@
   }
 }
 
+
+
+/* Existing detail, review and wishlist presentation, moved from search.php. */
+
+      .venue-header-img { width: 100%; height: 40vh; object-fit: cover; display: block; }
+      .detail-wrapper { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 40px; }
+      @media (max-width: 900px) { .detail-wrapper { grid-template-columns: 1fr; } }
+      .detail-info h1 { margin-top: 0; font-family: 'Playfair Display', serif; color: #523530; font-size: 2.3rem; margin-bottom: 10px; }
+      .meta-tags { display: flex; gap: 15px; color: #666; font-size: 0.95rem; margin-bottom: 25px; flex-wrap: wrap; }
+      .section-block { margin-bottom: 30px; }
+      .section-block h2 { font-size: 1.4rem; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px; }
+      .packages-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+      .package-card { border: 1px solid #eaeaea; border-radius: 8px; padding: 15px; background: #fafafa; }
+      .booking-widget { background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: sticky; top: 100px; }
+      .price-header { font-size: 1.6rem; font-weight: bold; color: #333; margin-bottom: 20px; }
+      .btn-book { width: 100%; background: #523530; color: #fff; border: none; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: center; display: block; text-decoration: none; box-sizing: border-box; }
+      .btn-book:hover { background: #3d2723; }
+      .back-link { display: inline-block; margin-bottom: 20px; color: #523530; font-weight: bold; text-decoration: none; }
+
+      /* Navbar Wishlist Link and Live Badge */
+      .nav-wishlist-link { position: relative; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
+      .wishlist-badge { background: #e53935; color: #fff; font-size: 0.75rem; font-weight: bold; border-radius: 10px; padding: 2px 6px; min-width: 16px; text-align: center; line-height: 1; }
+
+      /* Wishlist Heart Icon Styling */
+      .wishlist-btn {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          background: rgba(255, 255, 255, 0.9);
+          border: none;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.3rem;
+          color: #888;
+          transition: transform 0.15s ease, color 0.15s ease;
+          z-index: 5;
+      }
+      .wishlist-btn:hover { background: #fff; transform: scale(1.1); }
+      .wishlist-btn.active { color: #e53935; }
+
+      /* Async Loading state for smooth transitions */
+      #featured-venue-cards { transition: opacity 0.2s ease; }
+      #featured-venue-cards.loading { opacity: 0.35; pointer-events: none; }
+
+      /* Review Component Styles */
+      .review-card { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 16px; margin-bottom: 15px; }
+      .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+      .review-stars { color: #f59e0b; font-size: 1rem; }
+      .review-date { font-size: 0.85rem; color: #888; }
+      .review-author { font-weight: bold; color: #333; }
+      .review-comment { color: #555; font-size: 0.95rem; line-height: 1.5; margin: 0; }
+      .review-form-box { background: #fff; border: 1px solid #52353033; border-radius: 8px; padding: 20px; margin-top: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+      .review-form-box h3 { margin-top: 0; color: #523530; }
+      .star-rating-select { display: flex; gap: 8px; margin-bottom: 12px; flex-direction: row-reverse; justify-content: flex-end; }
+      .star-rating-select input { display: none; }
+      .star-rating-select label { font-size: 1.6rem; color: #ccc; cursor: pointer; }
+      .star-rating-select input:checked ~ label,
+      .star-rating-select label:hover,
+      .star-rating-select label:hover ~ label { color: #f59e0b; }
+      .review-textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; margin-bottom: 12px; }
+      .btn-review-submit { background: #523530; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+      .btn-review-submit:hover { background: #3d2723; }
+
+/* Venue browsing and detail view: shared cream, rose and brown theme. */
+.venue-browser {
+  --venue-rose: #8c5e58;
+  --venue-dark: #523530;
+  --venue-muted: #74645c;
+  --venue-border: #e7ddd5;
+  color: #2d2926;
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+}
+.venue-browser .venue-icon {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  vertical-align: middle;
+  color: var(--venue-rose);
+}
+.venue-browser #search-section { padding: 22px 24px; }
+.venue-browser #search-container,
+.venue-browser #featured-venue > div { max-width: 1200px; margin: 0 auto; }
+.venue-browser #featured-venue { padding: 36px 24px 64px; min-height: 55vh; }
+.venue-browser #featured-venue > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 20px;
+  align-items: center;
+}
+.venue-browser #search-subheading { grid-column: 1 / -1; }
+.venue-browser #search-heading { font: 400 clamp(30px, 3.5vw, 46px)/1.2 Georgia, serif; }
+.venue-browser #btn-clear-filters {
+  margin: 0;
+  padding: 10px 0 10px 16px;
+  color: var(--venue-dark);
+}
+.venue-browser #featured-venue-cards { grid-column: 1 / -1; margin-top: 24px; gap: 24px; }
+.venue-browser .search-field { min-height: 48px; padding: 10px 14px; border-radius: 12px; }
+.venue-browser #search-form .filter-button {
+  min-height: 48px;
+  border-radius: 12px;
+  justify-content: center;
+  background: var(--venue-rose);
+  border-color: var(--venue-rose);
+  color: #fff;
+  font-weight: 600;
+}
+.venue-browser .filter-button .venue-icon { color: inherit; }
+.venue-browser #search-form .filter-button:hover { background: var(--venue-dark); }
+.venue-browser .venue-card {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--venue-border);
+  border-radius: 18px;
+  background: #fffefd;
+  box-shadow: 0 4px 16px rgb(45 41 38 / 5%);
+}
+.venue-browser .venue-card-image { height: 220px; border-radius: 0; flex-shrink: 0; }
+.venue-browser .venue-card-image::after { background: linear-gradient(transparent 50%, rgb(45 41 38 / 30%)); }
+.venue-browser .hall-type-tag { max-width: calc(100% - 76px); top: 14px; left: 14px; border-radius: 6px; }
+.venue-browser .featured-tag { top: auto; bottom: 14px; left: 14px; right: auto; border-radius: 6px; font: 500 12px/1.5 Arial, sans-serif; }
+.venue-browser .rating-tag { display: flex; align-items: center; gap: 5px; bottom: 14px; right: 14px; background: #fff9f2; color: var(--venue-dark); font: 600 13px/1.5 Arial, sans-serif; }
+.venue-browser .location-details { padding: 20px 20px 12px; gap: 8px; grid-template-columns: minmax(0, 1fr); }
+.venue-browser .location-details p:first-child { font-size: 19px; line-height: 1.4; color: var(--venue-dark); }
+.venue-browser .location-details p:last-child { grid-column: 1; grid-row: 2; color: var(--venue-muted); }
+.venue-browser .location-details .cost { grid-column: 1; grid-row: 3; font-size: 16px; font-weight: 600; color: var(--venue-rose); white-space: normal; overflow-wrap: anywhere; }
+.venue-browser .hall-details { margin-top: auto; padding: 0 20px 20px; gap: 12px; }
+.venue-browser .hall-details p { color: var(--venue-muted); font-size: 13px; }
+.venue-browser .hall-details a { justify-content: center; width: 100%; min-height: 44px; border: 1px solid var(--venue-border); border-radius: 9px; background: #f5ede7; color: var(--venue-dark); font-weight: 600; }
+.venue-browser .hall-details a:hover { background: var(--venue-rose); color: #fff; }
+/* A CSS heart stays intact when the existing wishlist script replaces button text. */
+.venue-browser .wishlist-btn { width: 44px; height: 44px; color: var(--venue-rose); font-size: 0 !important; }
+.venue-browser .wishlist-btn::before {
+  content: ""; width: 22px; height: 22px; background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z' fill='none' stroke='black' stroke-width='1.8'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.venue-browser .wishlist-btn.active { color: #fff; background: var(--venue-rose); }
+.venue-browser .venue-gallery { max-width: 1440px; margin: 0 auto; }
+.venue-browser .venue-header-img { height: clamp(240px, 32vw, 420px); }
+.venue-browser .detail-wrapper { width: calc(100% - 48px); max-width: 1200px; margin: 36px auto 64px; padding: 0; grid-template-columns: minmax(0, 1fr) 330px; gap: 36px; }
+.venue-browser .detail-wrapper > * { min-width: 0; }
+.venue-browser .back-link { min-height: 44px; margin-bottom: 12px; font-size: 14px; color: var(--venue-rose); }
+.venue-browser .back-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.venue-browser .detail-info h1 { font: 400 clamp(28px, 3vw, 40px)/1.2 Georgia, serif; color: var(--venue-dark); margin: 0 0 20px; }
+.venue-browser .meta-tags { gap: 12px 20px; margin-bottom: 28px; color: var(--venue-muted); font-size: 14px; }
+.venue-browser .meta-tags > span { display: inline-flex; align-items: center; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.venue-browser .section-block { padding: 24px; margin-bottom: 20px; background: #fffefd; border: 1px solid var(--venue-border); border-radius: 14px; }
+.venue-browser .section-block h2 { margin: 0 0 16px; padding-bottom: 12px; font-size: 20px; color: var(--venue-dark); border-color: var(--venue-border); }
+.venue-browser .section-block p { font-size: 15px; line-height: 1.75; color: #60534b; overflow-wrap: anywhere; }
+.venue-browser .section-block p:last-child { margin-bottom: 0; }
+.venue-browser .section-block strong { color: var(--venue-dark); }
+.venue-browser .packages-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
+.venue-browser .package-card { min-width: 0; background: #faf7f2; border-color: var(--venue-border); border-radius: 10px; padding: 18px; }
+.venue-browser .package-card h3 { color: var(--venue-dark); margin-top: 0; }
+.venue-browser .booking-widget { top: 120px; padding: 26px; border-color: var(--venue-border); border-radius: 16px; box-shadow: 0 8px 28px rgb(82 53 48 / 7%); }
+.venue-browser .price-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; font-size: 28px; color: var(--venue-dark); overflow-wrap: anywhere; }
+.venue-browser .btn-book,
+.venue-browser .btn-review-submit { padding: 13px 18px; min-height: 48px; background: var(--venue-rose); border-radius: 9px; font-size: 15px; }
+.venue-browser .btn-book:not(:disabled):hover,
+.venue-browser .btn-review-submit:hover { background: var(--venue-dark); }
+.venue-browser .btn-book:disabled { color: #554a44; }
+.venue-browser .booking-widget > a { min-height: 44px; padding-top: 10px; }
+.venue-browser .reviews-empty { display: flex; align-items: flex-start; gap: 12px; background: #faf7f2; border-radius: 10px; padding: 18px; }
+.venue-browser .reviews-empty .venue-icon { margin-top: 4px; }
+.venue-browser .review-card { background: #faf7f2; border-color: var(--venue-border); border-radius: 10px; }
+.venue-browser .review-header { flex-wrap: wrap; gap: 8px; }
+.venue-browser .review-stars { color: var(--venue-rose); }
+.venue-browser .review-form-box { box-shadow: none; border-color: var(--venue-border); padding: 20px; }
+.venue-browser .review-textarea { padding: 12px; font-size: 16px; resize: vertical; min-height: 110px; }
+.venue-browser .star-rating-select input { display: block; position: absolute; width: 1px; height: 1px; opacity: 0; }
+.venue-browser .star-rating-select input:focus-visible + label { outline: 2px solid var(--venue-rose); outline-offset: 3px; }
+.venue-browser .star-rating-select input:checked ~ label,
+.venue-browser .star-rating-select label:hover,
+.venue-browser .star-rating-select label:hover ~ label { color: var(--venue-rose); }
+.venue-browser a:focus-visible,
+.venue-browser button:focus-visible,
+.venue-browser textarea:focus-visible { outline: 3px solid var(--venue-rose); outline-offset: 4px; }
+@media (max-width: 1100px) {
+  .venue-browser .detail-wrapper { grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; }
+}
+@media (max-width: 900px) {
+  .venue-browser .detail-wrapper { grid-template-columns: minmax(0, 1fr); }
+  .venue-browser .booking-widget { position: static; }
+}
+@media (max-width: 640px) {
+  .venue-browser #featured-venue > div { grid-template-columns: minmax(0, 1fr); }
+  .venue-browser #btn-clear-filters { justify-self: start; border: 0; padding-left: 0; }
+  .venue-browser #featured-venue { padding: 28px 20px 40px; }
+  .venue-browser #featured-venue-cards { margin-top: 12px; }
+  .venue-browser .detail-wrapper { width: calc(100% - 32px); margin-top: 24px; gap: 16px; }
+  .venue-browser .section-block { padding: 20px; }
+  .venue-browser .meta-tags { flex-direction: column; }
+  .venue-browser .booking-widget { padding: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .venue-browser .venue-card,
+  .venue-browser .wishlist-btn,
+  .venue-browser #featured-venue-cards { transition: none; }
+}
+
+/* Centre navigation links even when only one link is present. */
+@media (max-width: 1100px) {
+  .venue-browser #navigation-section #nav-bar {
+    gap: 6px;
+    padding: 12px 20px;
+  }
+  .venue-browser #navigation-section #nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    gap: 4px 20px;
+  }
+  .venue-browser #navigation-section #nav-links a {
+    justify-content: center;
+    text-align: center;
+  }
+  .venue-browser #navigation-section.has-mobile-menu #nav-links {
+    display: none;
+  }
+  .venue-browser #navigation-section.has-mobile-menu.is-menu-open #nav-links {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .venue-browser #navigation-section.has-mobile-menu #nav-links a {
+    justify-content: center;
+  }
+  .venue-browser #navigation-section.has-mobile-menu.is-menu-open #nav-buttons {
+    justify-content: center;
+  }
+}
+@media (max-width: 640px) {
+  .venue-browser .back-link {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .venue-browser .detail-info h1 { margin-bottom: 16px; }
+  .venue-browser .meta-tags { gap: 10px; margin-bottom: 22px; }
+  .venue-browser .venue-header-img { height: clamp(200px, 48vw, 280px); }
+}
+
+/* Avoid orphaned half-width controls in the compact search form. */
+@media (max-width: 760px) {
+  .venue-browser #search-form .search-guests,
+  .venue-browser #search-form > .filter-button {
+    grid-column: 1 / -1;
+  }
+}

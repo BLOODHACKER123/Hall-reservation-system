@@ -231,18 +231,18 @@ if (!$viewing_details) {
 
                         <div class="hall-type-tag"><?= htmlspecialchars($venue['venue_type'] ?? 'Venue') ?></div>
                         <div class="featured-tag">Featured</div>
-                        <div class="rating-tag">★<?= $venue['avg_rating'] > 0 ? $venue['avg_rating'] : 'New' ?></div>
+                        <div class="rating-tag"><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg><?= $venue['avg_rating'] > 0 ? $venue['avg_rating'] : 'New' ?></div>
                     </div>
 
                     <div class="location-details">
                         <p><?= htmlspecialchars($venue['name'] ?? 'Unnamed Venue') ?></p>
                         <p class="cost">$<?= number_format($venue['base_price_per_hour'] ?? 0, 2) ?>/day</p>
                         <br />
-                        <p><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <?= htmlspecialchars($venue['district'] ?? 'Unknown Location') ?></p>
+                        <p><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> <?= htmlspecialchars($venue['district'] ?? 'Unknown Location') ?></p>
                     </div>
                     <div class="hall-details">
-                        <p><i class="fa-solid fa-user-group" aria-hidden="true"></i> Up to <?= htmlspecialchars($venue['capacity'] ?? 'N/A') ?> guests</p>
-                        <p><i class="fa-solid fa-comment-dots" aria-hidden="true"></i> <?= (int)$venue['review_count'] ?> <?= ((int)$venue['review_count'] === 1) ? 'review' : 'reviews' ?></p>
+                        <p><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 4v3"/></svg> Up to <?= htmlspecialchars($venue['capacity'] ?? 'N/A') ?> guests</p>
+                        <p><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15a3 3 0 0 1-3 3H8l-5 4V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3Z"/><path d="M7 8h10M7 12h6"/></svg> <?= (int)$venue['review_count'] ?> <?= ((int)$venue['review_count'] === 1) ? 'review' : 'reviews' ?></p>
                         <a href="search.php?hall_id=<?= urlencode($venue['hall_id']) ?>">View Details → </a>
                     </div>
                 </div>
@@ -273,73 +273,9 @@ try {
   <link rel="stylesheet" href="common.css">
   <script src="navigation.js" defer></script>
   <link rel="stylesheet" href="search.css">
-  <style>
-      .venue-header-img { width: 100%; height: 40vh; object-fit: cover; display: block; }
-      .detail-wrapper { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 40px; }
-      @media (max-width: 900px) { .detail-wrapper { grid-template-columns: 1fr; } }
-      .detail-info h1 { margin-top: 0; font-family: 'Playfair Display', serif; color: #523530; font-size: 2.3rem; margin-bottom: 10px; }
-      .meta-tags { display: flex; gap: 15px; color: #666; font-size: 0.95rem; margin-bottom: 25px; flex-wrap: wrap; }
-      .section-block { margin-bottom: 30px; }
-      .section-block h2 { font-size: 1.4rem; color: #333; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px; }
-      .packages-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
-      .package-card { border: 1px solid #eaeaea; border-radius: 8px; padding: 15px; background: #fafafa; }
-      .booking-widget { background: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: sticky; top: 100px; }
-      .price-header { font-size: 1.6rem; font-weight: bold; color: #333; margin-bottom: 20px; }
-      .btn-book { width: 100%; background: #523530; color: #fff; border: none; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; text-align: center; display: block; text-decoration: none; box-sizing: border-box; }
-      .btn-book:hover { background: #3d2723; }
-      .back-link { display: inline-block; margin-bottom: 20px; color: #523530; font-weight: bold; text-decoration: none; }
 
-      /* Navbar Wishlist Link and Live Badge */
-      .nav-wishlist-link { position: relative; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
-      .wishlist-badge { background: #e53935; color: #fff; font-size: 0.75rem; font-weight: bold; border-radius: 10px; padding: 2px 6px; min-width: 16px; text-align: center; line-height: 1; }
-
-      /* Wishlist Heart Icon Styling */
-      .wishlist-btn {
-          position: absolute;
-          top: 12px;
-          right: 12px;
-          background: rgba(255, 255, 255, 0.9);
-          border: none;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.3rem;
-          color: #888;
-          transition: transform 0.15s ease, color 0.15s ease;
-          z-index: 5;
-      }
-      .wishlist-btn:hover { background: #fff; transform: scale(1.1); }
-      .wishlist-btn.active { color: #e53935; }
-
-      /* Async Loading state for smooth transitions */
-      #featured-venue-cards { transition: opacity 0.2s ease; }
-      #featured-venue-cards.loading { opacity: 0.35; pointer-events: none; }
-
-      /* Review Component Styles */
-      .review-card { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 16px; margin-bottom: 15px; }
-      .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-      .review-stars { color: #f59e0b; font-size: 1rem; }
-      .review-date { font-size: 0.85rem; color: #888; }
-      .review-author { font-weight: bold; color: #333; }
-      .review-comment { color: #555; font-size: 0.95rem; line-height: 1.5; margin: 0; }
-      .review-form-box { background: #fff; border: 1px solid #52353033; border-radius: 8px; padding: 20px; margin-top: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-      .review-form-box h3 { margin-top: 0; color: #523530; }
-      .star-rating-select { display: flex; gap: 8px; margin-bottom: 12px; flex-direction: row-reverse; justify-content: flex-end; }
-      .star-rating-select input { display: none; }
-      .star-rating-select label { font-size: 1.6rem; color: #ccc; cursor: pointer; }
-      .star-rating-select input:checked ~ label,
-      .star-rating-select label:hover,
-      .star-rating-select label:hover ~ label { color: #f59e0b; }
-      .review-textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; margin-bottom: 12px; }
-      .btn-review-submit { background: #523530; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-      .btn-review-submit:hover { background: #3d2723; }
-  </style>
 </head>
-<body>
+<body class="venue-browser">
   
     <!-- NAVIGATION BAR -->
     <section id="navigation-section">
@@ -380,7 +316,7 @@ try {
             $main_image = !empty($images) ? $images[0] : 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&auto=format&fit=crop&q=80'; 
             $in_wishlist = in_array((int)$venue_detail['hall_id'], $user_wishlist);
         ?>
-        <div style="position: relative;">
+        <div class="venue-gallery" style="position: relative;">
             <img src="<?= htmlspecialchars($main_image) ?>" alt="<?= htmlspecialchars($venue_detail['name']) ?>" class="venue-header-img">
             <button class="wishlist-btn <?= $in_wishlist ? 'active' : '' ?>" 
                     data-hall-id="<?= (int)$venue_detail['hall_id'] ?>" 
@@ -408,10 +344,10 @@ try {
 
                 <h1><?= htmlspecialchars($venue_detail['name']) ?></h1>
                 <div class="meta-tags">
-                    <span>📍 <?= htmlspecialchars($venue_detail['address'] . ', ' . $venue_detail['district']) ?></span>
-                    <span>👥 Up to <?= htmlspecialchars($venue_detail['capacity']) ?> guests</span>
-                    <span>🏢 <?= htmlspecialchars($venue_detail['venue_type']) ?></span>
-                    <span>★ <?= $avg_rating > 0 ? $avg_rating : 'New' ?> (<?= $total_reviews ?> reviews)</span>
+                    <span><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> <?= htmlspecialchars($venue_detail['address'] . ', ' . $venue_detail['district']) ?></span>
+                    <span><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 4v3"/></svg> Up to <?= htmlspecialchars($venue_detail['capacity']) ?> guests</span>
+                    <span><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 21v-5h6v5M8 7h1m6 0h1M8 11h1m6 0h1"/></svg> <?= htmlspecialchars($venue_detail['venue_type']) ?></span>
+                    <span><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg> <?= $avg_rating > 0 ? $avg_rating : 'New' ?> (<?= $total_reviews ?> reviews)</span>
                 </div>
 
                 <div class="section-block">
@@ -443,7 +379,7 @@ try {
                 <div class="section-block">
                     <h2>Guest Reviews (<?= $total_reviews ?>)</h2>
                     <?php if (empty($reviews)): ?>
-                        <p style="color: #666;">No reviews yet. Be the first to share your experience after your event!</p>
+                        <p class="reviews-empty"><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15a3 3 0 0 1-3 3H8l-5 4V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3Z"/><path d="M7 8h10M7 12h6"/></svg> No reviews yet. Be the first to share your experience after your event!</p>
                     <?php else: ?>
                         <?php foreach ($reviews as $rev): ?>
                             <div class="review-card">
@@ -474,11 +410,11 @@ try {
 
                                 <label style="display:block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem;">Your Rating</label>
                                 <div class="star-rating-select">
-                                    <input type="radio" id="star5" name="rating" value="5" required><label for="star5">★</label>
-                                    <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
-                                    <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
-                                    <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
-                                    <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
+                                    <input type="radio" id="star5" name="rating" value="5" required><label for="star5" aria-label="5 stars">★</label>
+                                    <input type="radio" id="star4" name="rating" value="4"><label for="star4" aria-label="4 stars">★</label>
+                                    <input type="radio" id="star3" name="rating" value="3"><label for="star3" aria-label="3 stars">★</label>
+                                    <input type="radio" id="star2" name="rating" value="2"><label for="star2" aria-label="2 stars">★</label>
+                                    <input type="radio" id="star1" name="rating" value="1"><label for="star1" aria-label="1 star">★</label>
                                 </div>
 
                                 <label for="review_comment" style="display:block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem;">Review Comment</label>
@@ -505,7 +441,7 @@ try {
                         <a href="process_bookings.php?hall_id=<?= urlencode($venue_detail['hall_id']) ?>" class="btn-book">Proceed to Booking</a>
                         <a href="messages.php?partner_id=<?= $venue_detail['vendor_id'] ?>&hall_id=<?= $venue_detail['hall_id'] ?>" 
                         style="display:block; text-align:center; margin-top:10px; color:#523530; font-weight:bold; text-decoration:none; font-size:0.9rem;">
-                        💬 Contact Venue Host
+                        <svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15a3 3 0 0 1-3 3H8l-5 4V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3Z"/><path d="M7 8h10M7 12h6"/></svg> Contact Venue Host
                         </a>
                     <?php endif; ?>
                 </div>
@@ -518,11 +454,11 @@ try {
           <div id="search-container">
             <form id="search-form" action="search.php" method="get">
               <label class="search-field search-location">
-                <span class="field-icon" aria-hidden="true">⌕</span>
-                <input type="text" id="location-input" name="location" placeholder="Location..." value="<?= htmlspecialchars($search_location) ?>" autocomplete="off" />
+                <svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+                <input type="text" id="location-input" aria-label="Location" name="location" placeholder="Location..." value="<?= htmlspecialchars($search_location) ?>" autocomplete="off" />
               </label>
               <label class="search-field">
-                <select id="venue-type-select" name="venueType">
+                <select id="venue-type-select" aria-label="Venue type" name="venueType">
                    <option value="">All Types</option>
                    <?php foreach($categories as $category): ?>
                         <option value="<?= htmlspecialchars($category) ?>" <?= ($search_type === $category) ? 'selected' : '' ?>>
@@ -532,10 +468,10 @@ try {
                 </select>
               </label>
               <label class="search-field search-date">
-                <input type="date" id="date-input" name="date" value="<?= htmlspecialchars($search_date) ?>" />
+                <input type="date" id="date-input" aria-label="Event date" name="date" value="<?= htmlspecialchars($search_date) ?>" />
               </label>
               <label class="search-field search-guests">
-                <select id="guests-select" name="guests">
+                <select id="guests-select" aria-label="Number of guests" name="guests">
                   <option value="">Guests</option>
                   <option value="1-50" <?= ($search_guests === '1-50') ? 'selected' : '' ?>>1-50</option>
                   <option value="51-150" <?= ($search_guests === '51-150') ? 'selected' : '' ?>>51-150</option>
@@ -544,14 +480,14 @@ try {
                 </select>
               </label>
               <label class="search-field search-sort">
-                <select id="sort-select" name="sort">
+                <select id="sort-select" aria-label="Sort venues" name="sort">
                   <option value="newest" <?= ($search_sort === 'newest') ? 'selected' : '' ?>>Newest First</option>
                   <option value="price-low" <?= ($search_sort === 'price-low') ? 'selected' : '' ?>>Price: Low to High</option>
                   <option value="price-high" <?= ($search_sort === 'price-high') ? 'selected' : '' ?>>Price: High to Low</option>
                 </select>
               </label>
               <button class="filter-button" type="submit">
-                <span class="filter-icon" aria-hidden="true">☷</span> Search
+                <svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg> Search
               </button>
             </form>
           </div>
@@ -583,18 +519,18 @@ try {
 
                       <div class="hall-type-tag"><?= htmlspecialchars($venue['venue_type'] ?? 'Venue') ?></div>
                       <div class="featured-tag">Featured</div>
-                      <div class="rating-tag">★<?= $venue['avg_rating'] > 0 ? $venue['avg_rating'] : 'New' ?></div>
+                      <div class="rating-tag"><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg><?= $venue['avg_rating'] > 0 ? $venue['avg_rating'] : 'New' ?></div>
                     </div>
 
                     <div class="location-details">
                       <p><?= htmlspecialchars($venue['name'] ?? 'Unnamed Venue') ?></p>
                       <p class="cost">$<?= number_format($venue['base_price_per_hour'] ?? 0, 2) ?>/day</p>
                       <br />
-                      <p><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <?= htmlspecialchars($venue['district'] ?? 'Unknown Location') ?></p>
+                      <p><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> <?= htmlspecialchars($venue['district'] ?? 'Unknown Location') ?></p>
                     </div>
                     <div class="hall-details">
-                      <p><i class="fa-solid fa-user-group" aria-hidden="true"></i> Up to <?= htmlspecialchars($venue['capacity'] ?? 'N/A') ?> guests</p>
-                      <p><i class="fa-solid fa-comment-dots" aria-hidden="true"></i> <?= (int)$venue['review_count'] ?> <?= ((int)$venue['review_count'] === 1) ? 'review' : 'reviews' ?></p>
+                      <p><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 4v3"/></svg> Up to <?= htmlspecialchars($venue['capacity'] ?? 'N/A') ?> guests</p>
+                      <p><svg class="venue-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15a3 3 0 0 1-3 3H8l-5 4V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3Z"/><path d="M7 8h10M7 12h6"/></svg> <?= (int)$venue['review_count'] ?> <?= ((int)$venue['review_count'] === 1) ? 'review' : 'reviews' ?></p>
                       <a href="search.php?hall_id=<?= urlencode($venue['hall_id']) ?>">View Details → </a>
                     </div>
                   </div>
