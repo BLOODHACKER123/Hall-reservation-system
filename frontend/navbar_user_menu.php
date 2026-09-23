@@ -375,25 +375,117 @@ if ($nav_user_id && isset($pdo)) {
 
         <ul>
           <?php if ($nav_user_type === 'Customer'): ?>
-            <li><a href="search.php"><span class="menu-link-label"><img src="./images/search-interface-symbol.png" alt="Browse Venues" class="menu-item-icon" /><span>Browse Venues</span></span></a></li>
-            <li><a href="mybookings.php"><span class="menu-link-label"><img src="./images/book.png" alt="My Bookings" class="menu-item-icon" /><span>My Bookings</span></span></a></li>
             <li>
-              <a href="wishlist.php">
-                <span class="menu-link-label"><img src="./images/wishlist.png" alt="My Wishlist" class="menu-item-icon" /><span>My Wishlist</span></span>
+              <a href="search.php">
+                <span class="menu-link-label">
+                <img src="./images/search-interface-symbol.png" alt="Browse Venues" class="menu-item-icon" />
+                <span>Browse Venues</span>
+              </span>
+            </a>
+          </li>
+
+          <li>
+            <a href="mybookings.php">
+              <span class="menu-link-label">
+                <img src="./images/book.png" alt="My Bookings" class="menu-item-icon" />
+                <span>My Bookings</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="wishlist.php">
+              <span class="menu-link-label">
+                <img src="./images/wishlist.png" alt="My Wishlist" class="menu-item-icon">
+                <span>My Wishlist</span>
+              </span>
                 <span class="nav-badge" style="position:static;"><?= $nav_wishlist_count ?></span>
               </a>
             </li>
-            <li><a href="messages.php"><span class="menu-link-label"><img src="./images/message.png" alt="Messages" class="menu-item-icon" /><span>Messages</span></span></a></li>
+            <li>
+              <a href="messages.php">
+                <span class="menu-link-label">
+                  <img src="./images/message.png" alt="Messages" class="menu-item-icon">
+                  <span>Messages</span>
+                </span>
+              </a>
+            </li>
+
           <?php elseif ($nav_user_type === 'Vendor'): ?>
-            <li><a href="ownerdashboard.php#overview"><span class="menu-link-label"><img src="./images/setting.png" alt="Dashboard Overview" class="menu-item-icon" /><span>Dashboard Overview</span></span></a></li>
-            <li><a href="ownerdashboard.php#venues"><span class="menu-link-label"><img src="./images/mall.png" alt="Manage Venues" class="menu-item-icon" /><span>Manage Venues</span></span></a></li>
-            <li><a href="ownerdashboard.php#bookings"><span class="menu-link-label"><img src="./images/book.png" alt="Booking Requests" class="menu-item-icon" /><span>Booking Requests</span></span></a></li>
-            <li><a href="messages.php"><span class="menu-link-label"><img src="./images/history.png" alt="Guest Inquiries" class="menu-item-icon" /><span>Guest Inquiries</span></span></a></li>
-            <li><a href="ownerdashboard.php#financials"><span class="menu-link-label"><img src="./images/financial-analysis.png" alt="Financials" class="menu-item-icon" /><span>Financials</span></span></a></li>
-            <li><a href="list.php"><span class="menu-link-label"><img src="./images/plus.png" alt="List New Venue" class="menu-item-icon" /><span>List New Venue</span></span></a></li>
-            <li><a href="ownerdashboard.php#settings"><span class="menu-link-label"><img src="./images/settings.png" alt="Settings" class="menu-item-icon" /><span>Settings</span></span></a></li>
-          <?php elseif ($nav_user_type === 'Admin'): ?>
-            <li><a href="admin.php"><span class="menu-link-label"><img src="./images/administrator.png" alt="Admin Dashboard" class="menu-item-icon" /><span>Admin Dashboard</span></span></a></li>
+            <li>
+              <a href="ownerdashboard.php#overview">
+                <span class="menu-link-label">
+                  <img src="./images/setting.png" alt="Dashboard Overview" class="menu-item-icon">
+                  <span>Dashboard Overview</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="ownerdashboard.php#venues">
+                <span class="menu-link-label">
+                  <img src="./images/mall.png" alt="Manage Venues" class="menu-item-icon"/>
+                  <span>Manage Venues</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="ownerdashboard.php#bookings">
+                <span class="menu-link-label">
+                  <img src="./images/book.png" alt="Booking Requests" class="menu-item-icon" />
+                  <span>Booking Requests</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="messages.php">
+                <span class="menu-link-label">
+                  <img src="./images/history.png" alt="Guest Inquiries" class="menu-item-icon" />
+                  <span>Guest Inquiries</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="ownerdashboard.php#financials">
+                <span class="menu-link-label">
+                  <img src="./images/financial-analysis.png" alt="Financials" class="menu-item-icon"/>
+                  <span>Financials</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="list.php">
+                <span class="menu-link-label">
+                  <img src="./images/plus.png" alt="List New Venue" class="menu-item-icon"/>
+                  <span>List New Venue</span>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a href="ownerdashboard.php#settings">
+                <span class="menu-link-label">
+                  <img src="./images/settings.png" alt="Settings" class="menu-item-icon" />
+                  <span>Settings</span>
+                </span>
+              </a>
+            </li>
+
+          <?php elseif ($nav_user_type === 'Admin'):?>
+            <li>
+              <a href="admin.php">
+                <span class="menu-link-label">
+                  <img src="./images/administrator.png" alt="Admin Dashboard" class="menu-item-icon" />
+                  <span>Admin Dashboard</span>
+                </span>
+              </a>
+            </li>
+
+            <li>
+              <a href="search.php">
+                <span class="menu-link-label">
+                  <img src="./images/mall.png" alt="Admin Dashboard" class="menu-item-icon" />
+                  <span>Browse Venues</span>
+                </span>
+              </a>
+            </li>
           <?php endif; ?>
 
           <li class="divider-wrap">

@@ -172,8 +172,6 @@ try {
             <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>
 
-        
-        
       </div>
     </div>
   </section>

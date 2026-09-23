@@ -301,8 +301,15 @@ try {
     </section>
 
     <main class="owner-content">
-        <?php if ($error_msg): ?><div style="background: #fce8e6; border: 1px solid #c5221f; color: #c5221f; padding: 15px; border-radius: 6px; margin-bottom: 20px;"><?= htmlspecialchars($error_msg) ?></div><?php endif; ?>
-        <?php if ($success_msg): ?><div style="background: #d4edda; border: 1px solid #155724; color: #155724; padding: 15px; border-radius: 6px; margin-bottom: 20px;"><?= htmlspecialchars($success_msg) ?></div><?php endif; ?>
+        <?php if ($error_msg): ?>
+            <div style="background: #fce8e6; border: 1px solid #c5221f; color: #c5221f; padding: 15px; border-radius: 6px; margin-bottom: 20px;"><?= htmlspecialchars($error_msg) ?>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($success_msg): ?>
+            <div style="background: #d4edda; border: 1px solid #155724; color: #155724; padding: 15px; border-radius: 6px; margin-bottom: 20px;"><?= htmlspecialchars($success_msg) ?>
+        </div>
+        <?php endif; ?>
 
         <?php if ($owner_data): ?>
         <div class="owner-header">
