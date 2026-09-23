@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../backend/config/database.php';
+require_once __DIR__ . '/../backend/utils/auditLogger.php';
 
 // Redirect to login if user is not authenticated
 if (!isset($_SESSION['user_id'])) {
@@ -44,7 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
             $stmt2 =$pdo->prepare("INSERT INTO admins (user_id, admin_level, role) VALUES (?, 1, 'System Admin')");
             $stmt2->execute([$new_admin_id]);
             
-            $pdo->commit();$admin_msg = "<p style='color: green; font-weight: bold; margin-bottom: 15px;'>New admin created successfully!</p>";
+            $pdo->commit();
+
+logAudit(
+    "New admin account created: " . $email
+);
+
+$admin_msg = "<p style='color: green; font-weight: bold; margin-bottom: 15px;'>New admin created successfully!</p>";
+
         } catch (Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();$admin_msg = "<p style='color: red; font-weight: bold; margin-bottom: 15px;'>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
         }
@@ -54,15 +62,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
 }
 
 // Handle Approve / Reject Actions for Venues
+// Handle Approve / Reject Actions for Venues
 if (isset($_GET['action']) && isset($_GET['id'])) {
     $hall_id = intval($_GET['id']);
-    if ($_GET['action'] === 'approve') {
-        $stmt =$pdo->prepare("UPDATE halls SET is_active = 1 WHERE hall_id = ?");
-        $stmt->execute([$hall_id]);
-    } elseif ($_GET['action'] === 'reject') {
-        $stmt =$pdo->prepare("DELETE FROM halls WHERE hall_id = ?");
-        $stmt->execute([$hall_id]);
+
+    // Get venue name before changing/deleting it
+    $venue_stmt = $pdo->prepare("SELECT name FROM halls WHERE hall_id = ?");
+    $venue_stmt->execute([$hall_id]);
+    $venue = $venue_stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($venue) {
+        if ($_GET['action'] === 'approve') {
+
+            $stmt = $pdo->prepare("UPDATE halls SET is_active = 1 WHERE hall_id = ?");
+            $stmt->execute([$hall_id]);
+
+            logAudit(
+                "Admin approved venue: " . $venue['name'] . " (Hall ID: " . $hall_id . ")"
+            );
+
+        } elseif ($_GET['action'] === 'reject') {
+
+            $stmt = $pdo->prepare("DELETE FROM halls WHERE hall_id = ?");
+            $stmt->execute([$hall_id]);
+
+            logAudit(
+                "Admin rejected and deleted venue: " . $venue['name'] . " (Hall ID: " . $hall_id . ")"
+            );
+        }
     }
+
     header("Location: admin.php#pending-venues");
     exit;
 }
@@ -150,21 +179,6 @@ try {
     <div id="container">
       <div id="nav-bar">
         <a id="logo" href="index.php">VenueVista</a>
-        <nav id="nav-links">
-          <a href="search.php">Browse Venues</a>
-          
-          <?php if (isset($_SESSION['user_type'])): ?>
-              <?php if ($_SESSION['user_type'] === 'Vendor'): ?>
-                  <a href="list.php">List a Venue</a>
-                  <a href="ownerdashboard.php">Owners Dashboard</a>
-              <?php elseif ($_SESSION['user_type'] === 'Admin'): ?>
-                  <a href="admin.php" class="active">Admin Dashboard</a>
-              <?php elseif ($_SESSION['user_type'] === 'Customer'): ?>
-                  <a href="mybookings.php">My Bookings</a>
-              <?php endif; ?>
-          <?php endif; ?>
-        </nav>
-
         <div id="nav-buttons">
             <button id="audit-logs-btn" type="button">
               Audit Logs

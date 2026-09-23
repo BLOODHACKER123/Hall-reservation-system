@@ -70,8 +70,8 @@ body {
 
 #navigation-section #logo {
   display: flex;
-  font-size: 1.05rem;
-  font-weight: 100;
+  font-size: 3rem;
+  font-weight: 600;
   text-decoration: none;
   color: #8c5e58;
   font-family: Cormorant-Garamond,serif;

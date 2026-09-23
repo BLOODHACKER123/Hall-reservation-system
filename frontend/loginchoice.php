@@ -35,11 +35,6 @@ if (isset($_SESSION['user_id'])) {
     <div id="container">
       <div id="nav-bar">
         <a id="logo" href="index.php">VenueVista</a>
-        <nav id="nav-links">
-          <a href="search.php">Browse Venues</a>
-      
-        </nav>
-        
         <div id="nav-buttons">
               <a id="login-button" href="loginchoice.php">Login</a>
         </div>

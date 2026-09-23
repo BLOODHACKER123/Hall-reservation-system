@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../backend/config/database.php';
+require_once __DIR__ . '/../backend/utils/auditLogger.php';
 
 $error_message = '';
 $email = $_POST['email'] ?? '';
@@ -26,6 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id'] = $user['user_id'];
                 $_SESSION['user_name'] = $user['first_name'];
                 $_SESSION['user_type'] = $user['user_type'];
+
+                if ($user['user_type'] === 'Admin') {
+                  logAudit("Admin logged in successfully with email: " . $email);
+                  }
 
                 // Update last login timestamp
                 $pdo->prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?")->execute([$user['user_id']]);
