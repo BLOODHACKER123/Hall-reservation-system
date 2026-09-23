@@ -105,16 +105,6 @@ try {
     <div id="container">
       <div id="nav-bar">
         <a id="logo" href="index.php">VenueVista</a>
-        <nav id="nav-links">
-          <a href="search.php">Browse Venues</a>
-          <?php if ($user_type === 'Vendor'): ?>
-              <a href="ownerdashboard.php">Owners Dashboard</a>
-          <?php elseif ($user_type === 'Customer'): ?>
-              <a href="wishlist.php">Wishlist</a>
-              <a href="mybookings.php">My Bookings</a>
-          <?php endif; ?>
-          <a href="messages.php" class="active">Messages</a>
-        </nav>
         <div id="nav-buttons">
           <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>
