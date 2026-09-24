@@ -292,8 +292,7 @@ if ($nav_user_id && isset($pdo)) {
     overflow: hidden;
     z-index: 1000;
   }
-  .user-dropdown-panel
-  .show { 
+  .user-dropdown-panel.show { 
     display: block; 
   }
 
@@ -448,7 +447,7 @@ if ($nav_user_id && isset($pdo)) {
 
     <!-- USER PROFILE MENU -->
     <div class="user-menu-container">
-      <button type="button" class="user-menu-trigger" id="userMenuTrigger">
+      <button type="button" class="user-menu-trigger" id="userMenuTrigger" aria-controls="userDropdownPanel" aria-expanded="false">
         <span class="user-avatar"><img src="./images/user.png" alt="User" class="menu-icon-image" /></span>
         <span><?= htmlspecialchars($nav_user_name) ?></span>
         <span style="font-size: 0.75rem;">▼</span>
@@ -586,7 +585,14 @@ if ($nav_user_id && isset($pdo)) {
           <li class="divider-wrap">
             <div class="divider"></div>
           </li>
-          <li><a href="../backend/config/logout.php" class="logout-link"><span class="menu-link-label"><img src="./images/logout.png" alt="Logout" class="menu-item-icon" /><span>Logout</span></span></a></li>
+          <li>
+            <a href="../backend/config/logout.php" class="logout-link">
+              <span class="menu-link-label">
+                <img src="./images/logout.png" alt="Logout" class="menu-item-icon" />
+                <span>Logout</span>
+              </span>
+            </a>
+          </li>
         </ul>
       </div>
     </div>
@@ -644,7 +650,10 @@ if ($nav_user_id && isset($pdo)) {
       if (bellBtn && notifPanel) {
         bellBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          if (userPanel) userPanel.classList.remove('show');
+          if (userPanel) {
+            userPanel.classList.remove('show');
+            userTrigger.setAttribute('aria-expanded', 'false');
+          }
           const isVisible = notifPanel.classList.toggle('show');
           if (isVisible) loadNotifications();
         });
@@ -674,7 +683,8 @@ if ($nav_user_id && isset($pdo)) {
         userTrigger.addEventListener('click', (e) => {
           e.stopPropagation();
           if (notifPanel) notifPanel.classList.remove('show');
-          userPanel.classList.toggle('show');
+          const isVisible = userPanel.classList.toggle('show');
+          userTrigger.setAttribute('aria-expanded', String(isVisible));
         });
       }
 
@@ -685,6 +695,7 @@ if ($nav_user_id && isset($pdo)) {
         }
         if (userPanel && !userPanel.contains(e.target) && !userTrigger.contains(e.target)) {
           userPanel.classList.remove('show');
+          userTrigger.setAttribute('aria-expanded', 'false');
         }
       });
     })();

@@ -237,9 +237,8 @@ session_start();
   <style>
 
       .owner-content { 
-        max-width: 1200px; 
-        margin: 40px auto; 
-        padding: 0 20px; 
+        max-width: 100%;  
+        padding: 20px 96px; 
     }
 
       .owner-header { 
@@ -420,11 +419,6 @@ session_start();
       <div id="container">
         <div id="nav-bar">
           <a id="logo" href="index.php">VenueVista</a>
-          <nav id="nav-links">
-            <a href="search.php">Browse Venues</a>
-            <a href="ownerdashboard.php" class="active">Owners Dashboard</a>
-            <a href="list.php">List a Venue</a>
-          </nav>
           
           <div id="nav-buttons">
             <?php include __DIR__ . '/navbar_user_menu.php'; ?>
@@ -462,8 +456,8 @@ session_start();
             <a class="tab-link" href="#settings" data-target="panel-settings">Settings</a>
         </nav>
 
-        <section class="admin-panel" id="panel-overview" style="display: block;">
-            <div class="admin-stats">
+        <section class="admin-panel" id="panel-overview" style="display: flex; justify-content:center; align-items:center;">
+            <div class="admin-stats" style="display:grid; width:100%; justify-content:center; align-items:center;">
                 <article class="stat-card"><span class="stat-label">▥ &nbsp; MY VENUES</span><strong><?= count($venues) ?></strong></article>
                 <article class="stat-card"><span class="stat-label">□ &nbsp; TOTAL BOOKINGS</span><strong><?= $total_bookings ?></strong></article>
                 <article class="stat-card"><span class="stat-label">↗ &nbsp; TOTAL EARNINGS</span><strong>$<?= number_format($total_earnings, 2) ?></strong></article>

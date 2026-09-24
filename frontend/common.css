@@ -80,8 +80,12 @@ body {
 #navigation-section 
 #logo {
   display: flex;
-  font-size: 3rem;
+  align-items: center;
+  min-width: 0;
+  font-size: 1rem;
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   text-decoration: none;
   color: #8c5e58;
   font-family: Cormorant-Garamond,serif;
@@ -252,16 +256,18 @@ body.account-page {
 
 /* Shared footer. */
 #footer-section {
+  display: flex;
   width: 100%;
   color: var(--cream);
   background: var(--ink);
+  justify-content: center;
+  align-items: center;
 }
 
 #footer-section 
 #footer-body {
-  width: min(100% - 48px, 1200px);
-  margin: 0 auto;
-  padding: 42px 0 22px;
+  width: 100%;
+  padding: 42px 96px 22px 96px;
 }
 
 #footer-section 
@@ -377,7 +383,7 @@ body.account-page {
 
   #navigation-section 
   #logo {
-    font-size: clamp(2rem, 8vw, 3rem);
+    font-size: 1.25rem;
   }
 
   #navigation-section #logo,

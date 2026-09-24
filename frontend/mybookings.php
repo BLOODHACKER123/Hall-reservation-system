@@ -243,21 +243,6 @@ try {
     <div id="container">
       <div id="nav-bar">
         <a id="logo" href="index.php">VenueVista</a>
-        <nav id="nav-links">
-          <a href="search.php">Browse Venues</a>
-          <a href="list.php">List a Venue</a>
-          
-          <?php if (isset($_SESSION['user_type'])): ?>
-              <?php if ($_SESSION['user_type'] === 'Vendor'): ?>
-                  <a href="ownerdashboard.php">Owners Dashboard</a>
-              <?php elseif ($_SESSION['user_type'] === 'Admin'): ?>
-                  <a href="admin.php">Admin Dashboard</a>
-              <?php elseif ($_SESSION['user_type'] === 'Customer'): ?>
-                  <a href="mybookings.php" class="active">My Bookings</a>
-              <?php endif; ?>
-          <?php endif; ?>
-        </nav>
-        
         <div id="nav-buttons">
             <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>

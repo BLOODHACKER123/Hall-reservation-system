@@ -124,14 +124,6 @@ try {
     <div id="container">
       <div id="nav-bar">
         <a id="logo" href="index.php">VenueVista</a>
-        <nav id="nav-links">
-          <a href="search.php">Browse Venues</a>
-          <a href="wishlist.php" class="nav-wishlist-link active">
-            Wishlist 
-            <span class="wishlist-badge" id="nav-wishlist-count"><?= $wishlist_count ?></span>
-          </a>
-          <a href="mybookings.php">My Bookings</a>
-        </nav>
         <div id="nav-buttons">
             <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>

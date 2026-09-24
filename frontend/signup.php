@@ -99,12 +99,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div id="container">
         <div id="nav-bar">
           <a id="logo" href="index.php">VenueVista</a>
-          <nav id="nav-links">
-            <a href="search.php">Browse Venues</a>
-            <a href="list.php">List a Venue</a>
-            <a href="ownerdashboard.php">Owners Dashboard</a>
-            <a href="admin.php">Admin</a>
-          </nav>
           <div id="nav-buttons">
     
             <a id="login-button" href="loginchoice.php">Login</a>

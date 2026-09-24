@@ -282,26 +282,7 @@ try {
       <div id="container">
         <div id="nav-bar">
           <a id="logo" href="index.php">VenueVista</a>
-          <nav id="nav-links">
-            <a href="search.php" class="active">Browse Venues</a>
-            <?php if (isset($_SESSION['user_type'])): ?>
-                <?php if ($_SESSION['user_type'] === 'Vendor'): ?>
-                    <a href="ownerdashboard.php">Owners Dashboard</a>
-                <?php elseif ($_SESSION['user_type'] === 'Admin'): ?>
-                    <a href="admin.php">Admin Dashboard</a>
-                <?php elseif ($_SESSION['user_type'] === 'Customer'): ?>
-                    <!-- Wishlist Navbar Link with Live Counter Badge -->
-                    <a href="wishlist.php" class="nav-wishlist-link">
-                        Wishlist 
-                        <span class="wishlist-badge" id="nav-wishlist-count"><?= $wishlist_count ?></span>
-                    </a>
-                    <a href="mybookings.php">My Bookings</a>
-                <?php endif; ?>
-            <?php endif; ?>
-          </nav>
-
-        
-        
+          
         <div id="nav-buttons">
             <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>
@@ -494,7 +475,7 @@ try {
         </section>
 
        <section id="featured-venue">
-          <div>
+          <div >
             <p id="search-subheading"><?= !empty($search_location) || !empty($search_type) || !empty($search_guests) ? 'Search Results' : 'Handpicked for You' ?></p>
             <h2 id="search-heading"><?= !empty($search_type) ? htmlspecialchars($search_type) . 's' : 'Available Venues' ?></h2>
             <a href="search.php" id="btn-clear-filters">View All / Clear Filters ✕</a>

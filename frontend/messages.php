@@ -106,9 +106,6 @@ try {
     <div id="container">
       <div id="nav-bar">
         <a id="logo" href="index.php">VenueVista</a>
-        <nav id="nav-links">
-          <a href="search.php">Browse Venues</a>
-        </nav>
         <div id="nav-buttons">
           <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>
