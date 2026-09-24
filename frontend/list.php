@@ -6,12 +6,13 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// 2. SAFELY LOAD DATABASE
+// 2. SAFELY LOAD DATABASE & AUDIT LOGGER
 $db_path = __DIR__ . '/../backend/config/database.php';
 if (!file_exists($db_path)) {
     die("<h2 style='color:red; text-align:center;'>FATAL ERROR: Cannot find database file.</h2>");
 }
 require_once $db_path;
+require_once __DIR__ . '/../backend/utils/auditLogger.php';
 
 if (!isset($pdo)) {
     die("<h2 style='color:red; text-align:center;'>FATAL ERROR: Database connected, but \$pdo variable is missing.</h2>");
@@ -30,19 +31,25 @@ if ($_SESSION['user_type'] !== 'Vendor') {
     exit;
 }
 
-$success_message = '';$error_message = '';
+$success_message = '';
+$error_message = '';
 
 // 4. INITIALIZE VARIABLES TO RETAIN FORM DATA (Safe Fallbacks)
-$name = isset($_POST['venue-name']) ?$_POST['venue-name'] : '';
-$email = isset($_POST['owner-email']) ? $_POST['owner-email'] : '';$venue_type = isset($_POST['venue-type']) ?$_POST['venue-type'] : '';
-$city = isset($_POST['city']) ? $_POST['city'] : '';$address = isset($_POST['address']) ?$_POST['address'] : '';
-$description = isset($_POST['description']) ? $_POST['description'] : '';$min_capacity = isset($_POST['min-capacity']) ?$_POST['min-capacity'] : '';
-$max_capacity = isset($_POST['max-capacity']) ? $_POST['max-capacity'] : '';$base_price = isset($_POST['base-price']) ?$_POST['base-price'] : '';
-$venue_rules = isset($_POST['venue-rules']) ? $_POST['venue-rules'] : '';$cancellation_policy = isset($_POST['cancellation-policy']) ?$_POST['cancellation-policy'] : '';
+$name = isset($_POST['venue-name']) ? $_POST['venue-name'] : '';
+$email = isset($_POST['owner-email']) ? $_POST['owner-email'] : '';
+$venue_type = isset($_POST['venue-type']) ? $_POST['venue-type'] : '';
+$city = isset($_POST['city']) ? $_POST['city'] : '';
+$address = isset($_POST['address']) ? $_POST['address'] : '';
+$description = isset($_POST['description']) ? $_POST['description'] : '';
+$min_capacity = isset($_POST['min-capacity']) ? $_POST['min-capacity'] : '';
+$max_capacity = isset($_POST['max-capacity']) ? $_POST['max-capacity'] : '';
+$base_price = isset($_POST['base-price']) ? $_POST['base-price'] : '';
+$venue_rules = isset($_POST['venue-rules']) ? $_POST['venue-rules'] : '';
+$cancellation_policy = isset($_POST['cancellation-policy']) ? $_POST['cancellation-policy'] : '';
 
-$selected_seating = isset($_POST['seating']) && is_array($_POST['seating']) ?$_POST['seating'] : [];
-$selected_catering = isset($_POST['catering']) && is_array($_POST['catering']) ?$_POST['catering'] : [];
-$selected_amenities = isset($_POST['amenities']) && is_array($_POST['amenities']) ?$_POST['amenities'] : [];
+$selected_seating = isset($_POST['seating']) && is_array($_POST['seating']) ? $_POST['seating'] : [];
+$selected_catering = isset($_POST['catering']) && is_array($_POST['catering']) ? $_POST['catering'] : [];
+$selected_amenities = isset($_POST['amenities']) && is_array($_POST['amenities']) ? $_POST['amenities'] : [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $clean_name = htmlspecialchars(strip_tags(trim($name)));
@@ -54,13 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $clean_max = intval($max_capacity);
     $clean_price = floatval($base_price);
 
-    $pkg_names = isset($_POST['package_name']) && is_array($_POST['package_name']) ?$_POST['package_name'] : [];
-    $pkg_prices = isset($_POST['package_price']) && is_array($_POST['package_price']) ?$_POST['package_price'] : [];
-    $pkg_descs = isset($_POST['package_desc']) && is_array($_POST['package_desc']) ?$_POST['package_desc'] : [];
-    $pkg_includes = isset($_POST['package_includes']) && is_array($_POST['package_includes']) ?$_POST['package_includes'] : [];
+    $pkg_names = isset($_POST['package_name']) && is_array($_POST['package_name']) ? $_POST['package_name'] : [];
+    $pkg_prices = isset($_POST['package_price']) && is_array($_POST['package_price']) ? $_POST['package_price'] : [];
+    $pkg_descs = isset($_POST['package_desc']) && is_array($_POST['package_desc']) ? $_POST['package_desc'] : [];
+    $pkg_includes = isset($_POST['package_includes']) && is_array($_POST['package_includes']) ? $_POST['package_includes'] : [];
 
     if (empty($clean_name) || empty($clean_email) || empty($clean_venue_type) || empty($clean_city) || empty($clean_description) ||$clean_max <= 0 || $clean_price <= 0) {$error_message = "Please fill in all required fields correctly.";
+        logAudit("Failed venue submission by Vendor #{$_SESSION['user_id']}: Missing required fields", (int)$_SESSION['user_id'], 'Vendor');
     } elseif (!filter_var($clean_email, FILTER_VALIDATE_EMAIL)) {$error_message = "Please provide a valid email address.";
+        logAudit("Failed venue submission by Vendor #{$_SESSION['user_id']}: Invalid email address ({$clean_email})", (int)$_SESSION['user_id'], 'Vendor');
     } else {
         try {
             $pdo->beginTransaction();
@@ -104,7 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'moderate', 60, 0)
             ");
             
-            $stmt->execute([$user_id, $clean_name,$clean_description, $clean_city,$clean_address, $clean_max,$env_type, $clean_venue_type,$clean_price, $clean_price * 1.2,$clean_price * 0.5
+            $stmt->execute([$user_id, $clean_name,$clean_description, $clean_city,$clean_address, 
+                $clean_max,$env_type, $clean_venue_type,$clean_price, 
+                $clean_price * 1.2,$clean_price * 0.5
             ]);
             
             $hall_id =$pdo->lastInsertId();
@@ -121,14 +132,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            $pdo->commit();$success_message = "Venue submitted successfully! It is currently pending admin review.";
+            $pdo->commit();
+            
+            // AUDIT LOGGING: Venue submission
+            logAudit("Vendor listed new venue '{$clean_name}' (Hall #{$hall_id}, {$clean_venue_type}, {$clean_city}). Pending admin approval.", (int)$_SESSION['user_id'], 'Vendor');
+
+            $success_message = "Venue submitted successfully! It is currently pending admin review.";
             
             $name =$email = $venue_type =$city = $address =$description = $min_capacity =$max_capacity = $base_price =$venue_rules = $cancellation_policy = '';$selected_seating = $selected_catering =$selected_amenities = [];
             
         } catch (Throwable $e) {
             if (isset($pdo) && $pdo->inTransaction()) {$pdo->rollBack();
             }
-            $error_message = "SYSTEM CRASH PREVENTED: " . $e->getMessage() . " on line " . $e->getLine();
+            logAudit("Error submitting venue '{$clean_name}': " . $e->getMessage(), (int)$_SESSION['user_id'], 'Vendor');$error_message = "SYSTEM CRASH PREVENTED: " . $e->getMessage() . " on line " . $e->getLine();
         }
     }
 }
@@ -144,24 +160,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <script src="navigation.js" defer></script>
   <link rel="stylesheet" href="list.css">
  
-  
   <style>
       /* Real-time validation styles */
       input.valid-field, textarea.valid-field { border-color: #2e7d32 !important; outline-color: #2e7d32 !important; }
       input.invalid-field, textarea.invalid-field { border-color: #c62828 !important; outline-color: #c62828 !important; }
       
-      /* In-page validation banner */
+      /* In-page validation banner matching theme */
       #js-error-banner {
           display: none;
           background: #fce8e6;
           color: #c5221f;
           padding: 15px;
-          border-radius: 8px;
+          border-radius: 17px;
           margin-bottom: 20px;
           text-align: center;
           font-weight: 500;
           border: 1px solid #f5c6cb;
           animation: fadeIn 0.3s ease-in-out;
+      }
+
+      /* Custom Confirmation Modal */
+      #confirm-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(45, 41, 38, 0.55);
+        backdrop-filter: blur(3px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      #confirm-modal-box {
+        background: #ffffff;
+        padding: 36px 30px;
+        border-radius: 24px;
+        border: 1px solid var(--listing-line);
+        max-width: 440px;
+        width: 100%;
+        box-shadow: 0 15px 38px rgba(45, 41, 38, 0.12);
+        text-align: center;
+      }
+
+      #confirm-modal-title {
+        margin: 0 0 12px;
+        color: var(--listing-ink);
+        font: normal 1.6rem/1.2 Cormorant Garamond, serif;
+      }
+
+      #confirm-modal-desc {
+        margin: 0 0 28px;
+        color: #76635b;
+        font: 400 0.9rem/1.5 Inter, sans-serif;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .modal-btn {
+        min-height: 42px;
+        padding: 0 24px;
+        border-radius: 999px;
+        font: 600 0.875rem Arial, sans-serif;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+      }
+
+      .modal-btn-cancel {
+        background: var(--listing-field);
+        border-color: var(--listing-line);
+        color: #634d49;
+      }
+
+      .modal-btn-cancel:hover {
+        background: #eae6e1;
+      }
+
+      .modal-btn-confirm {
+        background: var(--listing-rose);
+        color: #ffffff;
+      }
+
+      .modal-btn-confirm:hover {
+        background: #784f4a;
       }
 
       @keyframes fadeIn {
@@ -172,6 +258,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
+    <!-- Popup Confirmation Modal -->
+    <div id="confirm-modal-overlay">
+      <div id="confirm-modal-box">
+        <h3 id="confirm-modal-title">Ready to Submit?</h3>
+        <p id="confirm-modal-desc">Your venue will be submitted for administrative verification and will go live once reviewed.</p>
+        <div class="modal-actions">
+          <button type="button" class="modal-btn modal-btn-cancel" onclick="closeConfirmModal()">Review Again</button>
+          <button type="button" id="confirm-modal-proceed" class="modal-btn modal-btn-confirm">Yes, Submit</button>
+        </div>
+      </div>
+    </div>
+
     <!-- DYNAMIC NAVIGATION BAR -->
     <section id="navigation-section">
       <div id="container">
@@ -180,7 +278,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           
           <div id="nav-buttons">
             <?php include __DIR__ . '/navbar_user_menu.php'; ?>
-        </div>
+          </div>
         </div>
       </div>
     </section>
@@ -194,13 +292,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div id="js-error-banner" role="alert" aria-live="assertive"></div>
 
     <?php if (!empty($success_message)): ?>
-        <div style="background: #e6f4ea; color: #137333; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: 500;">
+        <div style="background: #e6f4ea; color: #137333; padding: 15px; border-radius: 17px; margin-bottom: 20px; text-align: center; font-weight: 500;">
             <?= htmlspecialchars($success_message) ?>
         </div>
     <?php endif; ?>
 
     <?php if (!empty($error_message)): ?>
-        <div style="background: #fce8e6; color: #c5221f; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: 500;">
+        <div style="background: #fce8e6; color: #c5221f; padding: 15px; border-radius: 17px; margin-bottom: 20px; text-align: center; font-weight: 500;">
             <?= htmlspecialchars($error_message) ?>
         </div>
     <?php endif; ?>
@@ -213,7 +311,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <li><span>5</span><strong>Rules and Submit</strong></li>
     </ol>
    
-    <form class="listing-form" action="list.php" method="post" novalidate>
+    <form id="listing-form" class="listing-form" action="list.php" method="post" novalidate>
       <section class="form-step active-step" data-step="0">
       <h2>Basic Information</h2>
       <label for="venue-name">Venue Name <em>*</em></label>
@@ -309,7 +407,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <div class="form-actions">
         <button class="previous" type="button" disabled>← &nbsp; Previous</button>
-        <button class="next" type="submit">Submit Listing <span aria-hidden="true">→</span></button>
+        <button class="next" type="button">Next <span aria-hidden="true">→</span></button>
       </div>
     </form>
   </main>
@@ -329,13 +427,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </section> 
 
 <script>
-   document.addEventListener('DOMContentLoaded', function() {
-    const steps = document.querySelectorAll('.form-step');
-    const indicators = document.querySelectorAll('.steps li');
-    const nextBtn = document.querySelector('.next');
-    const prevBtn = document.querySelector('.previous');
+    const modalOverlay = document.getElementById('confirm-modal-overlay');
+    const proceedBtn = document.getElementById('confirm-modal-proceed');
+    const listingForm = document.getElementById('listing-form');
     const errorBanner = document.getElementById('js-error-banner');
-    let currentStep = 0;
+
+    function closeConfirmModal() {
+        modalOverlay.style.display = 'none';
+    }
 
     function showError(message) {
         if (!errorBanner) return;
@@ -350,143 +449,143 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         errorBanner.style.display = 'none';
     }
 
-    function updateFormView() {
-        // Enforce visible step display
-        steps.forEach((step, index) => {
-            step.style.display = index === currentStep ? 'block' : 'none';
-            step.classList.toggle('active-step', index === currentStep);
-        });
+    proceedBtn.addEventListener('click', function() {
+        modalOverlay.style.display = 'none';
+        listingForm.submit();
+    });
 
-        // Sync step indicators with the active step
-        indicators.forEach((indicator, index) => {
-            indicator.classList.remove('current', 'completed');
-            if (index === currentStep) {
-                indicator.classList.add('current');
-            } else if (index < currentStep) {
-                indicator.classList.add('completed');
+    document.addEventListener('DOMContentLoaded', function() {
+        const steps = document.querySelectorAll('.form-step');
+        const indicators = document.querySelectorAll('.steps li');
+        const nextBtn = document.querySelector('.next');
+        const prevBtn = document.querySelector('.previous');
+        let currentStep = 0;
+
+        function updateFormView() {
+            steps.forEach((step, index) => {
+                step.style.display = index === currentStep ? 'block' : 'none';
+                step.classList.toggle('active-step', index === currentStep);
+            });
+
+            indicators.forEach((indicator, index) => {
+                indicator.classList.remove('current', 'completed');
+                if (index === currentStep) {
+                    indicator.classList.add('current');
+                } else if (index < currentStep) {
+                    indicator.classList.add('completed');
+                }
+            });
+
+            prevBtn.disabled = currentStep === 0;
+
+            if (currentStep === steps.length - 1) {
+                nextBtn.innerHTML = 'Submit Listing <span aria-hidden="true">→</span>';
+            } else {
+                nextBtn.innerHTML = 'Next <span aria-hidden="true">→</span>';
             }
-        });
-
-        prevBtn.disabled = currentStep === 0;
-
-        if (currentStep === steps.length - 1) {
-            nextBtn.innerHTML = 'Submit Listing <span aria-hidden="true">→</span>';
-            nextBtn.type = 'submit';
-        } else {
-            nextBtn.innerHTML = 'Next <span aria-hidden="true">→</span>';
-            nextBtn.type = 'button';
         }
-    }
 
-    function validateCurrentStep() {
-        const currentSection = steps[currentStep];
-        const currentInputs = currentSection.querySelectorAll('input[required], textarea[required], select[required]');
-        let allValid = true;
-        let firstInvalidField = null;
+        function validateCurrentStep() {
+            const currentSection = steps[currentStep];
+            const currentInputs = currentSection.querySelectorAll('input[required], textarea[required], select[required]');
+            let allValid = true;
+            let firstInvalidField = null;
 
-        currentInputs.forEach(input => {
-            if (input.type === 'radio') {
-                const radioGroup = currentSection.querySelectorAll(`input[name="${input.name}"]`);
-                const isChecked = Array.from(radioGroup).some(r => r.checked);
-                if (!isChecked) {
-                    allValid = false;
-                    if (!firstInvalidField) firstInvalidField = radioGroup[0];
+            currentInputs.forEach(input => {
+                if (input.type === 'radio') {
+                    const radioGroup = currentSection.querySelectorAll(`input[name="${input.name}"]`);
+                    const isChecked = Array.from(radioGroup).some(r => r.checked);
+                    if (!isChecked) {
+                        allValid = false;
+                        if (!firstInvalidField) firstInvalidField = radioGroup[0];
+                    }
+                } else {
+                    if (!input.checkValidity() || input.value.trim() === '') {
+                        input.classList.add('invalid-field');
+                        input.classList.remove('valid-field');
+                        allValid = false;
+                        if (!firstInvalidField) firstInvalidField = input;
+                    } else {
+                        input.classList.remove('invalid-field');
+                        input.classList.add('valid-field');
+                    }
+                }
+            });
+
+            if (!allValid) {
+                showError("Please fill in all required fields highlighted in red before proceeding.");
+                if (firstInvalidField) firstInvalidField.focus();
+                return false;
+            }
+
+            clearError();
+            return true;
+        }
+
+        nextBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentStep < steps.length - 1) {
+                if (validateCurrentStep()) {
+                    currentStep++;
+                    updateFormView();
                 }
             } else {
-                if (!input.checkValidity() || input.value.trim() === '') {
-                    input.classList.add('invalid-field');
-                    input.classList.remove('valid-field');
-                    allValid = false;
-                    if (!firstInvalidField) firstInvalidField = input;
-                } else {
-                    input.classList.remove('invalid-field');
-                    input.classList.add('valid-field');
+                // Final submission: validate, then open themed modal
+                if (validateCurrentStep()) {
+                    modalOverlay.style.display = 'flex';
                 }
             }
         });
 
-        if (!allValid) {
-            showError("Please fill in all required fields highlighted in red before proceeding.");
-            if (firstInvalidField) {
-                firstInvalidField.focus();
-            }
-            return false;
-        }
-
-        clearError();
-        return true;
-    }
-
-    // Intercept click on the Next/Submit control
-    nextBtn.addEventListener('click', function(e) {
-        if (currentStep < steps.length - 1) {
+        prevBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            e.stopPropagation();
-
-            if (validateCurrentStep()) {
-                currentStep++;
+            if (currentStep > 0) {
+                clearError();
+                currentStep--;
                 updateFormView();
             }
-        } else {
-            // Final submission validation
-            if (!validateCurrentStep()) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        }
-    });
-
-    prevBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (currentStep > 0) {
-            clearError();
-            currentStep--;
-            updateFormView();
-        }
-    });
-
-    // Real-time error clearing when user edits fields
-    document.querySelectorAll('.listing-form input, .listing-form textarea, .listing-form select').forEach(input => {
-        const resetValidation = function() {
-            if (this.checkValidity() && this.value.trim() !== '') {
-                this.classList.remove('invalid-field');
-                this.classList.add('valid-field');
-            }
-            clearError();
-        };
-        input.addEventListener('input', resetValidation);
-        input.addEventListener('change', resetValidation);
-    });
-
-    // Package cloning handler
-    const addBtn = document.getElementById('add-package-btn');
-    const packageContainer = document.getElementById('package-container');
-    if (addBtn && packageContainer) {
-        addBtn.addEventListener('click', function() {
-            const newEntry = document.createElement('div');
-            newEntry.className = 'package-entry';
-            newEntry.style.marginTop = '20px';
-            newEntry.style.paddingTop = '20px';
-            newEntry.style.borderTop = '1px dashed #d4a5a54d';
-            newEntry.innerHTML = `
-                <input type="text" name="package_name[]" placeholder="Package name (e.g. Gold)">
-                <div class="two-fields">
-                    <input type="number" name="package_price[]" placeholder="Price ($)">
-                    <input type="text" name="package_desc[]" placeholder="Short description">
-                </div>
-                <input type="text" name="package_includes[]" placeholder="Includes (comma-separated)">
-                <button type="button" class="remove-pkg" style="background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; margin-top: 10px;">- Remove this package</button>
-            `;
-            packageContainer.insertBefore(newEntry, addBtn);
-            newEntry.querySelector('.remove-pkg').addEventListener('click', function() {
-                newEntry.remove();
-            });
         });
-    }
 
-    // Initialize clean view state
-    updateFormView();
-});
-    </script>
+        document.querySelectorAll('.listing-form input, .listing-form textarea, .listing-form select').forEach(input => {
+            const resetValidation = function() {
+                if (this.checkValidity() && this.value.trim() !== '') {
+                    this.classList.remove('invalid-field');
+                    this.classList.add('valid-field');
+                }
+                clearError();
+            };
+            input.addEventListener('input', resetValidation);
+            input.addEventListener('change', resetValidation);
+        });
+
+        // Package cloning handler
+        const addBtn = document.getElementById('add-package-btn');
+        const packageContainer = document.getElementById('package-container');
+        if (addBtn && packageContainer) {
+            addBtn.addEventListener('click', function() {
+                const newEntry = document.createElement('div');
+                newEntry.className = 'package-entry';
+                newEntry.style.marginTop = '20px';
+                newEntry.style.paddingTop = '20px';
+                newEntry.style.borderTop = '1px dashed #d4a5a54d';
+                newEntry.innerHTML = `
+                    <input type="text" name="package_name[]" placeholder="Package name (e.g. Gold)">
+                    <div class="two-fields">
+                        <input type="number" name="package_price[]" placeholder="Price ($)">
+                        <input type="text" name="package_desc[]" placeholder="Short description">
+                    </div>
+                    <input type="text" name="package_includes[]" placeholder="Includes (comma-separated)">
+                    <button type="button" class="remove-pkg" style="background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; margin-top: 10px;">- Remove this package</button>
+                `;
+                packageContainer.insertBefore(newEntry, addBtn);
+                newEntry.querySelector('.remove-pkg').addEventListener('click', function() {
+                    newEntry.remove();
+                });
+            });
+        }
+
+        updateFormView();
+    });
+</script>
 </body>
 </html>

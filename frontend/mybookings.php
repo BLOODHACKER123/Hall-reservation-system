@@ -1,12 +1,13 @@
 <?php
 session_start();
 
-// 1. SAFELY LOAD DATABASE
+// 1. SAFELY LOAD DATABASE & AUDIT LOGGER
 $db_path = __DIR__ . '/../backend/config/database.php';
 if (!file_exists($db_path)) {
     die("<h2 style='color:red;'>Database configuration file missing.</h2>");
 }
 require_once $db_path;
+require_once __DIR__ . '/../backend/utils/auditLogger.php';
 
 // 2. SESSION LOGIC (Lock down to Customers only)
 if (!isset($_SESSION['user_id'])) {
@@ -19,7 +20,7 @@ if ($_SESSION['user_type'] !== 'Customer') {
     exit;
 }
 
-$customer_id = $_SESSION['user_id'];
+$customer_id = (int)$_SESSION['user_id'];
 $customer_name = $_SESSION['user_name'] ?? 'Customer';
 
 $success_msg = '';
@@ -29,15 +30,36 @@ $error_msg = '';
 if (isset($_GET['action']) && $_GET['action'] == 'cancel' && isset($_GET['id'])) {
     $res_id = intval($_GET['id']);
     
-    $check_stmt = $pdo->prepare("SELECT status FROM reservations WHERE reservation_id = ? AND customer_id = ?");
+    $check_stmt = $pdo->prepare("
+        SELECT r.status, h.name AS venue_name, r.hall_id 
+        FROM reservations r 
+        JOIN halls h ON r.hall_id = h.hall_id 
+        WHERE r.reservation_id = ? AND r.customer_id = ?
+    ");
     $check_stmt->execute([$res_id, $customer_id]);
     $booking = $check_stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($booking && strtolower($booking['status']) === 'pending') {
         $cancel_stmt = $pdo->prepare("UPDATE reservations SET status = 'Cancelled' WHERE reservation_id = ?");
         $cancel_stmt->execute([$res_id]);
+
+        // AUDIT LOG: Customer cancelled pending booking
+        logAudit(
+            "Customer {$customer_name} (#{$customer_id}) cancelled Order #{$res_id} for venue '{$booking['venue_name']}' (Hall ID: #{$booking['hall_id']})",
+            $customer_id,
+            'Customer'
+        );
+
         $success_msg = "Booking #$res_id has been successfully cancelled.";
     } else {
+        $current_status = $booking['status'] ?? 'Unknown/Not found';
+        // AUDIT LOG: Failed or invalid cancellation attempt
+        logAudit(
+            "Customer {$customer_name} (#{$customer_id}) failed to cancel Order #{$res_id}. Current status: {$current_status}",
+            $customer_id,
+            'Customer'
+        );
+
         $error_msg = "This booking cannot be cancelled because it is already processed.";
     }
 }
@@ -55,6 +77,11 @@ try {
     $stmt->execute([$customer_id]);
     $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
+    logAudit(
+        "Database error loading bookings for Customer #{$customer_id}: " . $e->getMessage(),
+        $customer_id,
+        'Customer'
+    );
     $error_msg = "Failed to load bookings: " . $e->getMessage();
     $bookings = [];
 }
@@ -73,170 +100,321 @@ try {
   <script src="navigation.js" defer></script>
   
   <style>
+      :root {
+        --booking-ink: #172e44;
+        --booking-muted: #92766e;
+        --booking-rose: #986e68;
+        --booking-bg: #faf8f5;
+        --booking-field: #f2f0ed;
+        --booking-line: #eee7e2;
+        --booking-danger: #8a3f38;
+        --booking-danger-hover: #6e302a;
+      }
+
+      body {
+        background-color: var(--booking-bg);
+      }
 
       .dashboard-container { 
         max-width: 1000px; 
-        margin: 60px auto; 
+        margin: 50px auto 70px; 
         padding: 0 20px; 
-        min-height: 50vh; 
-    }
+        min-height: 55vh; 
+      }
 
       .dashboard-header { 
-        border-bottom: 2px solid #eee; padding-bottom: 20px; 
-        margin-bottom: 30px; 
+        border-bottom: 1px solid var(--booking-line); 
+        padding-bottom: 22px; 
+        margin-bottom: 35px; 
         display: flex; 
         flex-wrap: wrap; 
         gap: 16px; 
-        justify-content: space-between; align-items: center; 
-    }
+        justify-content: space-between; 
+        align-items: center; 
+      }
 
       .dashboard-header h1 { 
-        margin: 0; 
-        color: #523530; 
-        font-family: 'Playfair Display', serif; 
-    }
+        margin: 0 0 6px; 
+        color: var(--booking-ink); 
+        font: 400 2.2rem/1.1 Georgia, 'Playfair Display', serif; 
+      }
+
+      .dashboard-header p {
+        margin: 0;
+        color: var(--booking-muted);
+        font: 400 15px/1.4 Arial, sans-serif;
+      }
       
       .booking-card { 
-        background: #fff; 
-        border: 1px solid #eaeaea; border-radius: 8px; 
-        padding: 25px; 
-        margin-bottom: 20px; 
-        box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
+        background: #ffffff; 
+        border: 1px solid var(--booking-line); 
+        border-radius: 20px; 
+        padding: 30px; 
+        margin-bottom: 24px; 
+        box-shadow: 0 10px 30px rgba(45, 41, 38, .04); 
         display: flex; 
         flex-direction: column; 
-        gap: 15px; 
-    }
+        gap: 18px; 
+      }
 
       .booking-header { 
         display: flex; 
         flex-wrap: wrap; 
         gap: 12px; 
-        justify-content: space-between; align-items: center; 
-        border-bottom: 1px dashed #ccc; padding-bottom: 15px; 
-    }
+        justify-content: space-between; 
+        align-items: center; 
+        border-bottom: 1px dashed var(--booking-line); 
+        padding-bottom: 16px; 
+      }
 
       .booking-header h3 { 
         margin: 0; 
-        font-size: 1.2rem; 
-        color: #333; 
-    }
+        font: 500 1.35rem/1.2 Georgia, serif; 
+        color: var(--booking-ink); 
+      }
       
       .status-badge { 
-        padding: 5px 12px; 
-        border-radius: 20px; 
-        font-size: 0.85rem; 
-        font-weight: bold; 
-        text-transform: uppercase; letter-spacing: 0.5px; 
-    }
+        padding: 6px 14px; 
+        border-radius: 999px; 
+        font-size: 0.78rem; 
+        font-weight: 700; 
+        text-transform: uppercase; 
+        letter-spacing: 0.6px; 
+        font-family: Arial, sans-serif;
+      }
       .status-pending { 
-        background: #fff3cd; 
-        color: #856404; 
-    }
+        background: #fff4e5; 
+        color: #b45309; 
+      }
       .status-confirmed { 
-        background: #d4edda; 
-        color: #155724; 
-    }
+        background: #ebf5ee; 
+        color: #2b6e41; 
+      }
       .status-cancelled { 
-        background: #f8d7da; 
-        color: #721c24; 
-    }
+        background: #fdf2f1; 
+        color: var(--booking-danger); 
+      }
       .status-completed { 
-        background: #e2e3e5; 
-        color: #383d41; 
-    }
+        background: var(--booking-field); 
+        color: #604d49; 
+      }
 
       .booking-details { 
         display: grid; 
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); 
-        gap: 15px; 
-        font-size: 0.95rem; 
-        color: #555; 
-    }
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); 
+        gap: 16px; 
+        font-size: 0.92rem; 
+        color: #685752; 
+        line-height: 1.5;
+      }
       .booking-details p { 
-        margin: 5px 0; 
-    }
+        margin: 4px 0; 
+      }
 
       .booking-details strong { 
-        color: #333; 
-    }
+        color: var(--booking-ink); 
+      }
 
       .booking-actions { 
         margin-top: 10px; 
         display: flex; 
         flex-wrap: wrap; 
-        gap: 10px; 
+        gap: 12px; 
         align-items: center; 
-    }
+      }
 
       .btn { 
-        padding: 8px 16px; 
-        border-radius: 4px; 
+        padding: 9px 20px; 
+        border-radius: 999px; 
         text-decoration: none; 
-        font-size: 0.9rem; 
-        font-weight: 500; 
+        font: 600 0.875rem Arial, sans-serif; 
         cursor: pointer; 
-        border: 1px solid transparent; transition: 0.2s; 
-        display: inline-block; 
-    }
+        border: 1px solid transparent; 
+        transition: all 0.2s ease; 
+        display: inline-flex; 
+        align-items: center;
+        justify-content: center;
+        font-family: inherit;
+      }
 
       .btn-primary { 
-        background: #523530; 
-        color: #fff; 
-    }
+        background: var(--booking-rose); 
+        color: #ffffff; 
+      }
       .btn-primary:hover { 
-        background: #3d2723; 
-    }
+        background: #865b56; 
+      }
       .btn-review { 
-        background: #f59e0b; 
-        color: #fff; 
-        border-color: #f59e0b; 
-        font-weight: 600; 
-    }
-      .btn-review:hover { 
         background: #d97706; 
-        color: #fff; 
-    }
+        color: #ffffff; 
+      }
+      .btn-review:hover { 
+        background: #b45309; 
+      }
       .reviewed-tag { 
         font-size: 0.85rem; 
-        color: #2e7d32; 
-        font-weight: bold; 
-        padding: 6px 12px; 
-        background: #e8f5e9; 
-        border-radius: 4px; 
-    }
+        color: #2b6e41; 
+        font-weight: 700; 
+        padding: 7px 14px; 
+        background: #ebf5ee; 
+        border-radius: 999px; 
+      }
+      .btn-outline {
+        border-color: var(--booking-line);
+        background: #ffffff;
+        color: #634d49;
+      }
+      .btn-outline:hover {
+        background: var(--booking-field);
+        border-color: #d8cec7;
+      }
       .btn-danger { 
         background: transparent; 
-        color: #c62828; 
-        border-color: #c62828; 
-    }
+        color: var(--booking-danger); 
+        border-color: #e6c8c4; 
+      }
       .btn-danger:hover { 
-        background: #c62828; 
-        color: #fff; 
-    }
+        background: var(--booking-danger); 
+        border-color: var(--booking-danger);
+        color: #ffffff; 
+      }
 
       .empty-state { 
         text-align: center; 
         padding: 60px 20px; 
-        background: #f9f9f9; 
-        border-radius: 8px; 
-        border: 1px dashed #ccc; 
-    }
+        background: #ffffff; 
+        border-radius: 24px; 
+        border: 1px dashed var(--booking-line); 
+      }
       .empty-state h2 { 
-        color: #523530; 
+        color: var(--booking-ink); 
+        font: 400 1.8rem Georgia, serif;
         margin-bottom: 10px; 
-    }
+      }
+      .empty-state p {
+        color: var(--booking-muted);
+        font: 400 15px Arial, sans-serif;
+      }
+
+      .alert-box {
+        padding: 16px 20px;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        font: 500 0.9rem Arial, sans-serif;
+      }
+      .alert-success {
+        background: #ebf5ee;
+        color: #2b6e41;
+        border: 1px solid #cce8d4;
+      }
+      .alert-error {
+        background: #fdf2f1;
+        color: var(--booking-danger);
+        border: 1px solid #f6cfcb;
+      }
+
+      /* ========================================================
+         THEMED CONFIRMATION MODAL POPUP
+         ======================================================== */
+      #confirm-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(45, 41, 38, 0.55);
+        backdrop-filter: blur(3px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      #confirm-modal-box {
+        background: #ffffff;
+        padding: 36px 30px;
+        border-radius: 24px;
+        border: 1px solid var(--booking-line);
+        max-width: 440px;
+        width: 100%;
+        box-shadow: 0 16px 38px rgba(45, 41, 38, 0.12);
+        text-align: center;
+      }
+
+      #confirm-modal-title {
+        margin: 0 0 10px;
+        color: var(--booking-ink);
+        font: 400 1.6rem/1.2 Georgia, serif;
+      }
+
+      #confirm-modal-desc {
+        margin: 0 0 26px;
+        color: var(--booking-muted);
+        font: 400 0.92rem/1.5 Arial, sans-serif;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .modal-btn {
+        min-height: 42px;
+        padding: 0 24px;
+        border-radius: 999px;
+        font: 600 0.875rem Arial, sans-serif;
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+
+      .modal-btn-cancel {
+        background: var(--booking-field);
+        border-color: var(--booking-line);
+        color: #604d49;
+      }
+
+      .modal-btn-cancel:hover {
+        background: #e4dfda;
+      }
+
+      .modal-btn-confirm {
+        background: var(--booking-danger);
+        color: #ffffff;
+      }
+
+      .modal-btn-confirm:hover {
+        background: var(--booking-danger-hover);
+      }
+
       @media (max-width: 600px) {
-          .dashboard-container { 
-            margin: 28px auto; 
-            padding: 0 16px; 
+        .dashboard-container { 
+          margin: 28px auto 50px; 
+          padding: 0 16px; 
         }
-          .booking-card { 
-            padding: 20px; 
+        .booking-card { 
+          padding: 22px; 
+          border-radius: 18px;
         }
       }
   </style>
 </head>
 <body>
+
+  <!-- Themed Custom Confirmation Modal -->
+  <div id="confirm-modal-overlay">
+    <div id="confirm-modal-box">
+      <h3 id="confirm-modal-title">Cancel Reservation</h3>
+      <p id="confirm-modal-desc">Are you sure you want to cancel this booking? This action cannot be reversed.</p>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-cancel" onclick="closeConfirmModal()">Keep Booking</button>
+        <a href="#" id="confirm-modal-proceed" class="modal-btn modal-btn-confirm">Yes, Cancel</a>
+      </div>
+    </div>
+  </div>
 
   <!-- DYNAMIC NAVIGATION BAR -->
   <section id="navigation-section">
@@ -260,13 +438,13 @@ try {
     </div>
 
     <?php if ($success_msg): ?>
-        <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+        <div class="alert-box alert-success">
             <?= htmlspecialchars($success_msg) ?>
         </div>
     <?php endif; ?>
 
     <?php if ($error_msg): ?>
-        <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+        <div class="alert-box alert-error">
             <?= htmlspecialchars($error_msg) ?>
         </div>
     <?php endif; ?>
@@ -315,7 +493,7 @@ try {
                 </div>
 
                 <div class="booking-actions">
-                    <a href="search.php?hall_id=<?= $booking['hall_id'] ?>" class="btn" style="border-color: #ccc; color: #333;">View Venue</a>
+                    <a href="search.php?hall_id=<?= $booking['hall_id'] ?>" class="btn btn-outline">View Venue</a>
                     
                     <!-- REVIEW BUTTON LOGIC -->
                     <?php if ($status !== 'cancelled' && $is_event_passed): ?>
@@ -326,13 +504,13 @@ try {
                         <?php endif; ?>
                     <?php endif; ?>
 
-                    <!-- CANCELLATION LOGIC -->
+                    <!-- THEMED MODAL CANCELLATION TRIGGER -->
                     <?php if ($status === 'pending'): ?>
-                        <a href="mybookings.php?action=cancel&id=<?= $booking['reservation_id'] ?>" 
-                           class="btn btn-danger" 
-                           onclick="return confirm('Are you sure you want to cancel this reservation?');">
+                        <button type="button" 
+                                class="btn btn-danger" 
+                                onclick="openConfirmModal('Cancel Reservation', 'Are you sure you want to cancel booking #<?= $booking['reservation_id'] ?> for <?= htmlspecialchars(addslashes($booking['venue_name'])) ?>?', 'mybookings.php?action=cancel&id=<?= $booking['reservation_id'] ?>')">
                            Cancel Booking
-                        </a>
+                        </button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -354,6 +532,31 @@ try {
         </div>
       </div>
   </section> 
- 
+
+  <!-- Custom Popup Modal Script -->
+  <script>
+    const modalOverlay = document.getElementById('confirm-modal-overlay');
+    const modalTitle   = document.getElementById('confirm-modal-title');
+    const modalDesc    = document.getElementById('confirm-modal-desc');
+    const modalProceed = document.getElementById('confirm-modal-proceed');
+
+    function openConfirmModal(title, description, proceedUrl) {
+      modalTitle.textContent = title;
+      modalDesc.textContent = description;
+      modalProceed.setAttribute('href', proceedUrl);
+      modalOverlay.style.display = 'flex';
+    }
+
+    function closeConfirmModal() {
+      modalOverlay.style.display = 'none';
+    }
+
+    // Dismiss modal if user clicks outside of the dialog box
+    modalOverlay.addEventListener('click', function(e) {
+      if (e.target === modalOverlay) {
+        closeConfirmModal();
+      }
+    });
+  </script>
 </body>
 </html>

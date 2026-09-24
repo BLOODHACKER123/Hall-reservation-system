@@ -12,6 +12,7 @@ if (!file_exists($db_path)) {
     die("<h2 style='color:red; text-align:center;'>FATAL ERROR: Cannot find database file.</h2>");
 }
 require_once $db_path;
+require_once __DIR__ . '/../backend/utils/auditLogger.php';
 
 if (!isset($pdo)) {
     die("<h2 style='color:red; text-align:center;'>FATAL ERROR: Database connected, but \$pdo variable is missing.</h2>");
@@ -45,6 +46,7 @@ try {
     $venue =$stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$venue) {
+        logAudit("Unauthorized venue edit attempt on Hall #{$hall_id} by User #{$_SESSION['user_id']}", (int)$_SESSION['user_id'], 'Vendor');
         die("<h2 style='color:red; text-align:center;'>Venue not found or you do not have permission to edit it. (Hall ID: $hall_id)</h2>");
     }
     
@@ -83,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $clean_cancellation = htmlspecialchars(strip_tags(trim($cancellation_policy)));
 
     if (empty($clean_name) || empty($clean_venue_type) || empty($clean_city) || empty($clean_description) ||$clean_max <= 0 || $clean_price <= 0) {$error_message = "Please fill in all required fields correctly.";
+        logAudit("Failed to update Venue '{$clean_name}' (Hall #{$hall_id}): Missing or invalid required fields", (int)$_SESSION['user_id'], 'Vendor');
     } else {
         try {
             $pdo->beginTransaction();
@@ -91,7 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (in_array(strtolower($clean_venue_type), ['garden venue', 'rooftop venue'])) {$env_type = 'open_garden';
             }
 
-           
             $update_stmt =$pdo->prepare("
                 UPDATE halls 
                 SET name = ?, description = ?, district = ?, address = ?, capacity = ?, 
@@ -101,10 +103,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 WHERE hall_id = ? AND vendor_id = ?
             ");
             
-            $update_stmt->execute([$clean_name,$clean_description,$clean_city,$clean_address,$clean_max,$env_type,$clean_venue_type,$clean_price,$clean_price * 1.2,$clean_price * 0.5,$clean_cancellation,$hall_id,$_SESSION['user_id']
+            $update_stmt->execute([$clean_name, $clean_description,$clean_city, $clean_address,$clean_max,
+                $env_type,$clean_venue_type, $clean_price,$clean_price * 1.2,
+                $clean_price * 0.5,$clean_cancellation, $hall_id,$_SESSION['user_id']
             ]);
 
-       
             $pdo->prepare("DELETE FROM hall_packages WHERE hall_id = ?")->execute([$hall_id]);
             
             if (!empty($pkg_names)) {
@@ -120,15 +123,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $pdo->commit();
+
+            logAudit("Vendor updated venue '{$clean_name}' (Hall #{$hall_id}). Listing set to pending approval", (int)$_SESSION['user_id'], 'Vendor');
             
-      
             header("Location: ownerdashboard.php#venues");
             exit;
             
         } catch (Throwable $e) { 
             if (isset($pdo) && $pdo->inTransaction()) {$pdo->rollBack();
             }
-            $error_message = "SYSTEM CRASH PREVENTED: " . $e->getMessage();
+            logAudit("Database error while updating Hall #{$hall_id}: " . $e->getMessage(), (int)$_SESSION['user_id'], 'Vendor');$error_message = "SYSTEM CRASH PREVENTED: " . $e->getMessage();
         }
     }
 }
@@ -145,16 +149,117 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="stylesheet" href="list.css">
   
   <style>
-     
       input.valid-field, textarea.valid-field { border-color: #2e7d32 !important; outline-color: #2e7d32 !important; }
       input.invalid-field, textarea.invalid-field { border-color: #c62828 !important; outline-color: #c62828 !important; }
       
-      .warning-banner { background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #ffeeba; }
+      .warning-banner { 
+        background: #fff3cd; 
+        color: #856404; 
+        padding: 15px; 
+        border-radius: 17px; 
+        margin-bottom: 20px; 
+        text-align: center; 
+        border: 1px solid #ffeeba; 
+      }
+
+      #js-error-banner {
+        display: none;
+        background: #fce8e6;
+        color: #c5221f;
+        padding: 15px;
+        border-radius: 17px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-weight: 500;
+        border: 1px solid #f5c6cb;
+      }
+
+      /* Custom Confirmation Modal */
+      #confirm-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(45, 41, 38, 0.55);
+        backdrop-filter: blur(3px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      #confirm-modal-box {
+        background: #ffffff;
+        padding: 36px 30px;
+        border-radius: 24px;
+        border: 1px solid var(--listing-line);
+        max-width: 440px;
+        width: 100%;
+        box-shadow: 0 15px 38px rgba(45, 41, 38, 0.12);
+        text-align: center;
+      }
+
+      #confirm-modal-title {
+        margin: 0 0 12px;
+        color: var(--listing-ink);
+        font: normal 1.6rem/1.2 Cormorant Garamond, serif;
+      }
+
+      #confirm-modal-desc {
+        margin: 0 0 28px;
+        color: #76635b;
+        font: 400 0.9rem/1.5 Inter, sans-serif;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .modal-btn {
+        min-height: 42px;
+        padding: 0 24px;
+        border-radius: 999px;
+        font: 600 0.875rem Arial, sans-serif;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+      }
+
+      .modal-btn-cancel {
+        background: var(--listing-field);
+        border-color: var(--listing-line);
+        color: #634d49;
+      }
+
+      .modal-btn-cancel:hover {
+        background: #eae6e1;
+      }
+
+      .modal-btn-confirm {
+        background: var(--listing-rose);
+        color: #ffffff;
+      }
+
+      .modal-btn-confirm:hover {
+        background: #784f4a;
+      }
   </style>
 </head>
 <body>
 
-   
+    <!-- Popup Confirmation Modal -->
+    <div id="confirm-modal-overlay">
+      <div id="confirm-modal-box">
+        <h3 id="confirm-modal-title">Confirm Changes</h3>
+        <p id="confirm-modal-desc">Are you sure? Saving changes will set your venue to pending review and remove it from public search until an Administrator approves it.</p>
+        <div class="modal-actions">
+          <button type="button" class="modal-btn modal-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+          <button type="button" id="confirm-modal-proceed" class="modal-btn modal-btn-confirm">Submit Changes</button>
+        </div>
+      </div>
+    </div>
+
     <section id="navigation-section">
       <div id="container">
         <div id="nav-bar">
@@ -183,8 +288,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <strong>Important:</strong> Saving changes will temporarily remove this venue from the public search until an Admin approves it.
     </div>
 
+    <!-- Client-side Validation Popup/Banner -->
+    <div id="js-error-banner" role="alert"></div>
+
     <?php if (!empty($error_message)): ?>
-        <div style="background: #fce8e6; color: #c5221f; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: 500;">
+        <div style="background: #fce8e6; color: #c5221f; padding: 15px; border-radius: 17px; margin-bottom: 20px; text-align: center; font-weight: 500;">
             <?= htmlspecialchars($error_message) ?>
         </div>
     <?php endif; ?>
@@ -197,7 +305,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <li><span>5</span><strong>Rules and Submit</strong></li>
     </ol>
    
-    <form class="listing-form" action="edit.php?hall_id=<?= $hall_id ?>" method="post" novalidate>
+    <form id="edit-form" class="listing-form" action="edit.php?hall_id=<?= $hall_id ?>" method="post" novalidate>
       
       <section class="form-step active-step" data-step="0">
       <h2>Basic Information</h2>
@@ -272,7 +380,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="package-box" id="package-container">
           <label>Existing & New Packages</label>
           
-          <!-- Loop through any existing packages from the database -->
           <?php foreach ($existing_packages as$pkg): ?>
               <div class="package-entry" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed rgba(212, 165, 165, 0.3);">
                 <input type="text" name="package_name[]" value="<?= htmlspecialchars($pkg['package_name']) ?>">
@@ -302,15 +409,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="ownerdashboard.php#venues" style="padding: 15px 30px; text-decoration: none; color: #333; font-weight: bold;">Cancel Edit</a>
         <div style="flex-grow: 1; text-align: right;">
             <button class="previous" type="button" disabled>← &nbsp; Previous</button>
-            <button class="next" type="submit">Update Venue <span aria-hidden="true">→</span></button>
+            <button class="next" type="button">Next <span aria-hidden="true">→</span></button>
         </div>
       </div>
     </form>
   </main>
 
 <script>
+      const modalOverlay = document.getElementById('confirm-modal-overlay');
+      const proceedBtn = document.getElementById('confirm-modal-proceed');
+      const editForm = document.getElementById('edit-form');
+      const errorBanner = document.getElementById('js-error-banner');
+
+      function closeConfirmModal() {
+          modalOverlay.style.display = 'none';
+      }
+
+      function showError(msg) {
+          if (!errorBanner) return;
+          errorBanner.textContent = msg;
+          errorBanner.style.display = 'block';
+          errorBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      function clearError() {
+          if (!errorBanner) return;
+          errorBanner.textContent = '';
+          errorBanner.style.display = 'none';
+      }
+
+      proceedBtn.addEventListener('click', function() {
+          modalOverlay.style.display = 'none';
+          editForm.submit();
+      });
+
       document.addEventListener('DOMContentLoaded', function() {
-          // --- 1. MULTI-STEP FORM NAVIGATION ---
           const steps = document.querySelectorAll('.form-step');
           const indicators = document.querySelectorAll('.steps li');
           const nextBtn = document.querySelector('.next');
@@ -320,71 +453,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           function updateFormView() {
               steps.forEach((step, index) => {
                   step.style.display = index === currentStep ? 'block' : 'none';
+                  step.classList.toggle('active-step', index === currentStep);
               });
               indicators.forEach((indicator, index) => {
-                  indicator.classList.toggle('current', index === currentStep);
+                  indicator.classList.remove('current', 'completed');
+                  if (index === currentStep) indicator.classList.add('current');
+                  else if (index < currentStep) indicator.classList.add('completed');
               });
               
               prevBtn.disabled = currentStep === 0;
               
               if (currentStep === steps.length - 1) {
                   nextBtn.innerHTML = 'Update Venue <span aria-hidden="true">→</span>';
-                  nextBtn.type = 'submit';
               } else {
                   nextBtn.innerHTML = 'Next <span aria-hidden="true">→</span>';
-                  nextBtn.type = 'button';
               }
           }
 
-         nextBtn.addEventListener('click', (e) => {
-              if (currentStep < steps.length - 1) {
-                  e.preventDefault();
-                  
-                  // Force HTML5 validation on current step before moving
-                  const currentInputs = steps[currentStep].querySelectorAll('input[required], textarea[required]');
-                  let allValid = true;
-                  currentInputs.forEach(input => {
-                      if (!input.checkValidity()) {
-                          input.classList.add('invalid-field');
+          function validateCurrentStep() {
+              const currentSection = steps[currentStep];
+              const currentInputs = currentSection.querySelectorAll('input[required], textarea[required], select[required]');
+              let allValid = true;
+              let firstInvalid = null;
+
+              currentInputs.forEach(input => {
+                  if (input.type === 'radio') {
+                      const radioGroup = currentSection.querySelectorAll(`input[name="${input.name}"]`);
+                      const isChecked = Array.from(radioGroup).some(r => r.checked);
+                      if (!isChecked) {
                           allValid = false;
+                          if (!firstInvalid) firstInvalid = radioGroup[0];
                       }
-                  });
-                  
-                  if (allValid) {
+                  } else {
+                      if (!input.checkValidity() || input.value.trim() === '') {
+                          input.classList.add('invalid-field');
+                          input.classList.remove('valid-field');
+                          allValid = false;
+                          if (!firstInvalid) firstInvalid = input;
+                      } else {
+                          input.classList.remove('invalid-field');
+                          input.classList.add('valid-field');
+                      }
+                  }
+              });
+
+              if (!allValid) {
+                  showError("Please fill in all required fields marked in red before continuing.");
+                  if (firstInvalid) firstInvalid.focus();
+                  return false;
+              }
+
+              clearError();
+              return true;
+          }
+
+          nextBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              if (currentStep < steps.length - 1) {
+                  if (validateCurrentStep()) {
                       currentStep++;
                       updateFormView();
-                  } else {
-                      alert("Please fill in all required fields marked with a red border before continuing.");
                   }
               } else {
-                  // FINAL STEP: Show the warning before actually submitting to the database
-                  if (!confirm('Are you sure? Your venue will go offline until approved by an Admin.')) {
-                      e.preventDefault(); // Stop the submission if they click "Cancel"
+                  // Final step: validate and show popup modal
+                  if (validateCurrentStep()) {
+                      modalOverlay.style.display = 'flex';
                   }
               }
           });
 
           prevBtn.addEventListener('click', () => {
               if (currentStep > 0) {
+                  clearError();
                   currentStep--;
                   updateFormView();
               }
           });
 
-          updateFormView(); // Initialize first view
+          updateFormView();
 
-          // --- 2. DYNAMIC PACKAGE CLONING ---
+          // Package cloning
           const addBtn = document.getElementById('add-package-btn');
           const container = document.getElementById('package-container');
           
-          // Attach remove event to existing packages loaded from PHP
           document.querySelectorAll('.remove-pkg').forEach(btn => {
               btn.addEventListener('click', function() {
                   this.parentElement.remove();
               });
           });
 
-          if(addBtn && container) {
+          if (addBtn && container) {
               addBtn.addEventListener('click', function() {
                   const newEntry = document.createElement('div');
                   newEntry.className = 'package-entry';
@@ -403,27 +561,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   `;
                   
                   container.insertBefore(newEntry, addBtn);
-                  
                   newEntry.querySelector('.remove-pkg').addEventListener('click', function() {
                       newEntry.remove();
                   });
               });
           }
 
-          // --- 3. REAL-TIME VALIDATION COLORS ---
-          const requiredInputs = document.querySelectorAll('input[required], textarea[required]');
-          requiredInputs.forEach(input => {
+          // Real-time validation
+          document.querySelectorAll('.listing-form input, .listing-form textarea').forEach(input => {
               input.addEventListener('input', function() {
-                  if (this.checkValidity()) {
+                  if (this.checkValidity() && this.value.trim() !== '') {
                       this.classList.remove('invalid-field');
                       this.classList.add('valid-field');
-                  } else {
-                      this.classList.remove('valid-field');
-                      this.classList.add('invalid-field');
                   }
+                  clearError();
               });
           });
       });
-    </script>
+</script>
 </body>
 </html>

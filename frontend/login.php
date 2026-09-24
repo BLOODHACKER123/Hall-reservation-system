@@ -13,13 +13,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error_message = 'Please enter both email and password.';
     } else {
         try {
-            $stmt = $pdo->prepare('SELECT user_id, first_name, password, user_type, is_active FROM users WHERE email = :email LIMIT 1');
+            $stmt = $pdo->prepare('SELECT user_id, first_name, last_name, password, user_type, is_active FROM users WHERE email = :email LIMIT 1');
             $stmt->execute(['email' => trim($email)]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$user || !password_verify($password, $user['password'])) {
+                // Track failed attempt in audit log
+                logAudit("Failed login attempt with email: " . htmlspecialchars($email), null, 'Guest');
                 $error_message = 'Invalid email or password.';
             } elseif ($user['is_active'] == 0) {
+                // Track deactivated user attempting login
+                logAudit("Deactivated account attempted login: " . htmlspecialchars($email), (int)$user['user_id'], $user['user_type']);
                 $error_message = 'Your account is deactivated. Please contact support.';
             } else {
                 // Success: Establish Session
@@ -28,11 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_name'] = $user['first_name'];
                 $_SESSION['user_type'] = $user['user_type'];
 
-                if ($user['user_type'] === 'Admin') {
-                  logAudit("Admin logged in successfully with email: " . $email);
-                  }
+                $fullName = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
 
-                // Update last login timestamp
+                // SAVE EVERY USER LOGIN TO AUDIT LOGS
+                logAudit(
+                    "User {$fullName} ({$user['user_type']}) logged in successfully with email: " . htmlspecialchars($email),
+                    (int)$user['user_id'],
+                    $user['user_type']
+                );
+
+                // Update last login timestamp in users table
                 $pdo->prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?")->execute([$user['user_id']]);
 
                 // Route automatically based on database role
@@ -120,18 +129,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </section>
   </main>
 
-     <section id="footer-section">
-      <div id="footer-body">
-        <div id="footer-top">
-          <div id="footer-details-block">
-            <h1>VenueVista</h1>
-            <p>Discover extraordinary spaces for life's most meaningful moments.</p>
-          </div>
-        </div>
-        <div id="footer-bottom">
-            <p>@ 2026 VenueVista. All rights reserved.</p>
+  <section id="footer-section">
+    <div id="footer-body">
+      <div id="footer-top">
+        <div id="footer-details-block">
+          <h1>VenueVista</h1>
+          <p>Discover extraordinary spaces for life's most meaningful moments.</p>
         </div>
       </div>
-    </section> 
+      <div id="footer-bottom">
+          <p>@ 2026 VenueVista. All rights reserved.</p>
+      </div>
+    </div>
+  </section> 
 </body>
 </html>

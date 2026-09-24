@@ -41,15 +41,16 @@ session_start();
         }
 
         if ($owner_data) {
-            $vendor_id = $owner_data['user_id'];
+            $vendor_id = (int)$owner_data['user_id'];
+            $vendor_name = trim($owner_data['first_name'] . ' ' . $owner_data['last_name']);
 
             // Handle Profile Update Submission
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
-                $first_name = trim($_POST['first_name']);
-                $last_name = trim($_POST['last_name']);
-                $phone = trim($_POST['phone']);
-                $business_name = trim($_POST['business_name']);
-                $business_address = trim($_POST['business_address']);
+                $first_name = trim($_POST['first_name'] ?? '');
+                $last_name = trim($_POST['last_name'] ?? '');
+                $phone = trim($_POST['phone'] ?? '');
+                $business_name = trim($_POST['business_name'] ?? '');
+                $business_address = trim($_POST['business_address'] ?? '');
 
                 try {
                     $pdo->beginTransaction();
@@ -63,6 +64,10 @@ session_start();
                     $update_vendor->execute([$business_name, $business_address, $vendor_id]);
                     
                     $pdo->commit();
+
+                    // AUDIT LOG: Profile update
+                    logAudit("Vendor #{$vendor_id} ({$first_name} {$last_name}) updated business profile: '{$business_name}'", $vendor_id, 'Vendor');
+
                     $success_msg = "Business profile updated successfully!";
                     
                     // Refresh $owner_data instantly
@@ -72,6 +77,7 @@ session_start();
                     
                 } catch (Throwable $e) {
                     if ($pdo->inTransaction()) $pdo->rollBack();
+                    logAudit("Vendor #{$vendor_id} profile update failed: " . $e->getMessage(), $vendor_id, 'Vendor');
                     $error_msg = "Failed to update profile: " . $e->getMessage();
                 }
             }
@@ -91,6 +97,7 @@ session_start();
                         $dup_check = $pdo->prepare("SELECT promo_id FROM promotions WHERE promo_code = ?");
                         $dup_check->execute([$p_code]);
                         if ($dup_check->fetch()) {
+                            logAudit("Vendor #{$vendor_id} attempted duplicate promo code creation: {$p_code}", $vendor_id, 'Vendor');
                             $error_msg = "The promo code '$p_code' already exists. Please use a unique code.";
                         } else {
                             $ins_p = $pdo->prepare("
@@ -98,9 +105,14 @@ session_start();
                                 VALUES (?, ?, ?, ?, ?, ?)
                             ");
                             $ins_p->execute([$p_hall_id, $p_code, $p_discount, $p_start, $p_end, $p_status]);
+
+                            // AUDIT LOG: Promo creation
+                            logAudit("Vendor #{$vendor_id} created promo '{$p_code}' ({$p_discount}% off) for Hall #{$p_hall_id} valid from {$p_start} to {$p_end}", $vendor_id, 'Vendor');
+
                             $success_msg = "Promotion code '$p_code' created successfully!";
                         }
                     } catch (Throwable $e) {
+                        logAudit("Vendor #{$vendor_id} promo creation error: " . $e->getMessage(), $vendor_id, 'Vendor');
                         $error_msg = "Failed to create promo: " . $e->getMessage();
                     }
                 } else {
@@ -111,13 +123,30 @@ session_start();
             // Handle Delete Promo
             if (isset($_GET['action']) && $_GET['action'] === 'delete_promo' && isset($_GET['promo_id'])) {
                 $del_id = intval($_GET['promo_id']);
-                $del_stmt = $pdo->prepare("
-                    DELETE p FROM promotions p 
+                
+                // Fetch details before deleting
+                $fetch_p = $pdo->prepare("
+                    SELECT p.promo_code, p.hall_id 
+                    FROM promotions p 
                     JOIN halls h ON p.hall_id = h.hall_id 
                     WHERE p.promo_id = ? AND h.vendor_id = ?
                 ");
-                $del_stmt->execute([$del_id, $vendor_id]);
-                $success_msg = "Promotion deleted.";
+                $fetch_p->execute([$del_id, $vendor_id]);
+                $promo_item = $fetch_p->fetch(PDO::FETCH_ASSOC);
+
+                if ($promo_item) {
+                    $del_stmt = $pdo->prepare("
+                        DELETE p FROM promotions p 
+                        JOIN halls h ON p.hall_id = h.hall_id 
+                        WHERE p.promo_id = ? AND h.vendor_id = ?
+                    ");
+                    $del_stmt->execute([$del_id, $vendor_id]);
+
+                    // AUDIT LOG: Promo deletion
+                    logAudit("Vendor #{$vendor_id} deleted promo '{$promo_item['promo_code']}' (Promo ID: #{$del_id}, Hall #{$promo_item['hall_id']})", $vendor_id, 'Vendor');
+                    $success_msg = "Promotion deleted.";
+                }
+                
                 header("Location: ownerdashboard.php#promotions");
                 exit;
             }
@@ -125,9 +154,20 @@ session_start();
             // Handle Take Offline Quick Action
             if (isset($_GET['action']) && isset($_GET['hall_id']) && $_GET['action'] === 'toggle_offline') {
                 $hall_id = intval($_GET['hall_id']);
-                $toggle_stmt = $pdo->prepare("UPDATE halls SET is_active = 0 WHERE hall_id = ? AND vendor_id = ?");
-                $toggle_stmt->execute([$hall_id, $vendor_id]);
-                $success_msg = "Venue taken offline successfully.";
+
+                $venue_stmt = $pdo->prepare("SELECT name FROM halls WHERE hall_id = ? AND vendor_id = ?");
+                $venue_stmt->execute([$hall_id, $vendor_id]);
+                $venue_target = $venue_stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($venue_target) {
+                    $toggle_stmt = $pdo->prepare("UPDATE halls SET is_active = 0 WHERE hall_id = ? AND vendor_id = ?");
+                    $toggle_stmt->execute([$hall_id, $vendor_id]);
+
+                    // AUDIT LOG: Venue taken offline
+                    logAudit("Vendor #{$vendor_id} took venue '{$venue_target['name']}' (Hall #{$hall_id}) offline", $vendor_id, 'Vendor');
+                    $success_msg = "Venue taken offline successfully.";
+                }
+                
                 header("Location: ownerdashboard.php#venues");
                 exit;
             }
@@ -135,9 +175,20 @@ session_start();
             // Handle Request to Publish Online Action
             if (isset($_GET['action']) && isset($_GET['hall_id']) && $_GET['action'] === 'request_online') {
                 $hall_id = intval($_GET['hall_id']);
-                $req_stmt = $pdo->prepare("UPDATE halls SET is_active = 0 WHERE hall_id = ? AND vendor_id = ?");
-                $req_stmt->execute([$hall_id, $vendor_id]);
-                $success_msg = "Approval request sent to Admin! Your venue will go live as soon as it is approved.";
+
+                $venue_stmt = $pdo->prepare("SELECT name FROM halls WHERE hall_id = ? AND vendor_id = ?");
+                $venue_stmt->execute([$hall_id, $vendor_id]);
+                $venue_target = $venue_stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($venue_target) {
+                    $req_stmt = $pdo->prepare("UPDATE halls SET is_active = 0 WHERE hall_id = ? AND vendor_id = ?");
+                    $req_stmt->execute([$hall_id, $vendor_id]);
+
+                    // AUDIT LOG: Venue publish request
+                    logAudit("Vendor #{$vendor_id} requested admin approval to publish venue '{$venue_target['name']}' (Hall #{$hall_id})", $vendor_id, 'Vendor');
+                    $success_msg = "Approval request sent to Admin! Your venue will go live as soon as it is approved.";
+                }
+
                 header("Location: ownerdashboard.php#venues");
                 exit;
             }
@@ -147,7 +198,7 @@ session_start();
                 $res_id = intval($_GET['reservation_id']);
 
                 $fetch_res = $pdo->prepare("
-                    SELECT r.customer_id, r.reservation_id, h.name as hall_name 
+                    SELECT r.customer_id, r.reservation_id, r.hall_id, h.name as hall_name 
                     FROM reservations r 
                     JOIN halls h ON r.hall_id = h.hall_id 
                     WHERE r.reservation_id = ? AND h.vendor_id = ?
@@ -166,7 +217,11 @@ session_start();
                             "Your reservation #$res_id at {$target_booking['hall_name']} has been approved.", 
                             "booking"
                         );
+
+                        // AUDIT LOG: Booking confirmed by vendor
+                        logAudit("Vendor #{$vendor_id} approved booking Order #{$res_id} for venue '{$target_booking['hall_name']}' (Customer #{$target_booking['customer_id']})", $vendor_id, 'Vendor');
                         $success_msg = "Booking #$res_id confirmed successfully.";
+
                     } elseif ($_GET['action'] === 'reject_booking') {
                         $stmt = $pdo->prepare("UPDATE reservations SET status = 'Cancelled' WHERE reservation_id = ?");
                         $stmt->execute([$res_id]);
@@ -177,6 +232,9 @@ session_start();
                             "Your reservation #$res_id at {$target_booking['hall_name']} was declined.", 
                             "booking"
                         );
+
+                        // AUDIT LOG: Booking rejected by vendor
+                        logAudit("Vendor #{$vendor_id} declined booking Order #{$res_id} for venue '{$target_booking['hall_name']}' (Customer #{$target_booking['customer_id']})", $vendor_id, 'Vendor');
                         $success_msg = "Booking #$res_id has been declined.";
                     }
                 }
@@ -357,41 +415,73 @@ session_start();
           display: none;
           position: fixed;
           top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(45, 41, 38, 0.55);
+          backdrop-filter: blur(3px);
           z-index: 9999;
           justify-content: center;
           align-items: center;
           animation: modalFadeIn 0.2s ease-out;
+          padding: 20px;
       }
       .custom-modal-box {
           max-height: calc(100dvh - 32px);
           overflow-y: auto;
           background: #fff;
-          padding: 25px 30px;
-          border-radius: 8px;
-          max-width: 450px;
-          width: 90%;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+          padding: 30px;
+          border-radius: 16px;
+          max-width: 440px;
+          width: 100%;
+          box-shadow: 0 16px 40px rgba(45, 41, 38, 0.15);
           text-align: left;
+          border: 1px solid #e9e3de;
       }
       .custom-modal-box h3 { 
         margin-top: 0; 
-        color: #523530; 
-    }
+        color: #2d2926; 
+        font-size: 1.4rem;
+        margin-bottom: 10px;
+      }
 
       .custom-modal-box p { 
-        color: #555; 
+        color: #76635b; 
         font-size: 0.95rem; 
         line-height: 1.5; 
         margin-bottom: 25px; 
-    }
+      }
 
       .custom-modal-actions { 
         display: flex; 
         flex-wrap: wrap; 
         justify-content: flex-end; 
         gap: 12px; 
-    }
+      }
+
+      .modal-btn-cancel {
+        background: #faf8f5;
+        border: 1px solid #e9e3de;
+        color: #63544d;
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .modal-btn-cancel:hover {
+        background: #f2e9e3;
+      }
+
+      .modal-btn-confirm {
+        background: #986e68;
+        border: 1px solid #986e68;
+        color: #fff;
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .modal-btn-confirm:hover {
+        background: #68443f;
+      }
 
       .booking-info-grid { 
         display: grid; 
@@ -643,11 +733,13 @@ session_start();
                                     </span>
                                 </td>
                                 <td style="padding: 12px;">
-                                    <a href="ownerdashboard.php?action=delete_promo&promo_id=<?= $p['promo_id'] ?>" 
-                                       class="action-btn btn-danger" 
-                                       onclick="return confirm('Delete promo code <?= htmlspecialchars($p['promo_code']) ?>?');">
+                                    <button type="button" 
+                                            class="action-btn btn-danger trigger-confirm" 
+                                            data-title="Delete Promotion?" 
+                                            data-desc="Are you sure you want to delete promo code '<?= htmlspecialchars($p['promo_code'], ENT_QUOTES) ?>'?" 
+                                            data-href="ownerdashboard.php?action=delete_promo&promo_id=<?= $p['promo_id'] ?>">
                                        Delete
-                                    </a>
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -729,8 +821,8 @@ session_start();
             <h3 id="modalTitle">Confirm Action</h3>
             <p id="modalDesc">Are you sure you want to perform this action?</p>
             <div class="custom-modal-actions">
-                <button type="button" class="action-btn" id="modalCancelBtn">Cancel</button>
-                <a href="#" class="action-btn btn-primary" id="modalConfirmBtn">Yes, Proceed</a>
+                <button type="button" class="modal-btn-cancel" id="modalCancelBtn">Cancel</button>
+                <a href="#" class="modal-btn-confirm" id="modalConfirmBtn">Yes, Proceed</a>
             </div>
         </div>
     </div>

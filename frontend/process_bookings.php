@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../backend/config/database.php';
 require_once __DIR__ . '/../backend/config/notify.php';
+require_once __DIR__ . '/../backend/utils/auditLogger.php';
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -17,7 +18,7 @@ if ($_SESSION['user_type'] !== 'Customer') {
     exit;
 }
 
-$customer_id = $_SESSION['user_id'];$error_msg = '';
+$customer_id = (int)$_SESSION['user_id'];$customer_name = $_SESSION['user_name'] ?? 'Customer';$error_msg = '';
 
 $hall_id = intval($_POST['hall_id'] ?? $_GET['hall_id'] ?? 0);
 
@@ -66,11 +67,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
 
     // Validation
     if (empty($event_date) || empty($start_time) || empty($end_time) || $guest_count <= 0) {$error_msg = "Please fill in all event details (date, times, and guest count).";
+        logAudit("Customer #{$customer_id} checkout failed: Missing event particulars for venue #{$hall_id}", $customer_id, 'Customer');
     } elseif (strtotime($event_date) < strtotime(date('Y-m-d'))) {$error_msg = "Event date cannot be in the past.";
-    } elseif (strtotime("$event_date$end_time") <= strtotime("$event_date$start_time")) {
+        logAudit("Customer #{$customer_id} checkout failed: Event date in the past ({$event_date})", $customer_id, 'Customer');
+    } elseif (strtotime("$event_date $end_time") <= strtotime("$event_date$start_time")) {
         $error_msg = "Event end time must be after the start time.";
-    } elseif ($guest_count > $venue['capacity']) {$error_msg = "Guest count exceeds the venue maximum capacity ({$venue['capacity']}).";
+        logAudit("Customer #{$customer_id} checkout failed: Invalid event times ({$start_time} - {$end_time})", $customer_id, 'Customer');
+    } elseif ($guest_count > (int)$venue['capacity']) {$error_msg = "Guest count exceeds the venue maximum capacity ({$venue['capacity']}).";
+        logAudit("Customer #{$customer_id} checkout failed: Guest count ({$guest_count}) exceeds capacity ({$venue['capacity']})", $customer_id, 'Customer');
     } elseif (empty($card_holder) || strlen($card_number_raw) < 13 || empty($card_expiry) || empty($card_cvv)) {$error_msg = "Please enter valid credit or debit card details.";
+        logAudit("Customer #{$customer_id} checkout failed: Incomplete or invalid card details", $customer_id, 'Customer');
     } else {
         try {
             // Verify and recalculate promo discount server-side
@@ -91,8 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
 
             $pdo->beginTransaction();
 
-            $start_datetime = "$event_date$start_time:00";
-            $end_datetime = "$event_date$end_time:00";
+            // Add a space between $event_date and $start_time / $end_time
+            $start_datetime = $event_date . ' ' . $start_time . ':00';
+            $end_datetime   = $event_date . ' ' . $end_time . ':00';
 
             // 1. Insert Reservation (Table: reservations)
             $res_stmt =$pdo->prepare("
@@ -133,9 +140,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
             ]);
 
             // 4. Update Customer stats
-            $pdo->prepare(" UPDATE customers SET booking_count = booking_count + 1,loyalty_points = loyalty_points + 10 WHERE user_id = ?")->execute([$customer_id]);
+            $pdo->prepare("UPDATE customers SET booking_count = booking_count + 1, loyalty_points = loyalty_points + 10 WHERE user_id = ?")->execute([$customer_id]);
 
             $pdo->commit();
+
+            // AUDIT LOG: Reservation placement and payment success
+            $promo_log = !empty($applied_promo_code) ? " (Promo: {$applied_promo_code}, Saved: $" . number_format($discount_amount, 2) . ")" : "";
+            logAudit(
+                "Customer {$customer_name} (#{$customer_id}) booked venue '{$venue['name']}' (Order #{$reservation_id}) for {$event_date}. Paid: $" . number_format($final_total, 2) . " via {$card_type_selected} (Card ending in {$card_last4}, Ref: {$transaction_ref}){$promo_log}",
+                $customer_id,
+                'Customer'
+            );
 
             // 5. Send notifications BEFORE redirecting
             createNotification(
@@ -160,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
         } catch (Throwable $e) {
             if ($pdo->inTransaction()) {$pdo->rollBack();
             }
-            $error_msg = "Payment processing failed: " . $e->getMessage();
+            logAudit("Checkout transaction failure for Customer #{$customer_id} on Hall #{$hall_id}: " . $e->getMessage(), $customer_id, 'Customer');$error_msg = "Payment processing failed: " . $e->getMessage();
         }
     }
 }
@@ -176,203 +191,254 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
   <link rel="stylesheet" href="common.css">
   <script src="navigation.js" defer></script>
   <style>
+      :root {
+        --checkout-ink: #172e44;
+        --checkout-muted: #92766e;
+        --checkout-rose: #986e68;
+        --checkout-rose-dark: #784f4a;
+        --checkout-bg: #faf8f5;
+        --checkout-field: #f2f0ed;
+        --checkout-line: #eee7e2;
+        --checkout-danger: #8a3f38;
+      }
+
+      body {
+        background-color: var(--checkout-bg);
+      }
 
       .checkout-wrapper { 
         max-width: 1100px; 
-        margin: 40px auto; 
+        margin: 40px auto 70px; 
         padding: 0 20px; 
         display: grid; 
-        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 40px; 
-    }
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); 
+        gap: 40px; 
+      }
 
       .checkout-wrapper > *, 
-      .form-row 
-      .form-group { 
+      .form-row .form-group { 
         min-width: 0; 
-    }
+      }
 
       .summary-item, 
       .summary-total { 
         gap: 12px; 
         flex-wrap: wrap; 
         overflow-wrap: anywhere; 
-    }
+      }
     
       .summary-item span:last-child, 
       .summary-total span:last-child { 
         margin-left: auto; 
         text-align: right; 
-    }
+      }
 
       @media (max-width: 900px) { 
         .checkout-wrapper { 
             grid-template-columns: 1fr; 
         } 
-    }
+      }
 
       .checkout-panel { 
-        background: #fff; 
-        border: 1px solid #ddd; 
-        border-radius: 8px; 
-        padding: 30px; 
-        box-shadow: 0 4px 14px rgba(0,0,0,0.03); 
-    }
+        background: #ffffff; 
+        border: 1px solid var(--checkout-line); 
+        border-radius: 20px; 
+        padding: 32px; 
+        box-shadow: 0 10px 30px rgba(45, 41, 38, 0.04); 
+      }
 
       .checkout-panel h2 { 
         margin-top: 0; 
-        color: #523530; 
-        border-bottom: 1px solid #eee; 
-        padding-bottom: 12px; 
-        margin-bottom: 20px; 
-        font-size: 1.3rem; 
-    }
+        color: var(--checkout-ink); 
+        border-bottom: 1px solid var(--checkout-line); 
+        padding-bottom: 14px; 
+        margin-bottom: 22px; 
+        font: 400 1.55rem/1.2 Georgia, serif; 
+      }
 
       .form-section-title { 
-        font-weight: bold; 
-        color: #523530; 
-        font-size: 1.05rem; 
+        font-weight: 700; 
+        color: var(--checkout-rose); 
+        font-size: 0.95rem; 
         margin: 25px 0 15px 0; 
-        border-bottom: 1px dashed #ccc; 
-        padding-bottom: 5px; 
-    }
+        border-bottom: 1px dashed var(--checkout-line); 
+        padding-bottom: 6px; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
 
       .form-group { 
-        margin-bottom: 15px; 
-    }
+        margin-bottom: 18px; 
+      }
 
       .form-group label { 
         display: block; 
-        font-weight: bold; 
-        margin-bottom: 5px; 
-        font-size: 0.9rem; 
-        color: #333; 
-    }
+        font-weight: 600; 
+        margin-bottom: 6px; 
+        font-size: 0.88rem; 
+        color: #4a3e39; 
+      }
 
       .form-group input, 
       .form-group select, 
       .form-group textarea { 
         width: 100%; 
-        padding: 11px; 
-        border: 1px solid #ccc; 
-        border-radius: 6px; 
+        padding: 12px 14px; 
+        border: 1px solid var(--checkout-line); 
+        border-radius: 10px; 
         box-sizing: border-box; 
         font-family: inherit; 
-    }
+        background: var(--checkout-field);
+        color: #4a3e39;
+        font-size: 0.92rem;
+        transition: border-color 0.2s;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #d4a19a;
+        background: #ffffff;
+      }
 
       .form-row { 
         display: flex; 
         gap: 15px; 
-    }
+      }
 
       .form-row .form-group { 
         flex: 1; 
-    }
+      }
 
       .summary-item { 
         display: flex; 
         justify-content: space-between; 
         margin-bottom: 12px; 
-        font-size: 0.95rem; 
-        color: #555; 
-    }
+        font-size: 0.92rem; 
+        color: #685752; 
+      }
 
       .summary-total { 
         display: flex; 
         justify-content: space-between; 
         margin-top: 15px; 
         padding-top: 15px; 
-        border-top: 2px solid #523530; 
+        border-top: 2px solid var(--checkout-rose); 
         font-size: 1.25rem; 
         font-weight: bold; 
-        color: #333; 
-    }
+        color: var(--checkout-ink); 
+      }
 
       .btn-pay { 
         width: 100%; 
-        background: #523530; 
-        color: #fff; 
+        background: var(--checkout-rose); 
+        color: #ffffff; 
         border: none; 
         padding: 15px; 
-        font-size: 1.1rem; 
-        font-weight: bold; 
-        border-radius: 6px; 
+        font-size: 1rem; 
+        font-weight: 700; 
+        border-radius: 999px; 
         cursor: pointer; 
-        margin-top: 20px; 
-        transition: background 0.2s; 
-    }
+        margin-top: 22px; 
+        transition: background 0.2s, transform 0.1s; 
+      }
 
       .btn-pay:hover { 
-        background: #3d2723; 
-    }
+        background: var(--checkout-rose-dark); 
+        transform: translateY(-1px);
+      }
 
       .badge-info { 
-        background: #e8f0fe; 
-        color: #1a73e8; 
-        padding: 8px 12px; 
-        border-radius: 4px; 
+        background: #f7f3ef; 
+        color: #785a52; 
+        padding: 12px 15px; 
+        border-radius: 10px; 
         font-size: 0.85rem; 
         margin-bottom: 20px; 
         display: block; 
-    }
+        border: 1px solid var(--checkout-line);
+        line-height: 1.45;
+      }
+
+      /* In-page styled error message banner */
+      .msg-banner {
+        padding: 14px 18px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        font-size: 0.9rem;
+        display: none;
+      }
+      .msg-banner.error {
+        display: block;
+        background: #fdf2f1;
+        color: var(--checkout-danger);
+        border: 1px solid #f6cfcb;
+      }
       
       /* Promo Code Component */
-
       .promo-box { 
         display: flex; 
         gap: 8px; 
         margin-top: 15px; 
-    }
+      }
 
       .promo-box input { 
         flex: 1; 
-        padding: 10px; 
-        border: 1px dashed #523530; 
-        border-radius: 6px; 
+        padding: 11px 14px; 
+        border: 1px dashed var(--checkout-rose); 
+        border-radius: 10px; 
         text-transform: uppercase; 
         font-weight: bold; 
         font-family: inherit; 
-    }
+        background: #ffffff;
+      }
 
       .promo-box button { 
-        background: #523530; 
-        color: #fff; 
+        background: var(--checkout-rose); 
+        color: #ffffff; 
         border: none; 
-        padding: 10px 16px; 
-        border-radius: 6px; 
+        padding: 10px 18px; 
+        border-radius: 10px; 
         cursor: pointer; 
-        font-weight: bold; 
-    }
+        font-weight: 600; 
+        transition: background 0.2s;
+      }
+
+      .promo-box button:hover {
+        background: var(--checkout-rose-dark);
+      }
 
       .promo-msg { 
-        font-size: 0.82rem; 
-        margin-top: 6px; 
+        font-size: 0.84rem; 
+        margin-top: 8px; 
         display: none; 
-    }
+      }
 
       .promo-msg.success { 
-        color: #2e7d32; 
+        color: #2b6e41; 
         display: block; 
-    }
+      }
 
       .promo-msg.error { 
-        color: #c5221f; 
+        color: var(--checkout-danger); 
         display: block; 
-    }
+      }
 
       @media (max-width: 600px) {
           .checkout-wrapper { 
-            margin: 24px auto; 
+            margin: 20px auto 40px; 
             padding: 0 16px; 
             gap: 24px; 
-        }
+          }
           .checkout-panel { 
-            padding: 20px; 
-        }
-        
+            padding: 22px; 
+            border-radius: 16px;
+          }
           .form-row { 
             flex-direction: column; 
             gap: 0; 
-        }
+          }
       }
   </style>
 </head>
@@ -393,16 +459,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
     <div class="checkout-panel">
         <h2>Complete Your Reservation</h2>
 
-        <?php if (!empty($error_msg)): ?>
-            <div style="background: #fce8e6; color: #c5221f; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 0.9rem;">
-                <?= htmlspecialchars($error_msg) ?>
-            </div>
-        <?php endif; ?>
+        <!-- In-page alert messages -->
+        <div id="js-error-banner" class="msg-banner <?= !empty($error_msg) ? 'error' : '' ?>">
+            <?= htmlspecialchars($error_msg) ?>
+        </div>
 
-        <form action="process_bookings.php" method="POST" id="checkoutForm">
+        <form action="" method="POST" id="checkoutForm">
             <input type="hidden" name="confirm_payment" value="1">
             <input type="hidden" name="hall_id" id="form_hall_id" value="<?= $venue['hall_id'] ?>">
-            <input type="hidden" name="applied_promo_code" id="form_applied_promo" value="">
+            <input type="hidden" name="applied_promo_code" id="form_applied_promo" value="<?= htmlspecialchars($applied_promo_code) ?>">
 
             <!-- 1. EVENT PARTICULARS -->
             <div class="form-section-title" style="margin-top: 0;">1. Event Particulars</div>
@@ -415,7 +480,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
                 <div class="form-group">
                     <label for="guest_count">
                         Estimated Guests <em>*</em> 
-                        <small style="color: #666; font-weight: normal;">(Max: <?= htmlspecialchars($venue['capacity']) ?>)</small>
+                        <small style="color: #76635b; font-weight: normal;">(Max: <?= htmlspecialchars($venue['capacity']) ?>)</small>
                     </label>
                     <input 
                         type="number" 
@@ -425,7 +490,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
                         placeholder="Max <?= htmlspecialchars($venue['capacity']) ?>" 
                         min="1" 
                         max="<?= htmlspecialchars($venue['capacity']) ?>" 
-                        oninput="if(parseInt(this.value) > <?= (int)$venue['capacity'] ?>) { this.setCustomValidity('Guest count cannot exceed maximum venue capacity of <?= (int)$venue['capacity'] ?>.'); } else { this.setCustomValidity(''); }"
                         required>
                 </div>
             </div>
@@ -504,7 +568,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
 
     <!-- Right Column: Order Summary -->
     <div>
-        <div class="checkout-panel" style="background: #fafafa; position: sticky; top: 100px;">
+        <div class="checkout-panel" style="background: #ffffff; position: sticky; top: 100px;">
             <h2>Reservation Summary</h2>
 
             <div class="summary-item">
@@ -524,13 +588,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
                 <span><?= htmlspecialchars($venue['capacity']) ?> guests</span>
             </div>
 
-            <hr style="border:0; border-top: 1px dashed #ccc; margin: 15px 0;">
+            <hr style="border:0; border-top: 1px dashed var(--checkout-line); margin: 15px 0;">
 
             <div class="summary-item">
                 <span>Base Rate</span>
                 <span>$<?= number_format($base_price, 2) ?></span>
             </div>
-            <div class="summary-item" id="discountSummaryRow" style="display: none; color: #2e7d32; font-weight: bold;">
+            <div class="summary-item" id="discountSummaryRow" style="display: none; color: #2b6e41; font-weight: bold;">
                 <span id="discountLabel">Promo Discount</span>
                 <span id="discountValue">-$0.00</span>
             </div>
@@ -545,8 +609,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
             </div>
 
             <!-- PROMO CODE INPUT BOX -->
-            <div style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
-                <label style="font-size: 0.88rem; font-weight: bold; color: #523530;">Have a Promo Code?</label>
+            <div style="margin-top: 20px; border-top: 1px dashed var(--checkout-line); padding-top: 15px;">
+                <label style="font-size: 0.88rem; font-weight: bold; color: var(--checkout-ink);">Have a Promo Code?</label>
                 <div class="promo-box">
                     <input type="text" id="promoInput" placeholder="ENTER CODE" maxlength="50">
                     <button type="button" id="btnApplyPromo">Apply</button>
@@ -558,7 +622,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
                 🛡️ <strong>Booking Guarantee:</strong> Your deposit is held securely and refunded subject to the venue's cancellation policy.
             </div>
             
-            <a href="search.php?hall_id=<?= $venue['hall_id'] ?>" style="display:block; text-align: center; color: #666; font-size: 0.9rem; text-decoration: none;">← Cancel and return to venue specs</a>
+            <a href="search.php?hall_id=<?= $venue['hall_id'] ?>" style="display:block; text-align: center; color: var(--checkout-muted); font-size: 0.88rem; text-decoration: none; margin-top: 15px;">← Cancel and return to venue details</a>
         </div>
     </div>
   </main>
@@ -578,6 +642,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
   </section> 
 
   <script>
+    const banner = document.getElementById('js-error-banner');
+
+    function showBannerError(msg) {
+        banner.textContent = msg;
+        banner.className = 'msg-banner error';
+        banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function clearBannerError() {
+        banner.textContent = '';
+        banner.className = 'msg-banner';
+    }
+
+    // Client-side form pre-submit validation check
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+        const guestInput = document.getElementById('guest_count');
+        const maxCapacity = <?= (int)$venue['capacity'] ?>;
+        const val = parseInt(guestInput.value, 10);
+
+        if (val > maxCapacity) {
+            e.preventDefault();
+            showBannerError(`Estimated guests (${val}) cannot exceed venue maximum capacity of ${maxCapacity}.`);
+            guestInput.focus();
+            return false;
+        }
+
+        const startDate = document.getElementById('event_date').value;
+        const startTime = document.getElementById('start_time').value;
+        const endTime = document.getElementById('end_time').value;
+
+        if (startTime && endTime && startTime >= endTime) {
+            e.preventDefault();
+            showBannerError('Event end time must be later than the start time.');
+            document.getElementById('end_time').focus();
+            return false;
+        }
+
+        clearBannerError();
+    });
+
     // Format card number & expiry
     document.getElementById('card_number').addEventListener('input', function (e) {
         e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim();

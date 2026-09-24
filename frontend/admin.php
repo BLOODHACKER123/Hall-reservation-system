@@ -20,18 +20,24 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Ensure strict PDO errors are active
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$admin_msg = '';
+$admin_id = (int)$_SESSION['user_id'];
+$admin_name =$_SESSION['user_name'] ?? 'Admin';
 
-// Handle Create New Admin
+// Read flash message from session
+$flash_msg =$_SESSION['flash_msg'] ?? null;
+unset($_SESSION['flash_msg']);
+
+// -------------------------------------------------------------
+// 1. Handle Create New Admin
+// -------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
     $first_name = trim($_POST['first_name'] ?? '');
-    $last_name = trim($_POST['last_name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    $password =$_POST['password'] ?? '';
+    $last_name  = trim($_POST['last_name'] ?? '');
+    $email      = trim($_POST['email'] ?? '');
+    $phone      = trim($_POST['phone'] ?? '');
+    $password   =$_POST['password'] ?? '';
 
     if (!empty($first_name) && !empty($last_name) && !empty($email) && !empty($phone) && !empty($password)) {
         try {
@@ -43,52 +49,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
             $new_admin_id =$pdo->lastInsertId();
             
             $stmt2 =$pdo->prepare("INSERT INTO admins (user_id, admin_level, role) VALUES (?, 1, 'System Admin')");
-            $stmt2->execute([$new_admin_id]);
-            
-            $pdo->commit();
+            $stmt2->execute([$new_admin_id]);$pdo->commit();
 
-logAudit(
-    "New admin account created: " . $email
-);
-
-$admin_msg = "<p style='color: green; font-weight: bold; margin-bottom: 15px;'>New admin created successfully!</p>";
+            logAudit("Admin {$admin_name} created new admin: {$email} (User ID: #{$new_admin_id})", $admin_id, 'Admin');$_SESSION['flash_msg'] = ['type' => 'success', 'text' => "New admin {$email} created successfully!"];
 
         } catch (Throwable $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();$admin_msg = "<p style='color: red; font-weight: bold; margin-bottom: 15px;'>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
+            if ($pdo->inTransaction())$pdo->rollBack();
+            logAudit("Admin {$admin_name} failed to create admin {$email}: " . $e->getMessage(),$admin_id, 'Admin');
+            $_SESSION['flash_msg'] = ['type' => 'error', 'text' => "Error: " . $e->getMessage()];
         }
     } else {
-        $admin_msg = "<p style='color: red; font-weight: bold; margin-bottom: 15px;'>Please fill in all required fields.</p>";
+        $_SESSION['flash_msg'] = ['type' => 'error', 'text' => "Please fill in all required fields."];
     }
+    header("Location: admin.php#system-admins");
+    exit;
 }
 
-// Handle Approve / Reject Actions for Venues
-// Handle Approve / Reject Actions for Venues
+// -------------------------------------------------------------
+// 2. Handle Approve / Reject Pending Venues
+// -------------------------------------------------------------
 if (isset($_GET['action']) && isset($_GET['id'])) {
     $hall_id = intval($_GET['id']);
 
-    // Get venue name before changing/deleting it
-    $venue_stmt = $pdo->prepare("SELECT name FROM halls WHERE hall_id = ?");
+    $venue_stmt =$pdo->prepare("SELECT name FROM halls WHERE hall_id = ?");
     $venue_stmt->execute([$hall_id]);
-    $venue = $venue_stmt->fetch(PDO::FETCH_ASSOC);
+    $venue =$venue_stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($venue) {
         if ($_GET['action'] === 'approve') {
-
-            $stmt = $pdo->prepare("UPDATE halls SET is_active = 1 WHERE hall_id = ?");
+            $stmt =$pdo->prepare("UPDATE halls SET is_active = 1 WHERE hall_id = ?");
             $stmt->execute([$hall_id]);
 
-            logAudit(
-                "Admin approved venue: " . $venue['name'] . " (Hall ID: " . $hall_id . ")"
-            );
+            logAudit("Admin approved venue: '{$venue['name']}' (Hall ID: #{$hall_id})", $admin_id, 'Admin');
+            $_SESSION['flash_msg'] = ['type' => 'success', 'text' => "Venue '{$venue['name']}' approved."];
 
         } elseif ($_GET['action'] === 'reject') {
-
-            $stmt = $pdo->prepare("DELETE FROM halls WHERE hall_id = ?");
+            $stmt =$pdo->prepare("DELETE FROM halls WHERE hall_id = ?");
             $stmt->execute([$hall_id]);
 
-            logAudit(
-                "Admin rejected and deleted venue: " . $venue['name'] . " (Hall ID: " . $hall_id . ")"
-            );
+            logAudit("Admin rejected and deleted venue: '{$venue['name']}' (Hall ID: #{$hall_id})", $admin_id, 'Admin');
+            $_SESSION['flash_msg'] = ['type' => 'success', 'text' => "Venue '{$venue['name']}' rejected & removed."];
         }
     }
 
@@ -96,35 +96,98 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     exit;
 }
 
+// -------------------------------------------------------------
+// 3. Handle Enable / Disable Venues
+// -------------------------------------------------------------
+if (isset($_GET['toggle_venue']) && isset($_GET['status'])) {
+    $hall_id = intval($_GET['toggle_venue']);
+    $new_status = intval($_GET['status']);
+
+    $venue_stmt =$pdo->prepare("SELECT name FROM halls WHERE hall_id = ?");
+    $venue_stmt->execute([$hall_id]);
+    $venue =$venue_stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($venue) {
+        $stmt =$pdo->prepare("UPDATE halls SET is_active = ? WHERE hall_id = ?");
+        $stmt->execute([$new_status,$hall_id]);
+
+        $action_label =$new_status === 1 ? "enabled" : "disabled";
+        logAudit("Admin {$action_label} venue: '{$venue['name']}' (Hall ID: #{$hall_id})", $admin_id, 'Admin');$_SESSION['flash_msg'] = ['type' => 'success', 'text' => "Venue '{$venue['name']}' successfully {$action_label}."];
+    }
+
+    header("Location: admin.php#all-venues");
+    exit;
+}
+
+// -------------------------------------------------------------
+// 4. Handle Suspend / Activate Users (Vendors and Customers)
+// -------------------------------------------------------------
+if (isset($_GET['toggle_user']) && isset($_GET['status'])) {
+    $target_uid = intval($_GET['toggle_user']);
+    $new_status = intval($_GET['status']);
+    $tab =$_GET['tab'] ?? 'vendors';
+
+    $user_stmt =$pdo->prepare("SELECT first_name, last_name, email, user_type FROM users WHERE user_id = ?");
+    $user_stmt->execute([$target_uid]);
+    $target_user =$user_stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($target_user) {
+        $stmt =$pdo->prepare("UPDATE users SET is_active = ? WHERE user_id = ?");
+        $stmt->execute([$new_status,$target_uid]);
+
+        $action_label =$new_status === 1 ? "activated" : "suspended";
+        logAudit("Admin {$action_label} {$target_user['user_type']}: {$target_user['first_name']} {$target_user['last_name']} (User ID: #{$target_uid}, Email: {$target_user['email']})", $admin_id, 'Admin');$_SESSION['flash_msg'] = ['type' => 'success', 'text' => "{$target_user['user_type']} account {$action_label} successfully."];
+    }
+
+    header("Location: admin.php#{$tab}");
+    exit;
+}
+
+// -------------------------------------------------------------
+// 5. Handle Cancel / Disable Bookings
+// -------------------------------------------------------------
+if (isset($_GET['cancel_booking_id'])) {
+    $booking_id = intval($_GET['cancel_booking_id']);
+
+    $b_stmt =$pdo->prepare("SELECT r.*, h.name as hall_name FROM reservations r JOIN halls h ON r.hall_id = h.hall_id WHERE r.reservation_id = ?");
+    $b_stmt->execute([$booking_id]);
+    $booking =$b_stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($booking &&$booking['status'] !== 'Cancelled') {
+        $stmt =$pdo->prepare("UPDATE reservations SET status = 'Cancelled' WHERE reservation_id = ?");
+        $stmt->execute([$booking_id]);
+
+        logAudit("Admin cancelled Order #{$booking_id} for venue '{$booking['hall_name']}'", $admin_id, 'Admin');
+        $_SESSION['flash_msg'] = ['type' => 'success', 'text' => "Order #{$booking_id} has been cancelled and disabled."];
+    }
+
+    header("Location: admin.php#all-bookings");
+    exit;
+}
+
 // Fetch Platform Stats
 try {
-    $total_venues =$pdo->query("SELECT COUNT(*) FROM halls")->fetchColumn();
-    $approved_venues =$pdo->query("SELECT COUNT(*) FROM halls WHERE is_active = 1")->fetchColumn();
+    $total_venues         =$pdo->query("SELECT COUNT(*) FROM halls")->fetchColumn();
+    $approved_venues      =$pdo->query("SELECT COUNT(*) FROM halls WHERE is_active = 1")->fetchColumn();
     $pending_venues_count =$pdo->query("SELECT COUNT(*) FROM halls WHERE is_active = 0")->fetchColumn();
-    $total_bookings =$pdo->query("SELECT COUNT(*) FROM reservations")->fetchColumn();
-    $platform_revenue =$pdo->query("SELECT SUM(amount) FROM payments WHERE status = 'Success'")->fetchColumn() ?: 0;
-    
-    // New Stats for Users
-    $total_vendors =$pdo->query("SELECT COUNT(*) FROM vendors")->fetchColumn();
-    $total_customers =$pdo->query("SELECT COUNT(*) FROM customers")->fetchColumn();
+    $total_bookings       =$pdo->query("SELECT COUNT(*) FROM reservations")->fetchColumn();
+    $platform_revenue     =$pdo->query("SELECT SUM(amount) FROM payments WHERE status = 'Success'")->fetchColumn() ?: 0;
+    $total_vendors        =$pdo->query("SELECT COUNT(*) FROM vendors")->fetchColumn();
+    $total_customers      =$pdo->query("SELECT COUNT(*) FROM customers")->fetchColumn();
 } catch (PDOException $e) {$total_venues = $approved_venues =$pending_venues_count = $total_bookings =$platform_revenue = $total_vendors =$total_customers = 0;
 }
 
 // Fetch Data Lists
 try {
-    // 1. Pending Venues
     $pending_stmt =$pdo->query("SELECT h.*, v.business_name, u.email FROM halls h JOIN vendors v ON h.vendor_id = v.user_id JOIN users u ON v.user_id = u.user_id WHERE h.is_active = 0 ORDER BY h.created_at DESC");
     $pending_list =$pending_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Approved Venues
-    $approved_stmt =$pdo->query("SELECT h.*, v.business_name, u.email FROM halls h JOIN vendors v ON h.vendor_id = v.user_id JOIN users u ON v.user_id = u.user_id WHERE h.is_active = 1 ORDER BY h.created_at DESC");
+    $approved_stmt =$pdo->query("SELECT h.*, v.business_name, u.email FROM halls h JOIN vendors v ON h.vendor_id = v.user_id JOIN users u ON v.user_id = u.user_id ORDER BY h.created_at DESC");
     $approved_list =$approved_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. All Bookings
     $bookings_stmt =$pdo->query("SELECT r.*, u.first_name, u.last_name, u.email, u.phone, h.name as hall_name FROM reservations r JOIN customers c ON r.customer_id = c.user_id JOIN users u ON c.user_id = u.user_id JOIN halls h ON r.hall_id = h.hall_id ORDER BY r.created_at DESC");
     $bookings_list =$bookings_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 4. All Vendors
     $vendors_stmt =$pdo->query("
         SELECT u.user_id, u.first_name, u.last_name, u.email, u.phone, u.created_at, u.is_active, 
                v.business_name, v.business_address, v.verification_status,
@@ -135,7 +198,6 @@ try {
     ");
     $vendors_list =$vendors_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 5. All Customers
     $customers_stmt =$pdo->query("
         SELECT u.user_id, u.first_name, u.last_name, u.email, u.phone, u.created_at, u.is_active, 
                c.preference, c.booking_count, c.loyalty_points 
@@ -145,7 +207,6 @@ try {
     ");
     $customers_list =$customers_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 6. All Admins
     $admins_stmt =$pdo->query("
         SELECT u.user_id, u.first_name, u.last_name, u.email, u.phone, u.created_at, a.role 
         FROM users u 
@@ -156,10 +217,9 @@ try {
     $admins_list =$admins_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    $pending_list =$approved_list =$bookings_list =$vendors_list =$customers_list =$admins_list = [];
+    $pending_list =$approved_list = $bookings_list =$vendors_list = $customers_list =$admins_list = [];
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -173,24 +233,43 @@ try {
 </head>
 
 <body>
-  
+
+  <!-- Themed Toast Notification Container -->
+  <div id="toast-container">
+    <?php if ($flash_msg): ?>
+      <div class="toast-box <?= htmlspecialchars($flash_msg['type']) ?>">
+        <span><?= htmlspecialchars($flash_msg['text']) ?></span>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <!-- Themed Custom Confirmation Modal -->
+  <div id="confirm-modal-overlay">
+    <div id="confirm-modal-box">
+      <h3 id="confirm-modal-title">Confirm Action</h3>
+      <p id="confirm-modal-desc">Are you sure you want to proceed?</p>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+        <a href="#" id="confirm-modal-proceed" class="modal-btn modal-btn-confirm">Confirm</a>
+      </div>
+    </div>
+  </div>
+
   <!-- DYNAMIC NAVIGATION BAR -->
   <section id="navigation-section">
     <div id="container">
       <div id="nav-bar">
         <a id="logo" href="index.php">VenueVista</a>
         <div id="nav-buttons">
-            <button id="audit-logs-btn" type="button">
-              Audit Logs
+            <button id="audit-logs-btn" type="button" onclick="window.location.href='admin_audit_logs.php';">
+                Audit Logs
             </button>
             <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>
-
       </div>
     </div>
   </section>
 
- 
   <main class="admin-content">
     <section class="admin-hero">
       <p class="admin-eyebrow">PLATFORM MANAGEMENT</p>
@@ -245,12 +324,10 @@ try {
                   </ul>
               </details>
               
-              <br>
               <div>
-                <a href="admin.php?action=approve&id=<?= $venue['hall_id'] ?>" class="filter-button">Approve</a> &nbsp;
-                <a href="admin.php?action=reject&id=<?= $venue['hall_id'] ?>" onclick="return confirm('Reject and delete this listing?');" class="filter-button" style="background: transparent; color: inherit; border: 1px solid currentColor;">Reject</a>
+                <a href="admin.php?action=approve&id=<?= $venue['hall_id'] ?>" class="filter-button">Approve</a>
+                <button type="button" class="filter-button btn-danger" onclick="openConfirmModal('Reject Venue', 'Reject and permanently delete this listing?', 'admin.php?action=reject&id=<?= $venue['hall_id'] ?>')">Reject</button>
               </div>
-              <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
             </article>
           <?php endforeach; ?>
       <?php else: ?>
@@ -264,12 +341,16 @@ try {
 
     <!-- 3. All Venues Panel -->
     <section class="admin-panel" id="panel-all" style="display: none;">
-      <h2>All Approved Venues</h2>
+      <h2>All Venues</h2>
       <?php if (!empty($approved_list)): ?>
           <?php foreach ($approved_list as$venue): ?>
             <article>
               <h3><?= htmlspecialchars($venue['name']) ?></h3>
-              <p><strong>Type:</strong> <?= htmlspecialchars($venue['venue_type']) ?> | <strong>Location:</strong> <?= htmlspecialchars($venue['district']) ?></p>
+              <p>
+                <strong>Type:</strong> <?= htmlspecialchars($venue['venue_type']) ?> | 
+                <strong>Location:</strong> <?= htmlspecialchars($venue['district']) ?> | 
+                <strong>Status:</strong> <span class="status-tag <?= $venue['is_active'] ? 'active' : 'disabled' ?>"><?= $venue['is_active'] ? 'Active' : 'Disabled' ?></span>
+              </p>
               
               <details>
                   <summary><strong>View Full Details</strong></summary>
@@ -286,11 +367,17 @@ try {
                       <li><strong>Cancellation Policy:</strong> <?= htmlspecialchars($venue['cancellation_policy']) ?></li>
                   </ul>
               </details>
-              <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
+              <div>
+                <?php if ($venue['is_active']): ?>
+                  <button type="button" class="filter-button btn-danger" onclick="openConfirmModal('Disable Venue', 'Are you sure you want to disable this venue from public listings?', 'admin.php?toggle_venue=<?= $venue['hall_id'] ?>&status=0')">Disable Venue</button>
+                <?php else: ?>
+                  <a href="admin.php?toggle_venue=<?= $venue['hall_id'] ?>&status=1" class="filter-button">Enable Venue</a>
+                <?php endif; ?>
+              </div>
             </article>
           <?php endforeach; ?>
       <?php else: ?>
-        <p>No active venues found.</p>
+        <p>No venues found.</p>
       <?php endif; ?>
     </section>
 
@@ -310,11 +397,17 @@ try {
                       <li><strong>Phone:</strong> <?= htmlspecialchars($vendor['phone']) ?></li>
                       <li><strong>Business Address:</strong> <?= htmlspecialchars($vendor['business_address']) ?></li>
                       <li><strong>Verification Status:</strong> <?= htmlspecialchars($vendor['verification_status']) ?></li>
-                      <li><strong>Account Status:</strong> <?= $vendor['is_active'] ? 'Active' : 'Suspended' ?></li>
+                      <li><strong>Account Status:</strong> <span class="status-tag <?= $vendor['is_active'] ? 'active' : 'suspended' ?>"><?= $vendor['is_active'] ? 'Active' : 'Suspended' ?></span></li>
                       <li><strong>Joined Platform:</strong> <?= date('F j, Y', strtotime($vendor['created_at'])) ?></li>
                   </ul>
               </details>
-              <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
+              <div>
+                <?php if ($vendor['is_active']): ?>
+                  <button type="button" class="filter-button btn-danger" onclick="openConfirmModal('Suspend Vendor', 'Suspend this vendor? They will not be able to log in or manage venues.', 'admin.php?toggle_user=<?= $vendor['user_id'] ?>&status=0&tab=vendors')">Suspend Vendor</button>
+                <?php else: ?>
+                  <a href="admin.php?toggle_user=<?= $vendor['user_id'] ?>&status=1&tab=vendors" class="filter-button">Activate Vendor</a>
+                <?php endif; ?>
+              </div>
             </article>
           <?php endforeach; ?>
       <?php else: ?>
@@ -337,11 +430,17 @@ try {
                       <li><strong>Email:</strong> <?= htmlspecialchars($customer['email']) ?></li>
                       <li><strong>Phone:</strong> <?= htmlspecialchars($customer['phone']) ?></li>
                       <li><strong>Preferences:</strong> <?= htmlspecialchars($customer['preference'] ?: 'None specified') ?></li>
-                      <li><strong>Account Status:</strong> <?= $customer['is_active'] ? 'Active' : 'Suspended' ?></li>
+                      <li><strong>Account Status:</strong> <span class="status-tag <?= $customer['is_active'] ? 'active' : 'suspended' ?>"><?= $customer['is_active'] ? 'Active' : 'Suspended' ?></span></li>
                       <li><strong>Joined Platform:</strong> <?= date('F j, Y', strtotime($customer['created_at'])) ?></li>
                   </ul>
               </details>
-              <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
+              <div>
+                <?php if ($customer['is_active']): ?>
+                  <button type="button" class="filter-button btn-danger" onclick="openConfirmModal('Suspend Customer', 'Suspend this customer account from making future bookings?', 'admin.php?toggle_user=<?= $customer['user_id'] ?>&status=0&tab=customers')">Suspend Customer</button>
+                <?php else: ?>
+                  <a href="admin.php?toggle_user=<?= $customer['user_id'] ?>&status=1&tab=customers" class="filter-button">Activate Customer</a>
+                <?php endif; ?>
+              </div>
             </article>
           <?php endforeach; ?>
       <?php else: ?>
@@ -356,7 +455,13 @@ try {
           <?php foreach ($bookings_list as$booking): ?>
             <article>
               <h3>Order #<?= $booking['reservation_id'] ?> - <?= htmlspecialchars($booking['hall_name']) ?></h3>
-              <p><strong>Customer:</strong> <?= htmlspecialchars($booking['first_name'] . ' ' . $booking['last_name']) ?> | <strong>Status:</strong> <?= htmlspecialchars($booking['status']) ?></p>
+              <p>
+                <strong>Customer:</strong> <?= htmlspecialchars($booking['first_name'] . ' ' .$booking['last_name']) ?> | 
+                <strong>Status:</strong> 
+                <span class="status-tag <?= strtolower($booking['status']) ?>">
+                  <?= htmlspecialchars($booking['status']) ?>
+                </span>
+              </p>
               
               <details>
                   <summary><strong>View Order Details</strong></summary>
@@ -372,7 +477,13 @@ try {
                       <li><strong>Booking Created On:</strong> <?= date('F j, Y', strtotime($booking['created_at'])) ?></li>
                   </ul>
               </details>
-              <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
+              <div>
+                <?php if ($booking['status'] !== 'Cancelled'): ?>
+                  <button type="button" class="filter-button btn-danger" onclick="openConfirmModal('Cancel Booking', 'Cancel and disable Order #<?= $booking['reservation_id'] ?>? This action is logged.', 'admin.php?cancel_booking_id=<?= $booking['reservation_id'] ?>')">Disable / Cancel Booking</button>
+                <?php else: ?>
+                  <span style="color: #76635b; font-size: 0.875rem; font-style: italic;">Booking disabled/cancelled</span>
+                <?php endif; ?>
+              </div>
             </article>
           <?php endforeach; ?>
       <?php else: ?>
@@ -384,7 +495,6 @@ try {
     <section class="admin-panel" id="panel-admins" style="display: none;">
       <h2>Manage System Admins</h2>
       
-      <!-- List Current Admins -->
       <div style="margin-bottom: 40px;">
           <?php if (!empty($admins_list)): ?>
               <?php foreach ($admins_list as$admin): ?>
@@ -392,7 +502,6 @@ try {
                   <h3><?= htmlspecialchars($admin['first_name'] . ' ' .$admin['last_name']) ?></h3>
                   <p><strong>Email:</strong> <?= htmlspecialchars($admin['email']) ?> | <strong>Phone:</strong> <?= htmlspecialchars($admin['phone']) ?></p>
                   <p><strong>Role:</strong> <?= htmlspecialchars($admin['role']) ?> | <strong>Joined:</strong> <?= date('F j, Y', strtotime($admin['created_at'])) ?></p>
-                  <hr style="margin: 30px 0; border: 0; border-top: 1px dashed #ccc;">
                 </article>
               <?php endforeach; ?>
           <?php else: ?>
@@ -400,152 +509,95 @@ try {
           <?php endif; ?>
       </div>
 
-      <!-- Form to Create New Admin -->
-      <h3>Create New Admin Account</h3>
-      <?= $admin_msg ?>
-      <form action="admin.php#system-admins" method="POST" style="max-width: 400px; display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+      <h2>Create New Admin Account</h2>
+      <form class="admin-create-form" action="admin.php#system-admins" method="POST">
           <input type="hidden" name="create_admin" value="1">
-          <input type="text" name="first_name" placeholder="First Name" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-          <input type="text" name="last_name" placeholder="Last Name" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-          <input type="email" name="email" placeholder="Email Address" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-          <input type="text" name="phone" placeholder="Phone Number (e.g. +9477...)" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-          <input type="password" name="password" placeholder="Secure Password" required minlength="8" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-          <button type="submit" class="filter-button" style="padding: 10px 20px; cursor: pointer;">Create Admin</button>
+          <input type="text" name="first_name" placeholder="First Name" required>
+          <input type="text" name="last_name" placeholder="Last Name" required>
+          <input type="email" name="email" placeholder="Email Address" required>
+          <input type="text" name="phone" placeholder="Phone Number (e.g. +9477...)" required>
+          <input type="password" name="password" placeholder="Secure Password" required minlength="8">
+          <button type="submit" class="filter-button" style="width: 100%;">Create Admin</button>
       </form>
     </section>
 
   </main>
 
-      <section id="footer-section">
+  <section id="footer-section">
+    <div id="footer-body">
+      <div id="footer-top">
+        <div id="footer-details-block">
+          <h1>VenueVista</h1>
+          <p>Discover extraordinary spaces for life's most meaningful moments.</p>
+        </div>
+      </div>
+      <div id="footer-bottom">
+        <p>@ 2026 VenueVista. All rights reserved.</p>
+      </div>
+    </div>
+  </section>   
 
-<div id="footer-body">
+  <!-- Modal & Tab Logic -->
+  <script>
+    const modalOverlay = document.getElementById('confirm-modal-overlay');
+    const modalTitle   = document.getElementById('confirm-modal-title');
+    const modalDesc    = document.getElementById('confirm-modal-desc');
+    const modalProceed = document.getElementById('confirm-modal-proceed');
 
-<div id="footer-top">
+    function openConfirmModal(title, description, proceedUrl) {
+      modalTitle.textContent = title;
+      modalDesc.textContent = description;
+      modalProceed.setAttribute('href', proceedUrl);
+      modalOverlay.style.display = 'flex';
+    }
 
+    function closeConfirmModal() {
+      modalOverlay.style.display = 'none';
+    }
 
+    // Auto-dismiss Toast after 4 seconds
+    setTimeout(() => {
+      const toast = document.querySelector('.toast-box');
+      if (toast) {
+        toast.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        setTimeout(() => toast.remove(), 500);
+      }
+    }, 4000);
 
-<div id="footer-details-block">
+    // Tab Switching Logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const panels = document.querySelectorAll('.admin-panel');
 
-<h1>VenueVista</h1>
+        function switchTab(targetId, activeTabElement) {
+            panels.forEach(panel => panel.style.display = 'none');
+            tabLinks.forEach(tab => tab.classList.remove('active'));
 
-<p>Discover extraordinary spaces for life's most meaningful moments. Where every venue tells
+            const targetPanel = document.getElementById(targetId);
+            if (targetPanel) targetPanel.style.display = 'block';
+            if (activeTabElement) activeTabElement.classList.add('active');
+        }
 
-a story.</p>
+        tabLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('data-target');
+                switchTab(targetId, link);
+                history.replaceState(null, null, link.getAttribute('href'));
+            });
+        });
 
-
-
-<div class="social-links">
-
-<a href="">INSTAGRAM</a>
-
-<a href="">PINTEREST</a>
-
-<a href="">FACEBOOK</a>
-
-</div>
-
-</div>
-
-
-<div class="footer-nav-links">
-
-
-
-<p>DISCOVER</p>
-
-<a href="search.php">Browse Venues</a>
-
-<a href="search.php">Wedding Venues</a>
-
-<a href="search.php">Banquet Halls</a>
-
-<a href="search.php">Conference Halls</a>
-
-
-</div>
-
-
-
-<div class="footer-nav-links">
-
-<p>FOR OWNERS</p>
-
-
-<a href="list.php">List Your Venue</a>
-
-<a href="ownerdashboard.php">Owner Dashboard</a>
-
-<a href="mybookings.php">My Bookings</a>
-
-
-</div>
-
-
-</div>
-
-<div id="footer-bottom">
-
-<p>@ 2026 VenueVista. All rights reserved.</p>
-
-
-
-<div class="footer-links">
-
-<a href="">Privacy Policy</a>
-
-<a href="">Terms of Service</a>
-
-<a href="">Contact</a>
-
-</div>
-
-</div>
-
-</div>
-
-</section>   
-
-    <!-- Logic for Tabs -->
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-          const tabLinks = document.querySelectorAll('.tab-link');
-          const panels = document.querySelectorAll('.admin-panel');
-
-          function switchTab(targetId, activeTabElement) {
-              panels.forEach(panel => {
-                  panel.style.display = 'none';
-              });
-              tabLinks.forEach(tab => {
-                  tab.classList.remove('active');
-              });
-
-              const targetPanel = document.getElementById(targetId);
-              if (targetPanel) {
-                  targetPanel.style.display = 'block';
-              }
-              if (activeTabElement) {
-                  activeTabElement.classList.add('active');
-              }
-          }
-
-          tabLinks.forEach(link => {
-              link.addEventListener('click', (e) => {
-                  e.preventDefault();
-                  const targetId = link.getAttribute('data-target');
-                  switchTab(targetId, link);
-                  history.replaceState(null, null, link.getAttribute('href'));
-              });
-          });
-
-          const hash = window.location.hash;
-          if (hash) {
-              const activeTab = document.querySelector(`.tab-link[href="${hash}"]`);
-              if (activeTab) {
-                  const targetId = activeTab.getAttribute('data-target');
-                  switchTab(targetId, activeTab);
-              }
-          }
-      });
-    </script>
+        const hash = window.location.hash;
+        if (hash) {
+            const activeTab = document.querySelector(`.tab-link[href="${hash}"]`);
+            if (activeTab) {
+                const targetId = activeTab.getAttribute('data-target');
+                switchTab(targetId, activeTab);
+            }
+        }
+    });
+  </script>
 </body>
 </html>
