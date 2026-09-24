@@ -6,16 +6,22 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-/**
- * Logs an admin action into the audit_logs table.
- *
- * @param string $action Description of what the admin did
- */
+
+function auditLogHasRoles(): bool
+{
+    global $pdo;
+    static $hasRoles = null;
+    if ($hasRoles === null) {
+        $hasRoles = (bool)$pdo->query("SHOW COLUMNS FROM audit_logs LIKE 'user_role'")->fetch();
+    }
+    return $hasRoles;
+}
+
 function logAudit(string $action): bool
 {
     global $pdo;
 
-    // Only authenticated admins can create audit logs
+// Only authenticated admins can create audit logs
     if (
         !isset($_SESSION['user_id']) ||
         !isset($_SESSION['user_type']) ||
@@ -26,7 +32,8 @@ function logAudit(string $action): bool
 
     $adminId = (int) $_SESSION['user_id'];
 
-    // Capture client IP address
+// Capture client IP address
+
     $ip = $_SERVER['HTTP_X_FORWARDED_FOR']
         ?? $_SERVER['REMOTE_ADDR']
         ?? '127.0.0.1';
@@ -36,7 +43,10 @@ function logAudit(string $action): bool
     }
 
     try {
-        $stmt = $pdo->prepare("
+        $stmt = $pdo->prepare(auditLogHasRoles() ? "
+            INSERT INTO audit_logs (user_id, user_role, action, ip_address)
+            VALUES (?, 'Admin', ?, ?)
+        " : "
             INSERT INTO audit_logs (admin_id, action, ip_address)
             VALUES (?, ?, ?)
         ");

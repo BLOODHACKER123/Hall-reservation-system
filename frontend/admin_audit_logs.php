@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../backend/config/database.php';
+require_once __DIR__ . '/../backend/utils/auditLogger.php';
 
 // Strict Admin Gatekeeper
 if (empty($_SESSION['user_id']) || empty($_SESSION['user_type']) || $_SESSION['user_type'] !== 'Admin') {
@@ -15,7 +16,6 @@ $date_to     = trim($_GET['date_to'] ?? '');
 
 $page   = max(1, (int)($_GET['page'] ?? 1));
 $limit  = 25;
-$offset = ($page - 1) * $limit;
 
 $where  = [];
 $params = [];
@@ -38,16 +38,20 @@ if ($date_to !== '') {
 }
 
 $whereSql = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+$auditTable = auditLogHasRoles() ? 'audit_logs'
+    : "(SELECT *, admin_id AS user_id, 'Admin' AS user_role FROM audit_logs) AS audit_entries";
 
 // Count for pagination
-$countStmt = $pdo->prepare("SELECT COUNT(*) FROM audit_logs $whereSql");
+$countStmt = $pdo->prepare("SELECT COUNT(*) FROM $auditTable $whereSql");
 $countStmt->execute($params);
 $totalRecords = (int)$countStmt->fetchColumn();
 $totalPages   = max(1, ceil($totalRecords / $limit));
+$page = min($page, (int)$totalPages);
+$offset = ($page - 1) * $limit;
 
 // Fetch paginated logs
 $stmt = $pdo->prepare("
-    SELECT * FROM audit_logs 
+    SELECT * FROM $auditTable
     $whereSql 
     ORDER BY log_id DESC 
     LIMIT $limit OFFSET $offset
@@ -56,9 +60,10 @@ $stmt->execute($params);
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch distinct roles for filtering
-$rolesStmt = $pdo->query("SELECT DISTINCT user_role FROM audit_logs WHERE user_role IS NOT NULL ORDER BY user_role ASC");
+$rolesStmt = $pdo->query("SELECT DISTINCT user_role FROM $auditTable WHERE user_role IS NOT NULL ORDER BY user_role ASC");
 $availableRoles = $rolesStmt->fetchAll(PDO::FETCH_COLUMN);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,12 +73,14 @@ $availableRoles = $rolesStmt->fetchAll(PDO::FETCH_COLUMN);
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="common.css" />
   <style>
+
     body { 
-    font-family: -apple-system,BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-    background: #f8fafc; 
-    padding: 24px;
-    color: #1e293b; 
+      font-family: -apple-system,BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      background: #f8fafc; 
+      padding: 24px;
+      color: #1e293b; 
     }
+
     .container { 
       max-width: 1300px; 
       margin: 0 auto; 
@@ -85,6 +92,8 @@ $availableRoles = $rolesStmt->fetchAll(PDO::FETCH_COLUMN);
 
     .header { 
       display: flex; 
+      flex-wrap: wrap;
+      gap: 16px;
       justify-content: space-between; 
       align-items: center; 
       border-bottom: 1px solid #e2e8f0; 
@@ -102,13 +111,16 @@ $availableRoles = $rolesStmt->fetchAll(PDO::FETCH_COLUMN);
 
     .filter-bar label { 
       display: flex; 
+      flex: 1 1 180px;
+      min-width: 0;
       flex-direction: column; 
       font-size: 13px; 
       font-weight: 600; 
       color: #64748b; 
     }
 
-    .filter-bar input, .filter-bar select { 
+    .filter-bar input,
+    .filter-bar select { 
       padding: 8px 12px; 
       border: 1px solid #cbd5e1; 
       border-radius: 6px; 
@@ -188,9 +200,28 @@ $availableRoles = $rolesStmt->fetchAll(PDO::FETCH_COLUMN);
 
     .pagination { 
       display: flex; 
+      flex-wrap: wrap;
+      gap: 16px;
       justify-content: space-between; 
       align-items: center; 
       margin-top: 20px; 
+    }
+
+    .header-actions { 
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    td { 
+      overflow-wrap: anywhere;
+     }
+     
+    @media (max-width: 600px) {
+      body { padding: 12px; }
+      .container { padding: 16px; }
+      .filter-bar label { flex-basis: 100%; }
+      .btn { min-height: 44px; }
     }
 
   </style>
@@ -203,8 +234,8 @@ $availableRoles = $rolesStmt->fetchAll(PDO::FETCH_COLUMN);
         <h2>System Activity & Audit Trail</h2>
         <small>Admins-only visibility into operational events, logins, and changes.</small>
       </div>
-      <div>
-        <a href="admin.php" class="btn" style="background:#e2e8f0; color:#334155; margin-right: 8px;">
+      <div class="header-actions">
+        <a href="admin.php" class="btn" style="background:#e2e8f0; color:#334155;">
           <i class="fa-solid fa-arrow-left"></i> Dashboard
         </a>
         <a href="export_audit_report.php?<?= http_build_query($_GET) ?>" class="btn btn-green">
@@ -247,6 +278,7 @@ $availableRoles = $rolesStmt->fetchAll(PDO::FETCH_COLUMN);
     </form>
 
     <!-- Table -->
+    <div class="table-scroll" role="region" aria-label="Audit records" tabindex="0">
     <table>
       <thead>
         <tr>
@@ -281,6 +313,7 @@ $availableRoles = $rolesStmt->fetchAll(PDO::FETCH_COLUMN);
         <?php endif; ?>
       </tbody>
     </table>
+    </div>
 
     <div class="pagination">
       <span>Showing <?= count($logs) ?> of <?= $totalRecords ?> records (Page <?= $page ?> of <?= $totalPages ?>)</span>

@@ -59,16 +59,62 @@ try {
   <link rel="stylesheet" href="search.css">
   <script src="navigation.js" defer></script>
   <style>
-      .wishlist-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; min-height: 60vh; }
-      .wishlist-header { border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-      .wishlist-header h1 { font-family: 'Playfair Display', serif; color: #523530; margin: 0; }
-      
-      /* Badge on navbar */
-      .nav-wishlist-link { position: relative; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
-      .wishlist-badge { background: #e53935; color: #fff; font-size: 0.75rem; font-weight: bold; border-radius: 10px; padding: 2px 6px; min-width: 16px; text-align: center; }
+      .wishlist-container {
+        max-width: 1200px; 
+        margin: 40px auto; 
+        padding: 0 20px; 
+        min-height: 60vh; 
+      }
 
-      .remove-btn { color: #c62828; text-decoration: none; font-size: 0.85rem; font-weight: bold; }
-      .remove-btn:hover { text-decoration: underline; }
+      .wishlist-header { 
+        border-bottom: 2px solid #eee; 
+        padding-bottom: 15px; 
+        margin-bottom: 30px; 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 16px; 
+        justify-content: space-between; 
+        align-items: center; 
+      }
+
+      .wishlist-header h1 { 
+        font-family: 'Playfair Display', serif; 
+        color: #523530; 
+        margin: 0; 
+      }
+      
+      /*nav bar badge */
+
+      .nav-wishlist-link { 
+        position: relative; 
+        display: inline-flex; 
+        align-items: center; 
+        gap: 4px; 
+        text-decoration: none; 
+      }
+
+      .wishlist-badge {
+        background: #e53935; 
+        color: #fff; 
+        font-size: 0.75rem; 
+        font-weight: bold; 
+        border-radius: 10px; 
+        padding: 2px 6px; 
+        min-width: 16px; 
+        text-align: center; 
+      }
+
+      .remove-btn { 
+        color: #c62828; 
+        text-decoration: none; 
+        font-size: 0.85rem; 
+        font-weight: bold; 
+      }
+
+      .remove-btn:hover { 
+        text-decoration: underline; 
+      }
+
   </style>
 </head>
 <body>
@@ -109,7 +155,8 @@ try {
         <a href="search.php" style="background: #523530; color: #fff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Explore Venues</a>
       </div>
     <?php else: ?>
-      <div id="featured-venue-cards" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px;">
+      <div id="featured-venue-cards" 
+      style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 25px;">
         <?php foreach ($wishlist_venues as $venue): ?>
           <?php $imgSrc = !empty($venue['image_url']) ? $venue['image_url'] : 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&auto=format&fit=crop&q=80'; ?>
           <div class="venue-card">
@@ -122,11 +169,15 @@ try {
             <div class="location-details">
               <p><?= htmlspecialchars($venue['name']) ?></p>
               <p class="cost">$<?= number_format($venue['base_price_per_hour'], 2) ?>/day</p>
-              <br />
+
+              <br/>
+
               <p><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <?= htmlspecialchars($venue['district']) ?></p>
+
             </div>
 
-            <div class="hall-details" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="hall-details" 
+            style="display: flex; justify-content: space-between; align-items: center;">
               <a href="search.php?hall_id=<?= urlencode($venue['hall_id']) ?>">View Details →</a>
               <a href="wishlist.php?remove=<?= $venue['hall_id'] ?>" class="remove-btn" onclick="return confirm('Remove this venue from your wishlist?');">Remove ✕</a>
             </div>

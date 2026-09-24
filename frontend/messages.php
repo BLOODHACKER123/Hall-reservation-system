@@ -96,6 +96,7 @@ try {
   <title>Messages | VenueVista</title>
   <link rel="icon" type="image/x-icon" href="images/venuevista-logo.png" />
   <link rel="stylesheet" href="common.css">
+  <script src="navigation.js" defer></script>
   <link rel="stylesheet" href="messages.css">
 </head>
 <body>
@@ -105,6 +106,9 @@ try {
     <div id="container">
       <div id="nav-bar">
         <a id="logo" href="index.php">VenueVista</a>
+        <nav id="nav-links">
+          <a href="search.php">Browse Venues</a>
+        </nav>
         <div id="nav-buttons">
           <?php include __DIR__ . '/navbar_user_menu.php'; ?>
         </div>

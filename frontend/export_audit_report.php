@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../backend/config/database.php';
+require_once __DIR__ . '/../backend/utils/auditLogger.php';
 
 // Strict Admin Gatekeeper
 if (empty($_SESSION['user_id']) || empty($_SESSION['user_type']) || $_SESSION['user_type'] !== 'Admin') {
@@ -35,7 +36,9 @@ if ($date_to !== '') {
 
 $whereSql = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 
-$stmt = $pdo->prepare("SELECT * FROM audit_logs $whereSql ORDER BY log_id DESC");
+$auditTable = auditLogHasRoles() ? 'audit_logs'
+    : "(SELECT *, admin_id AS user_id, 'Admin' AS user_role FROM audit_logs) AS audit_entries";
+$stmt = $pdo->prepare("SELECT * FROM $auditTable $whereSql ORDER BY log_id DESC");
 $stmt->execute($params);
 
 $filename = "audit_report_" . date('Y-m-d_His') . ".csv";
@@ -43,7 +46,7 @@ header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 
 $output = fopen('php://output', 'w');
-fputcsv($output, ['Log ID', 'User ID', 'User Role', 'Action', 'IP Address', 'Timestamp']);
+fputcsv($output, ['Log ID', 'User ID', 'User Role', 'Action', 'IP Address', 'Timestamp'], ',', '"', '');
 
 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     fputcsv($output, [
@@ -53,7 +56,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $row['action'],
         $row['ip_address'],
         $row['timestamp']
-    ]);
+    ], ',', '"', '');
 }
 
 fclose($output);

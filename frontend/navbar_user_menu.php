@@ -24,6 +24,8 @@ if ($nav_user_id && isset($pdo)) {
 <style>
   .nav-user-bar {
     display: flex;
+    min-width: 0;
+    max-width: 100%;
     align-items: center;
     gap: 12px;
   }
@@ -207,9 +209,10 @@ if ($nav_user_id && isset($pdo)) {
   }
 
   /* User Menu Dropdown */
-  .user-menu-container { position: relative; display: inline-block; }
+  .user-menu-container { position: relative; display: inline-block; min-width: 0; max-width: 100%; }
   .user-menu-trigger {
     display: flex;
+    max-width: 100%;
     align-items: center;
     gap: 10px;
     background: #8c5e58;
@@ -225,7 +228,10 @@ if ($nav_user_id && isset($pdo)) {
     transition: background 0.2s ease, transform 0.15s ease;
     box-shadow: 0 4px 10px rgba(82, 53, 48, 0.12);
   }
-  .user-menu-trigger:hover { background: #3d2723; transform: translateY(-1px); }
+  .user-menu-trigger:hover { 
+    background: #3d2723; 
+    transform: translateY(-1px); 
+}
   .user-avatar {
     width: 28px;
     height: 28px;
@@ -248,7 +254,6 @@ if ($nav_user_id && isset($pdo)) {
     width: 18px;
     height: 18px;
     object-fit: contain;
-    vertical-align:middle;
   }
 
   .menu-item-icon {
@@ -265,10 +270,15 @@ if ($nav_user_id && isset($pdo)) {
     display: block;
   }
 
-  .user-menu-trigger span:last-of-type {
+  .user-menu-trigger > span:nth-child(2) {
     display: inline-block;
+    min-width: 0;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
+
   .user-dropdown-panel {
     display: none;
     position: absolute;
@@ -282,20 +292,37 @@ if ($nav_user_id && isset($pdo)) {
     overflow: hidden;
     z-index: 1000;
   }
-  .user-dropdown-panel.show { display: block; }
+  .user-dropdown-panel
+  .show { 
+    display: block; 
+  }
+
   .user-dropdown-header {
     padding: 12px 16px;
     background: #fafafa;
     border-bottom: 1px solid #eee;
   }
-  .user-dropdown-header .role-tag {
+  .user-dropdown-header 
+  .role-tag {
     font-size: 0.75rem;
     text-transform: uppercase;
     color: #888;
     font-weight: bold;
   }
-  .user-dropdown-header .user-name { margin: 2px 0 0 0; font-weight: 600; color: #333; font-size: 0.95rem; }
-  .user-dropdown-panel ul { list-style: none; margin: 0; padding: 6px 0; }
+  .user-dropdown-header 
+  .user-name { 
+    margin: 2px 0 0 0; 
+    font-weight: 600; 
+    color: #333; 
+    font-size: 0.95rem; 
+  }
+
+  .user-dropdown-panel ul { 
+    list-style: none; 
+    margin: 0; 
+    padding: 6px 0; 
+  }
+
   .user-dropdown-panel li a {
     display: flex;
     align-items: center;
@@ -307,16 +334,36 @@ if ($nav_user_id && isset($pdo)) {
     font-size: 0.9rem;
     transition: background 0.15s;
   }
-  .user-dropdown-panel li a .menu-link-label {
+
+  .user-dropdown-panel li a 
+  .menu-link-label {
     display: flex;
     align-items: center;
     gap: 8px;
     flex: 1;
   }
-  .user-dropdown-panel li a:hover { background: #f5f5f5; color: #523530; }
-  .user-dropdown-panel .divider { height: 1px; background: #eee; margin: 6px 0; }
-  .user-dropdown-panel .logout-link { color: #c62828 !important; }
-  .user-dropdown-panel .logout-link:hover { background: #fce8e6 !important; }
+
+  .user-dropdown-panel li a:hover { 
+    background: #f5f5f5; 
+    color: #523530; 
+}
+
+  .user-dropdown-panel 
+  .divider { 
+    height: 1px; 
+    background: #eee; 
+    margin: 6px 0; 
+}
+
+  .user-dropdown-panel 
+  .logout-link { 
+    color: #c62828 !important; 
+  }
+
+  .user-dropdown-panel 
+  .logout-link:hover { 
+    background: #fce8e6 !important; 
+  }
 
   .menu-disabled-link {
     display: flex;
@@ -333,6 +380,46 @@ if ($nav_user_id && isset($pdo)) {
     text-align: left;
     cursor: not-allowed;
     opacity: 0.75;
+  }
+
+ 
+  @media (max-width: 1100px) {
+
+    .nav-user-bar { 
+      display: grid; 
+      grid-template-columns: 36px minmax(0, 1fr); 
+      width: 100%; 
+    }
+
+    .nav-icon-container, 
+    .user-menu-container { 
+      display: contents; 
+    }
+
+    .nav-bell-btn { 
+      grid-column: 1; 
+      grid-row: 1; 
+    }
+
+    .user-menu-trigger { 
+      grid-column: 2; 
+      grid-row: 1; 
+      justify-self: start; 
+    }
+
+    .notif-dropdown-panel, 
+    .user-dropdown-panel {
+      position: static;
+      grid-column: 1 / -1;
+      grid-row: 2;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .notif-header { 
+      flex-wrap: wrap; 
+      gap: 8px; 
+    }
   }
 </style>
 
@@ -469,6 +556,14 @@ if ($nav_user_id && isset($pdo)) {
             </li>
 
           <?php elseif ($nav_user_type === 'Admin'):?>
+            <li>
+              <a href="admin_audit_logs.php">
+                <span class="menu-link-label">
+                  <img src="./images/history.png" alt="" class="menu-item-icon" />
+                  <span>Audit Logs</span>
+                </span>
+              </a>
+            </li>
             <li>
               <a href="admin.php">
                 <span class="menu-link-label">

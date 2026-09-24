@@ -32,7 +32,9 @@ try {
     $venue =$stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$venue) {
-        die("<h2 style='text-align:center; color:#c5221f; margin-top:50px;'>Venue not available or does not exist.</h2>");
+        die("
+        <h2 style='text-align:center; color:#c5221f; margin-top:50px;'>Venue not available or does not exist.</h2>"
+        );
     }
 
     $cust_stmt =$pdo->prepare("SELECT first_name, last_name, email, phone FROM users WHERE user_id = ?");
@@ -50,6 +52,7 @@ $end_time = trim($_POST['end_time'] ?? '22:00');
 $guest_count = intval($_POST['guest_count'] ?? 0);
 $special_requests = trim($_POST['special_requests'] ?? '');
 $applied_promo_code = strtoupper(trim($_POST['applied_promo_code'] ?? ''));
+
 $billing_name = trim($_POST['billing_name'] ?? ($customer_info['first_name'] . ' ' .$customer_info['last_name']));
 $billing_phone = trim($_POST['billing_phone'] ?? $customer_info['phone']);$billing_email = trim($_POST['billing_email'] ?? $customer_info['email']);
 
@@ -130,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
             ]);
 
             // 4. Update Customer stats
-            $pdo->prepare("                 UPDATE customers                  SET booking_count = booking_count + 1,                      loyalty_points = loyalty_points + 10                  WHERE user_id = ?             ")->execute([$customer_id]);
+            $pdo->prepare(" UPDATE customers SET booking_count = booking_count + 1,loyalty_points = loyalty_points + 10 WHERE user_id = ?")->execute([$customer_id]);
 
             $pdo->commit();
 
@@ -171,30 +174,206 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_payment'])) {
   <title>Complete Reservation | VenueVista</title>
   <link rel="icon" type="image/x-icon" href="images/venuevista-logo.png" />
   <link rel="stylesheet" href="common.css">
+  <script src="navigation.js" defer></script>
   <style>
-      .checkout-wrapper { max-width: 1100px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; }
-      @media (max-width: 900px) { .checkout-wrapper { grid-template-columns: 1fr; } }
-      .checkout-panel { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 30px; box-shadow: 0 4px 14px rgba(0,0,0,0.03); }
-      .checkout-panel h2 { margin-top: 0; color: #523530; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 20px; font-size: 1.3rem; }
-      .form-section-title { font-weight: bold; color: #523530; font-size: 1.05rem; margin: 25px 0 15px 0; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
-      .form-group { margin-bottom: 15px; }
-      .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; color: #333; }
-      .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
-      .form-row { display: flex; gap: 15px; }
-      .form-row .form-group { flex: 1; }
-      .summary-item { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem; color: #555; }
-      .summary-total { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px solid #523530; font-size: 1.25rem; font-weight: bold; color: #333; }
-      .btn-pay { width: 100%; background: #523530; color: #fff; border: none; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
-      .btn-pay:hover { background: #3d2723; }
-      .badge-info { background: #e8f0fe; color: #1a73e8; padding: 8px 12px; border-radius: 4px; font-size: 0.85rem; margin-bottom: 20px; display: block; }
+
+      .checkout-wrapper { 
+        max-width: 1100px; 
+        margin: 40px auto; 
+        padding: 0 20px; 
+        display: grid; 
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 40px; 
+    }
+
+      .checkout-wrapper > *, 
+      .form-row 
+      .form-group { 
+        min-width: 0; 
+    }
+
+      .summary-item, 
+      .summary-total { 
+        gap: 12px; 
+        flex-wrap: wrap; 
+        overflow-wrap: anywhere; 
+    }
+    
+      .summary-item span:last-child, 
+      .summary-total span:last-child { 
+        margin-left: auto; 
+        text-align: right; 
+    }
+
+      @media (max-width: 900px) { 
+        .checkout-wrapper { 
+            grid-template-columns: 1fr; 
+        } 
+    }
+
+      .checkout-panel { 
+        background: #fff; 
+        border: 1px solid #ddd; 
+        border-radius: 8px; 
+        padding: 30px; 
+        box-shadow: 0 4px 14px rgba(0,0,0,0.03); 
+    }
+
+      .checkout-panel h2 { 
+        margin-top: 0; 
+        color: #523530; 
+        border-bottom: 1px solid #eee; 
+        padding-bottom: 12px; 
+        margin-bottom: 20px; 
+        font-size: 1.3rem; 
+    }
+
+      .form-section-title { 
+        font-weight: bold; 
+        color: #523530; 
+        font-size: 1.05rem; 
+        margin: 25px 0 15px 0; 
+        border-bottom: 1px dashed #ccc; 
+        padding-bottom: 5px; 
+    }
+
+      .form-group { 
+        margin-bottom: 15px; 
+    }
+
+      .form-group label { 
+        display: block; 
+        font-weight: bold; 
+        margin-bottom: 5px; 
+        font-size: 0.9rem; 
+        color: #333; 
+    }
+
+      .form-group input, 
+      .form-group select, 
+      .form-group textarea { 
+        width: 100%; 
+        padding: 11px; 
+        border: 1px solid #ccc; 
+        border-radius: 6px; 
+        box-sizing: border-box; 
+        font-family: inherit; 
+    }
+
+      .form-row { 
+        display: flex; 
+        gap: 15px; 
+    }
+
+      .form-row .form-group { 
+        flex: 1; 
+    }
+
+      .summary-item { 
+        display: flex; 
+        justify-content: space-between; 
+        margin-bottom: 12px; 
+        font-size: 0.95rem; 
+        color: #555; 
+    }
+
+      .summary-total { 
+        display: flex; 
+        justify-content: space-between; 
+        margin-top: 15px; 
+        padding-top: 15px; 
+        border-top: 2px solid #523530; 
+        font-size: 1.25rem; 
+        font-weight: bold; 
+        color: #333; 
+    }
+
+      .btn-pay { 
+        width: 100%; 
+        background: #523530; 
+        color: #fff; 
+        border: none; 
+        padding: 15px; 
+        font-size: 1.1rem; 
+        font-weight: bold; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        margin-top: 20px; 
+        transition: background 0.2s; 
+    }
+
+      .btn-pay:hover { 
+        background: #3d2723; 
+    }
+
+      .badge-info { 
+        background: #e8f0fe; 
+        color: #1a73e8; 
+        padding: 8px 12px; 
+        border-radius: 4px; 
+        font-size: 0.85rem; 
+        margin-bottom: 20px; 
+        display: block; 
+    }
       
       /* Promo Code Component */
-      .promo-box { display: flex; gap: 8px; margin-top: 15px; }
-      .promo-box input { flex: 1; padding: 10px; border: 1px dashed #523530; border-radius: 6px; text-transform: uppercase; font-weight: bold; font-family: inherit; }
-      .promo-box button { background: #523530; color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-      .promo-msg { font-size: 0.82rem; margin-top: 6px; display: none; }
-      .promo-msg.success { color: #2e7d32; display: block; }
-      .promo-msg.error { color: #c5221f; display: block; }
+
+      .promo-box { 
+        display: flex; 
+        gap: 8px; 
+        margin-top: 15px; 
+    }
+
+      .promo-box input { 
+        flex: 1; 
+        padding: 10px; 
+        border: 1px dashed #523530; 
+        border-radius: 6px; 
+        text-transform: uppercase; 
+        font-weight: bold; 
+        font-family: inherit; 
+    }
+
+      .promo-box button { 
+        background: #523530; 
+        color: #fff; 
+        border: none; 
+        padding: 10px 16px; 
+        border-radius: 6px; 
+        cursor: pointer; 
+        font-weight: bold; 
+    }
+
+      .promo-msg { 
+        font-size: 0.82rem; 
+        margin-top: 6px; 
+        display: none; 
+    }
+
+      .promo-msg.success { 
+        color: #2e7d32; 
+        display: block; 
+    }
+
+      .promo-msg.error { 
+        color: #c5221f; 
+        display: block; 
+    }
+
+      @media (max-width: 600px) {
+          .checkout-wrapper { 
+            margin: 24px auto; 
+            padding: 0 16px; 
+            gap: 24px; 
+        }
+          .checkout-panel { 
+            padding: 20px; 
+        }
+        
+          .form-row { 
+            flex-direction: column; 
+            gap: 0; 
+        }
+      }
   </style>
 </head>
 <body>

@@ -73,36 +73,167 @@ try {
   <script src="navigation.js" defer></script>
   
   <style>
-      .dashboard-container { max-width: 1000px; margin: 60px auto; padding: 0 20px; min-height: 50vh; }
-      .dashboard-header { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-      .dashboard-header h1 { margin: 0; color: #523530; font-family: 'Playfair Display', serif; }
+
+      .dashboard-container { 
+        max-width: 1000px; 
+        margin: 60px auto; 
+        padding: 0 20px; 
+        min-height: 50vh; 
+    }
+
+      .dashboard-header { 
+        border-bottom: 2px solid #eee; padding-bottom: 20px; 
+        margin-bottom: 30px; 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 16px; 
+        justify-content: space-between; align-items: center; 
+    }
+
+      .dashboard-header h1 { 
+        margin: 0; 
+        color: #523530; 
+        font-family: 'Playfair Display', serif; 
+    }
       
-      .booking-card { background: #fff; border: 1px solid #eaeaea; border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 15px; }
-      .booking-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #ccc; padding-bottom: 15px; }
-      .booking-header h3 { margin: 0; font-size: 1.2rem; color: #333; }
+      .booking-card { 
+        background: #fff; 
+        border: 1px solid #eaeaea; border-radius: 8px; 
+        padding: 25px; 
+        margin-bottom: 20px; 
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02); 
+        display: flex; 
+        flex-direction: column; 
+        gap: 15px; 
+    }
+
+      .booking-header { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 12px; 
+        justify-content: space-between; align-items: center; 
+        border-bottom: 1px dashed #ccc; padding-bottom: 15px; 
+    }
+
+      .booking-header h3 { 
+        margin: 0; 
+        font-size: 1.2rem; 
+        color: #333; 
+    }
       
-      .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-      .status-pending { background: #fff3cd; color: #856404; }
-      .status-confirmed { background: #d4edda; color: #155724; }
-      .status-cancelled { background: #f8d7da; color: #721c24; }
-      .status-completed { background: #e2e3e5; color: #383d41; }
+      .status-badge { 
+        padding: 5px 12px; 
+        border-radius: 20px; 
+        font-size: 0.85rem; 
+        font-weight: bold; 
+        text-transform: uppercase; letter-spacing: 0.5px; 
+    }
+      .status-pending { 
+        background: #fff3cd; 
+        color: #856404; 
+    }
+      .status-confirmed { 
+        background: #d4edda; 
+        color: #155724; 
+    }
+      .status-cancelled { 
+        background: #f8d7da; 
+        color: #721c24; 
+    }
+      .status-completed { 
+        background: #e2e3e5; 
+        color: #383d41; 
+    }
 
-      .booking-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.95rem; color: #555; }
-      .booking-details p { margin: 5px 0; }
-      .booking-details strong { color: #333; }
+      .booking-details { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); 
+        gap: 15px; 
+        font-size: 0.95rem; 
+        color: #555; 
+    }
+      .booking-details p { 
+        margin: 5px 0; 
+    }
 
-      .booking-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; }
-      .btn { padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: 0.2s; display: inline-block; }
-      .btn-primary { background: #523530; color: #fff; }
-      .btn-primary:hover { background: #3d2723; }
-      .btn-review { background: #f59e0b; color: #fff; border-color: #f59e0b; font-weight: 600; }
-      .btn-review:hover { background: #d97706; color: #fff; }
-      .reviewed-tag { font-size: 0.85rem; color: #2e7d32; font-weight: bold; padding: 6px 12px; background: #e8f5e9; border-radius: 4px; }
-      .btn-danger { background: transparent; color: #c62828; border-color: #c62828; }
-      .btn-danger:hover { background: #c62828; color: #fff; }
+      .booking-details strong { 
+        color: #333; 
+    }
 
-      .empty-state { text-align: center; padding: 60px 20px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc; }
-      .empty-state h2 { color: #523530; margin-bottom: 10px; }
+      .booking-actions { 
+        margin-top: 10px; 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 10px; 
+        align-items: center; 
+    }
+
+      .btn { 
+        padding: 8px 16px; 
+        border-radius: 4px; 
+        text-decoration: none; 
+        font-size: 0.9rem; 
+        font-weight: 500; 
+        cursor: pointer; 
+        border: 1px solid transparent; transition: 0.2s; 
+        display: inline-block; 
+    }
+
+      .btn-primary { 
+        background: #523530; 
+        color: #fff; 
+    }
+      .btn-primary:hover { 
+        background: #3d2723; 
+    }
+      .btn-review { 
+        background: #f59e0b; 
+        color: #fff; 
+        border-color: #f59e0b; 
+        font-weight: 600; 
+    }
+      .btn-review:hover { 
+        background: #d97706; 
+        color: #fff; 
+    }
+      .reviewed-tag { 
+        font-size: 0.85rem; 
+        color: #2e7d32; 
+        font-weight: bold; 
+        padding: 6px 12px; 
+        background: #e8f5e9; 
+        border-radius: 4px; 
+    }
+      .btn-danger { 
+        background: transparent; 
+        color: #c62828; 
+        border-color: #c62828; 
+    }
+      .btn-danger:hover { 
+        background: #c62828; 
+        color: #fff; 
+    }
+
+      .empty-state { 
+        text-align: center; 
+        padding: 60px 20px; 
+        background: #f9f9f9; 
+        border-radius: 8px; 
+        border: 1px dashed #ccc; 
+    }
+      .empty-state h2 { 
+        color: #523530; 
+        margin-bottom: 10px; 
+    }
+      @media (max-width: 600px) {
+          .dashboard-container { 
+            margin: 28px auto; 
+            padding: 0 16px; 
+        }
+          .booking-card { 
+            padding: 20px; 
+        }
+      }
   </style>
 </head>
 <body>

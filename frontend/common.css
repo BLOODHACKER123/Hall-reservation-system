@@ -6,19 +6,20 @@ body {
   padding: 0;
 }
 
-/* Keep the shared header visible while the page scrolls. */
 #navigation-section {
   position: sticky;
   top: 0;
   z-index: 1000;
 }
 
-#navigation-section #container {
+#navigation-section 
+#container {
   width: 100%;
   background-color: #FEFDFC;
 }
 
-#navigation-section #nav-bar {
+#navigation-section 
+#nav-bar {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -30,7 +31,8 @@ body {
 }
 
 
-#navigation-section #nav-links {
+#navigation-section 
+#nav-links {
   font-family: Arial,sans-serif;
   display: flex;
   gap: 16px clamp(16px, 3vw, 50px);
@@ -39,21 +41,26 @@ body {
   justify-self: center;
 }
 
-#navigation-section #nav-links a {
+#navigation-section 
+#nav-links a {
   color: #2d2926;
   text-decoration: none;
   cursor: pointer;
 }
 
-#navigation-section #nav-buttons {
+#navigation-section 
+#nav-buttons {
   display: flex;
+  min-width: 0;
   flex-wrap: wrap;
   gap: 10px;
   justify-self: end;
 }
 
-#navigation-section #login-button,
-#navigation-section #list-venue-button {
+#navigation-section 
+#login-button,
+#navigation-section 
+#list-venue-button {
   color: #faf7f2;
   background-color: #8c5e58;
   border: 1.5px solid #523530;
@@ -63,12 +70,15 @@ body {
   font-size: 1rem;
 }
 
-#navigation-section #login-button,
-#navigation-section #list-venue-button {
+#navigation-section 
+#login-button,
+#navigation-section 
+#list-venue-button {
   text-decoration: none;
 }
 
-#navigation-section #logo {
+#navigation-section 
+#logo {
   display: flex;
   font-size: 3rem;
   font-weight: 600;
@@ -133,6 +143,16 @@ img {
   max-width: 100%;
 }
 
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.table-scroll table {
+  min-width: 640px;
+}
+
 input,
 select,
 textarea {
@@ -140,14 +160,10 @@ textarea {
   max-width: 100%;
 }
 
-p,
-h1,
-h2,
-h3 {
+p,h1,h2,h3 {
   overflow-wrap: anywhere;
 }
 
-/* Shared venue details keep names, prices and actions aligned on both pages. */
 .location-details {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -173,7 +189,8 @@ h3 {
   font-weight: 600;
 }
 
-.location-details .cost {
+.location-details 
+.cost {
   grid-column: 2;
   grid-row: 2;
   color: var(--rose);
@@ -216,7 +233,7 @@ h3 {
   text-decoration: none;
 }
 
-/* Let short account pages fill the screen, with the footer after the content. */
+
 body.account-page {
   display: flex;
   flex-direction: column;
@@ -240,13 +257,15 @@ body.account-page {
   background: var(--ink);
 }
 
-#footer-section #footer-body {
+#footer-section 
+#footer-body {
   width: min(100% - 48px, 1200px);
   margin: 0 auto;
   padding: 42px 0 22px;
 }
 
-#footer-section #footer-top {
+#footer-section 
+#footer-top {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr));
   gap: clamp(24px, 5vw, 70px);
@@ -254,7 +273,8 @@ body.account-page {
   border-bottom: 1px solid var(--line);
 }
 
-#footer-section #footer-details-block {
+#footer-section 
+#footer-details-block {
   max-width: 310px;
 }
 
@@ -264,7 +284,8 @@ body.account-page {
   font: 500 24px "Playfair Display", Georgia, serif;
 }
 
-#footer-section #footer-details-block p {
+#footer-section 
+#footer-details-block p {
   margin: 0;
   color: #d8cbc4;
   font: 14px/1.6 "DM Sans", Arial, sans-serif;
@@ -277,11 +298,13 @@ body.account-page {
   gap: 18px;
 }
 
-#footer-section .social-links {
+#footer-section 
+.social-links {
   margin-top: 20px;
 }
 
-#footer-section .footer-nav-links {
+#footer-section 
+.footer-nav-links {
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
@@ -306,14 +329,16 @@ body.account-page {
   outline-offset: 4px;
 }
 
-#footer-section .footer-nav-links p {
+#footer-section 
+.footer-nav-links p {
   margin: 0 0 4px;
   color: #d9a09a;
   font: 700 11px "DM Sans", Arial, sans-serif;
   letter-spacing: .12em;
 }
 
-#footer-section #footer-bottom {
+#footer-section 
+#footer-bottom {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -322,29 +347,37 @@ body.account-page {
   padding-top: 22px;
 }
 
-#footer-section #footer-bottom p {
+#footer-section 
+#footer-bottom p {
   margin: 0;
   color: #b8aaa3;
   font: 12px/1.5 "DM Sans", Arial, sans-serif;
 }
 
-#footer-section .footer-links {
+#footer-section 
+.footer-links {
   display: flex;
   flex-wrap: wrap;
   gap: 22px;
 }
 
 @media (max-width: 1100px) {
-  /* Keep navigation available in a wrapping layout without JavaScript. */
+
   #navigation-section {
     position: relative;
   }
 
-  #navigation-section #nav-bar {
+  #navigation-section 
+  #nav-bar {
     grid-template-columns: 1fr;
     gap: 10px;
     padding: 16px;
     text-align: center;
+  }
+
+  #navigation-section 
+  #logo {
+    font-size: clamp(2rem, 8vw, 3rem);
   }
 
   #navigation-section #logo,
@@ -356,13 +389,15 @@ body.account-page {
     min-width: 0;
   }
 
-  #navigation-section #nav-links {
+  #navigation-section 
+  #nav-links {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0 18px;
   }
 
-  #navigation-section #nav-links a {
+  #navigation-section 
+  #nav-links a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -370,12 +405,15 @@ body.account-page {
     font-size: 14px;
   }
 
-  #navigation-section #nav-buttons {
+  #navigation-section 
+  #nav-buttons {
     justify-content: center;
   }
 
-  #navigation-section #login-button,
-  #navigation-section #list-venue-button {
+  #navigation-section 
+  #login-button,
+  #navigation-section 
+  #list-venue-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -389,18 +427,21 @@ body.account-page {
     overflow-y: auto;
   }
 
-  #navigation-section.has-mobile-menu #nav-bar {
+  #navigation-section.has-mobile-menu 
+  #nav-bar {
     grid-template-columns: minmax(0, 1fr) auto;
     text-align: left;
   }
 
-  #navigation-section.has-mobile-menu #logo {
+  #navigation-section.has-mobile-menu 
+  #logo {
     grid-column: 1;
     grid-row: 1;
     justify-self: start;
   }
 
-  #navigation-section.has-mobile-menu .nav-toggle {
+  #navigation-section.has-mobile-menu 
+  .nav-toggle {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -410,15 +451,18 @@ body.account-page {
     justify-self: end;
   }
 
-  #navigation-section.has-mobile-menu #nav-links,
-  #navigation-section.has-mobile-menu #nav-buttons {
+  #navigation-section.has-mobile-menu 
+  #nav-links,
+  #navigation-section.has-mobile-menu 
+  #nav-buttons {
     display: none;
     grid-column: 1 / -1;
     justify-self: stretch;
     width: 100%;
   }
 
-  #navigation-section.has-mobile-menu.is-menu-open #nav-links {
+  #navigation-section.has-mobile-menu.is-menu-open 
+  #nav-links {
     display: grid;
     grid-template-columns: 1fr;
     grid-row: 2;
@@ -426,14 +470,16 @@ body.account-page {
     border-top: 1px solid #e9e3de;
   }
 
-  #navigation-section.has-mobile-menu #nav-links a {
+  #navigation-section.has-mobile-menu 
+  #nav-links a {
     justify-content: flex-start;
     padding: 10px 12px;
     border-radius: 8px;
     font-size: 16px;
   }
 
-  #navigation-section.has-mobile-menu #nav-links a:hover {
+  #navigation-section.has-mobile-menu 
+  #nav-links a:hover {
     background: #faf7f2;
   }
 
@@ -447,7 +493,7 @@ body.account-page {
 }
 
 @media (max-width: 760px) {
-  /* Prevent mobile browsers from zooming into small form text. */
+  
   body input,
   body select,
   body textarea {

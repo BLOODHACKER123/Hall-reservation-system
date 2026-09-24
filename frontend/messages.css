@@ -24,7 +24,6 @@
   box-sizing: border-box;
 }
 
-/* Conversation list */
 .threads-list {
   min-width: 0;
   overflow-y: auto;
@@ -159,6 +158,7 @@
 }
 
 .msg-bubble {
+  flex-shrink: 0;
   max-width: min(70%, 520px);
   padding: 11px 15px;
   position: relative;
@@ -192,7 +192,7 @@
   opacity: 0.75;
 }
 
-/* Message input */
+
 .chat-footer {
   padding: 14px 16px;
   display: flex;
@@ -260,6 +260,7 @@
   .inbox-wrapper {
     width: min(100% - 24px, 680px);
     height: auto;
+    max-height: none;
     min-height: 0;
     margin: 18px auto;
     grid-template-columns: 1fr;
@@ -272,6 +273,7 @@
   }
 
   .chat-window {
+    height: 500px;
     min-height: 500px;
   }
 
@@ -288,6 +290,7 @@
   }
 
   .chat-window {
+    height: 440px;
     min-height: 440px;
   }
 
@@ -310,5 +313,9 @@
 
   .chat-footer button {
     padding: 10px 16px;
+  }
+
+  .chat-footer input {
+    font-size: 16px;
   }
 }

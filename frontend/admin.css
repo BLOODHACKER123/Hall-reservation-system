@@ -1,4 +1,3 @@
-
 /* Admin dashboard layout. */
 :root {
   --admin-ink: #172e44;
@@ -8,8 +7,6 @@
   --admin-bg: #faf8f5;
   --admin-line: #e9e3de;
 }
-
-
 
 .admin-hero {
   padding: 34px clamp(20px, 3.2vw, 52px) 52px;
@@ -52,6 +49,7 @@
 }
 
 .stat-card strong{
+ overflow-wrap: anywhere;
  color: #fff8f3;
  font-family: Cormorant Garamond,serif;
  display: flex;
@@ -60,7 +58,6 @@
  
 }
 
-/* Record cards: direct children only, so overview statistics stay compact. */
 .admin-content {
   color: var(--admin-dark);
   line-height: 1.6;
@@ -150,7 +147,12 @@
   margin-top: 20px;
 }
 
-.admin-panel .filter-button {
+.admin-panel > article > div > * {
+  min-width: 0;
+}
+
+.admin-panel 
+.filter-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -165,7 +167,8 @@
   font-weight: 600;
 }
 
-.admin-panel .filter-button:hover {
+.admin-panel 
+.filter-button:hover {
   background: #68443f;
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -191,7 +194,8 @@
 }
 
 .admin-panel > p,
-.admin-panel .empty-state {
+.admin-panel 
+.empty-state {
   padding: 32px 20px;
   border: 1px dashed #d8ccc3;
   border-radius: 12px;
@@ -200,7 +204,8 @@
   text-align: center;
 }
 
-.admin-panel .empty-state h6 {
+.admin-panel 
+.empty-state h6 {
   margin: 8px 0 0;
 }
 
